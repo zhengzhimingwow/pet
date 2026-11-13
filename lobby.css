@@ -152,7 +152,7 @@
 .town-profile-footer details { text-align: right; }
 .town-profile-footer summary { cursor: pointer; }
 #online-player { margin: 4px 0 0; font-variant-numeric: tabular-nums; }
-#open-weapon-collection, #equip-selected-weapon {
+#open-weapon-collection {
   flex: none;
   min-height: 34px;
   padding: 4px 10px;
@@ -163,7 +163,7 @@
   font-size: 12px;
   font-weight: 800;
 }
-#open-weapon-collection:hover, #equip-selected-weapon:hover { background: #ffde8a; }
+#open-weapon-collection:hover { background: #ffde8a; }
 .town-weapon-compare { padding: 12px 16px 0; border-bottom: 1px solid var(--town-line); }
 .weapon-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .weapon-comparison-item {
@@ -177,7 +177,19 @@
   background: #fff;
 }
 .weapon-comparison-item + .weapon-comparison-item { border-color: #98bce8; background: #edf5ff; }
-.weapon-comparison-item > span, .weapon-comparison-item small { color: var(--town-muted); font-size: 12px; }
+.weapon-comparison-item > :is(span, label), .weapon-comparison-item small { color: var(--town-muted); font-size: 12px; }
+#weapon-reference {
+  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  padding: 3px 7px;
+  border: 1px solid #b9cee9;
+  border-radius: 6px;
+  background: #f7fbff;
+  color: var(--town-ink);
+  font: inherit;
+  font-weight: 700;
+}
 .weapon-comparison-item p { margin: 4px 0 0; color: var(--town-muted); font-size: 12px; }
 .weapon-comparison-item b { color: var(--town-ink); font-size: 18px; font-variant-numeric: tabular-nums; }
 #weapon-damage-change {
@@ -221,10 +233,8 @@
 #town-weapon-list button:hover { background: #f1f6ff; }
 #town-weapon-list button[aria-pressed="true"] { border-color: #5a89c7; background: #e7f1ff; }
 #town-weapon-list small { display: block; color: var(--town-muted); }
-.weapon-equipped, .weapon-state { font-size: 12px; color: var(--town-muted); }
-.weapon-equipped { color: #226342; font-weight: 700; }
-#town-weapon-feedback { margin: 0 0 8px; color: #344e75; font-size: 13px; }
-#town-weapon-feedback:empty { display: none; }
+.weapon-owned, .weapon-state { font-size: 12px; color: var(--town-muted); }
+.weapon-owned { color: #226342; font-weight: 700; }
 .town-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
 .town-item-icon {
   display: grid;

@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=weapon-collection">
-  <link rel="stylesheet" href="lobby.css?v=profile-below-square">
+  <link rel="stylesheet" href="lobby.css?v=weapon-draw">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -117,10 +117,10 @@
           </div>
           <div class="town-loadout">
             <div class="town-item">
-              <span id="town-weapon-icon" class="town-item-icon" aria-hidden="true"></span>
-              <div><strong id="town-weapon"></strong><small id="town-weapon-move"></small></div>
+              <span class="town-item-icon" aria-hidden="true">⚔</span>
+              <div><strong id="town-weapon"></strong><small>每次出手随机抽一把，每场各用一次</small></div>
             </div>
-            <button id="open-weapon-collection" type="button">换武器</button>
+            <button id="open-weapon-collection" type="button">武器库</button>
           </div>
           <div class="town-profile-footer">
             <span>技能 <strong id="town-skill"></strong></span>
@@ -157,8 +157,8 @@
       <section class="town-weapon-compare" aria-label="武器对比">
         <div class="weapon-comparison" aria-live="polite">
           <div class="weapon-comparison-item">
-            <span>当前装备</span>
-            <strong id="weapon-current-name"></strong>
+            <label for="weapon-reference">对比基准</label>
+            <select id="weapon-reference"></select>
             <small id="weapon-current-move"></small>
             <p>武器基础伤害 <b id="weapon-current-damage"></b></p>
           </div>
@@ -171,9 +171,7 @@
         </div>
         <div class="weapon-compare-actions">
           <span id="weapon-selection-status"></span>
-          <button id="equip-selected-weapon" type="button" hidden>装备</button>
         </div>
-        <p id="town-weapon-feedback" role="status"></p>
       </section>
       <div class="town-damage-content">
         <ul id="town-weapon-list"></ul>
@@ -267,14 +265,14 @@
         <details id="damage-stats" hidden><summary>伤害统计</summary><ul id="damage-totals"></ul></details>
       </div>
       <div class="action-panel">
-        <div><h2 id="action-title">准备就绪</h2><p id="action-desc">双方轮流随机出招。</p></div>
+        <div><h2 id="action-title">准备就绪</h2><p id="action-desc">双方轮流抽取武器，每把在本场只用一次。</p></div>
         <button class="start" id="start" type="button">开始战斗 <span aria-hidden="true">↗</span></button>
       </div>
     </section>
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
-  <script src="game.js?v=weapon-collection"></script>
-  <script src="online.js?v=character-card"></script>
+  <script src="game.js?v=weapon-draw"></script>
+  <script src="online.js?v=weapon-draw"></script>
 </body>
 </html>

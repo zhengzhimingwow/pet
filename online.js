@@ -11,8 +11,7 @@ if (onlineMode) {
  const damageDialog = $('town-damage-dialog');
  const weaponDialog = $('town-weapon-dialog');
  const weaponList = $('town-weapon-list');
- const weaponFeedback = $('town-weapon-feedback');
- const equipWeapon = $('equip-selected-weapon');
+ const weaponReference = $('weapon-reference');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
@@ -48,7 +47,6 @@ if (onlineMode) {
   same_player: '请选择其他玩家。',
   invalid_request: '请检查区服和角色 UID。',
   request_conflict: '请求编号已被使用，请重新选择对手。',
-  weapon_locked: '尚未获得这把武器。',
   unavailable: '区服或战斗服暂时不可用，请稍后重试。',
  };
 
@@ -165,16 +163,13 @@ if (onlineMode) {
  function renderPlayer(data) {
   session = data;
   const {player, zone, progression} = data;
-  const weapon = weaponMoves[player.weapon_id];
   $('town-zone').textContent = `${zone} 服`;
   $('town-player-name').textContent = player.name;
   $('online-player').textContent = `UID ${player.player_id}`;
   $('town-hp').textContent = player.max_hp;
   $('town-attack').textContent = player.attack;
   $('town-defense').textContent = player.defense;
-  $('town-weapon').textContent = weapon?.label ?? '未装备';
-  $('town-weapon-icon').textContent = weapon?.icon || (weapon ? '⚔' : '–');
-  $('town-weapon-move').textContent = weapon ? weaponMoveLabel(weapon) : '';
+  $('town-weapon').textContent = `本场可抽取 ${progression.weapons.length} 把武器`;
   $('town-skill').textContent = player.skill_id === 'combo' ? '连击' : '未装备';
   $('town-level').textContent = `Lv. ${progression.level}`;
   $('town-xp').max = progression.next_level_xp;
@@ -190,27 +185,23 @@ if (onlineMode) {
 
  function selectWeapon(id) {
   selectedWeaponId = id;
-  const currentId = session.player.weapon_id;
+  const currentId = weaponReference.value;
   const current = weaponMoves[currentId];
   const selected = weaponMoves[id];
   const owned = session.progression.weapons.includes(id);
-  const equipped = id === currentId;
-  for (const [slot, weapon] of [['current', current], ['selected', selected]]) {
-   $(`weapon-${slot}-name`).textContent = weapon?.label ?? '未装备';
-   $(`weapon-${slot}-move`).textContent = weapon ? weaponMoveLabel(weapon) : '';
-   $(`weapon-${slot}-damage`).textContent = weapon?.damage ?? '—';
-  }
+  $('weapon-current-move').textContent = current ? weaponMoveLabel(current) : '';
+  $('weapon-current-damage').textContent = current?.damage ?? '—';
+  $('weapon-selected-name').textContent = selected?.label ?? '请选择武器';
+  $('weapon-selected-move').textContent = selected ? weaponMoveLabel(selected) : '';
+  $('weapon-selected-damage').textContent = selected?.damage ?? '—';
   const change = $('weapon-damage-change');
-  change.hidden = !current || !selected || equipped;
+  change.hidden = !current || !selected || id === currentId;
   if (!change.hidden) {
    const delta = selected.damage - current.damage;
    change.textContent = delta > 0 ? `+${delta}` : delta < 0 ? `−${Math.abs(delta)}` : '相同';
    change.dataset.direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
   }
-  $('weapon-selection-status').textContent = equipped ? '已装备' : owned ? '已拥有' : '未获得';
-  equipWeapon.hidden = !owned || equipped || !selected;
-  equipWeapon.disabled = busy;
-  if (selected) equipWeapon.setAttribute('aria-label', `装备${selected.label}`);
+  $('weapon-selection-status').textContent = owned ? '已加入战斗抽取池' : '未获得';
   for (const button of weaponList.querySelectorAll('button')) {
    button.setAttribute('aria-pressed', String(button.dataset.weapon === id));
   }
@@ -218,9 +209,10 @@ if (onlineMode) {
 
  function renderWeaponCollection() {
   const owned = new Set(session.progression.weapons);
-  const equippedId = session.player.weapon_id;
-  const priority = id => id === equippedId ? 2 : Number(owned.has(id));
-  const catalog = Object.entries(weaponMoves).sort(([a], [b]) => priority(b) - priority(a));
+  const previousReference = weaponReference.value;
+  weaponReference.replaceChildren(...[...owned].map(id => new Option(weaponMoves[id].label, id)));
+  if (owned.has(previousReference)) weaponReference.value = previousReference;
+  const catalog = Object.entries(weaponMoves).sort(([a], [b]) => Number(owned.has(b)) - Number(owned.has(a)));
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
   weaponList.replaceChildren(...catalog.map(([id, move]) => {
    const item = document.createElement('li');
@@ -239,43 +231,25 @@ if (onlineMode) {
    detail.textContent = weaponMoveLabel(move);
    info.append(label, detail);
    const state = document.createElement('span');
-   state.className = id === equippedId ? 'weapon-equipped' : 'weapon-state';
-   state.textContent = id === equippedId ? '已装备' : owned.has(id) ? '已拥有' : '未获得';
+   state.className = owned.has(id) ? 'weapon-owned' : 'weapon-state';
+   state.textContent = owned.has(id) ? '已拥有' : '未获得';
    button.append(icon, info, state);
-   button.addEventListener('click', () => {
-    weaponFeedback.textContent = '';
-    selectWeapon(id);
-   });
+   button.addEventListener('click', () => selectWeapon(id));
    item.append(button);
    return item;
   }));
   selectWeapon(selectedWeaponId);
  }
+ weaponReference.addEventListener('change', () => selectWeapon(selectedWeaponId));
  $('open-weapon-collection').addEventListener('click', () => {
-  weaponFeedback.textContent = '';
-  const equippedId = session.player.weapon_id;
-  selectedWeaponId = session.progression.weapons.find(id => id !== equippedId)
-   ?? Object.keys(weaponMoves).find(id => id !== equippedId);
+  const reference = session.progression.weapons.includes(weaponReference.value)
+   ? weaponReference.value : session.progression.weapons[0];
+  selectedWeaponId = session.progression.weapons.find(id => id !== reference)
+   ?? Object.keys(weaponMoves).find(id => id !== reference);
   renderWeaponCollection();
   weaponDialog.showModal();
   weaponList.parentElement.scrollTop = 0;
  });
- equipWeapon.addEventListener('click', () => run(async () => {
-  const id = selectedWeaponId;
-  weaponFeedback.textContent = '';
-  try {
-   renderPlayer(await api(session.zone, '/equipment', {weapon_id:id}));
-   weaponFeedback.textContent = `已装备${weaponMoves[id].label}`;
-   if (weaponDialog.open) weaponDialog.querySelector('[autofocus]').focus({preventScroll:true});
-  } catch (error) {
-   if (error.code === 'unauthorized') {
-    if (weaponDialog.open) weaponDialog.close();
-    throw error;
-   }
-   weaponFeedback.textContent = error.code ? error.message : messages.unavailable;
-  }
- }));
-
  function lock(value) {
   busy = value;
   $('login-submit').disabled = value;
@@ -289,7 +263,6 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   backToSquare.disabled = value;
   $('open-weapon-collection').disabled = value;
-  equipWeapon.disabled = value;
   for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
   for (const button of opponentsList.querySelectorAll('button')) button.disabled = value;
@@ -319,7 +292,7 @@ if (onlineMode) {
     turn = {
      number, attacker:event.actor, defender:event.target,
      move:weaponMoves[event.move_id] ?? punch, dodge:event.kind === 'dodge',
-     damage:0, remainingHp:event.remaining_hp, events:[],
+     damage:0, remainingHp:event.remaining_hp, events:[], drawsFromPool:report.rules_version >= 4,
     };
     turns.push(turn);
    }

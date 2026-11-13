@@ -26,7 +26,6 @@ const weaponDemos = {pan:panAttack, blade:bladeAttack, sword:swordAttack};
 const weaponMoves = {...weaponDemos, ...customWeaponMoves};
 const mode = Object.hasOwn(weaponMoves, requestedDemo) ? requestedDemo : 'normal';
 const demoAttack = onlineMode ? null : weaponMoves[mode];
-const specialAttacks = Object.values(weaponMoves);
 const punch = {name:'挥出一拳', damage:10, icon:'✦'};
 const maxHp = {left:100, right:100};
 const fighterNames = {left:'小团子', right:'大壮'};
@@ -204,8 +203,10 @@ function say(text) { const p = document.createElement('p'); p.textContent = text
 function reportTurnEvent(number, text) {
  say(`第 ${number} 回合 · ${text}`);
 }
-function reportWeaponDraw({number, attacker, move}) {
- if (move.weapon) reportTurnEvent(number, fighterNames[attacker] + move.draw + '！');
+function reportWeaponDraw({number, attacker, move, drawsFromPool}) {
+ if (!move.weapon) return;
+ const action = drawsFromPool ? `抽到${move.label}` : move.draw;
+ reportTurnEvent(number, `${fighterNames[attacker]}${action}！`);
 }
 function reportTurnResult({number, attacker, defender, move, dodge, damage, remainingHp, events}) {
  const name = fighterNames[attacker], target = fighterNames[defender];
@@ -222,7 +223,8 @@ function reportTurnResult({number, attacker, defender, move, dodge, damage, rema
   return;
  }
  if (dodge) {
-  reportTurnEvent(number, name + '挥出一拳，' + target + '灵巧地躲开了！');
+  const attack = move.label ? `用${move.label}使出「${move.name}」` : move.name;
+  reportTurnEvent(number, name + attack + '，' + target + '灵巧地躲开了！');
   return;
  }
  const attackName = move.label ? `用${move.label}使出「${move.name}」` : move.name;
@@ -241,18 +243,18 @@ function updateHp(side, hp) {
 }
 function simulateBattle() {
  const hp = {left:100, right:100};
+ const pools = {left:Object.values(weaponMoves), right:Object.values(weaponMoves)};
  const turns = [];
  while (hp.left > 0 && hp.right > 0) {
   const number = Math.floor(turns.length / 2) + 1;
   const attacker = turns.length % 2 === 0 ? 'left' : 'right';
   const defender = attacker === 'left' ? 'right' : 'left';
-  const roll = Math.random();
-  const dodge = !demoAttack && roll < .16;
-  const special = roll >= .16 && roll < .53;
-  const move = demoAttack ?? (special ? specialAttacks[Math.floor(Math.random() * specialAttacks.length)] : punch);
+  const pool = pools[attacker];
+  const move = demoAttack ?? pool.splice(Math.floor(Math.random() * pool.length), 1)[0] ?? punch;
+  const dodge = !demoAttack && Math.random() < .16;
   const damage = dodge ? 0 : move.damage + Math.floor(Math.random() * 7);
   hp[defender] = Math.max(0, hp[defender] - damage);
-  turns.push({number, attacker, defender, move, dodge, damage, remainingHp:hp[defender]});
+  turns.push({number, attacker, defender, move, dodge, damage, remainingHp:hp[defender], drawsFromPool:!demoAttack});
  }
  return {turns, hp};
 }
