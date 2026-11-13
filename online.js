@@ -198,20 +198,15 @@ if (onlineMode) {
   return [...totals.values()];
  }
 
- async function playback(report) {
-  clearTimeout(returnToSquareTimer);
-  townStage.hidden = true;
-  battleView.hidden = false;
-  $('arena-title').focus({preventScroll:true});
-  battleView.scrollIntoView({block:'nearest'});
-  lastReport = report;
+ function battleTurns(report) {
   const turns = [];
   const moves = {pan:panAttack, blade:bladeAttack, sword:swordAttack, punch};
   for (const event of report.events) {
+   const number = report.rules_version === 1 ? Math.ceil(event.round / 2) : event.round;
    let turn = turns.at(-1);
-   if (turn?.number !== event.round) {
+   if (turn?.number !== number || turn.attacker !== event.actor) {
     turn = {
-     number:event.round, attacker:event.actor, defender:event.target,
+     number, attacker:event.actor, defender:event.target,
      move:moves[event.move_id] ?? punch, dodge:event.kind === 'dodge',
      damage:0, remainingHp:event.remaining_hp, events:[],
     };
@@ -221,8 +216,18 @@ if (onlineMode) {
    turn.damage += event.applied_damage;
    turn.remainingHp = event.remaining_hp;
   }
+  return turns;
+ }
+
+ async function playback(report) {
+  clearTimeout(returnToSquareTimer);
+  townStage.hidden = true;
+  battleView.hidden = false;
+  $('arena-title').focus({preventScroll:true});
+  battleView.scrollIntoView({block:'nearest'});
+  lastReport = report;
   await playBattle({
-   turns, hp:{left:report.left_hp, right:report.right_hp}, winner:report.winner,
+   turns:battleTurns(report), hp:{left:report.left_hp, right:report.right_hp}, winner:report.winner,
    players:{left:report.attacker, right:report.defender}, damageTotals:damageBySource(report.events),
   });
   returnToSquareTimer = setTimeout(returnToSquare, 3000);
@@ -230,6 +235,10 @@ if (onlineMode) {
 
  function showDamageReport(report, time, opener) {
   const names = {left:report.attacker.name, right:report.defender.name};
+  if (names.left === names.right) {
+   names.left += '（先手）';
+   names.right += '（后手）';
+  }
   const outcome = report.winner === 'draw' ? '平局' : `${names[report.winner]}获胜`;
   $('town-damage-match').textContent = `${names.left} 对战 ${names.right} · ${outcome} · ${time}`;
 
@@ -253,33 +262,45 @@ if (onlineMode) {
 
   const rounds = $('town-damage-rounds');
   rounds.replaceChildren();
-  let round;
-  let events;
-  for (const event of report.events) {
-   if (round !== event.round) {
-    round = event.round;
-    const item = document.createElement('li');
+  let roundNumber;
+  let roundActions;
+  const turns = battleTurns(report);
+  for (const turn of turns) {
+   if (roundNumber !== turn.number) {
+    roundNumber = turn.number;
+    const round = document.createElement('li');
     const title = document.createElement('h4');
-    title.textContent = `第 ${round} 回合 · ${names[event.actor]}出手`;
-    events = document.createElement('ul');
-    item.append(title, events);
-    rounds.append(item);
+    title.textContent = `第 ${roundNumber} 回合`;
+    roundActions = document.createElement('div');
+    round.append(title, roundActions);
+    rounds.append(round);
    }
-   const item = document.createElement('li');
-   const attacker = names[event.actor];
-   const defender = names[event.target];
-   const move = `${event.source_name} · ${event.move_name}`;
-   if (event.kind === 'dodge') {
-    item.textContent = `${attacker} 使用「${move}」，被 ${defender} 闪避。`;
-   } else if (event.kind === 'knockout') {
-    item.textContent = `${defender} 倒下了。`;
-   } else {
-    const calculated = event.damage !== event.applied_damage ? `（计算伤害 ${event.damage}）` : '';
-    const critical = event.critical ? '（暴击）' : '';
-    const action = event.source_id === 'combo' ? '本回合追加连击' : '出招';
-    item.textContent = `${action}「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
+   const title = document.createElement('h5');
+   title.textContent = `${names[turn.attacker]}出手`;
+   const events = document.createElement('ul');
+   for (const event of turn.events) {
+    const item = document.createElement('li');
+    const defender = names[event.target];
+    const move = `${event.source_name} · ${event.move_name}`;
+    if (event.kind === 'dodge') {
+     item.textContent = `使用「${move}」，被 ${defender} 闪避。`;
+    } else if (event.kind === 'knockout') {
+     item.textContent = `${defender} 倒下了。`;
+    } else {
+     const calculated = event.damage !== event.applied_damage ? `（计算伤害 ${event.damage}）` : '';
+     const critical = event.critical ? '（暴击）' : '';
+     const action = event.source_id === 'combo' ? '追加连击' : '出招';
+     item.textContent = `${action}「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
+    }
+    events.append(item);
    }
-   events.append(item);
+   roundActions.append(title, events);
+  }
+  const lastTurn = turns.at(-1);
+  if (lastTurn?.attacker === 'left') {
+   const note = document.createElement('p');
+   note.textContent = `${names[lastTurn.defender]}未出手，本回合未打完。`;
+   roundActions.append(note);
   }
 
   damageReportButton = opener;

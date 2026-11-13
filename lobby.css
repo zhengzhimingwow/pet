@@ -225,6 +225,8 @@
 .town-damage-summary section, .town-damage-rounds > li { padding: 9px 12px; border: 1px solid var(--town-line); border-radius: 8px; background: #fff; }
 .town-damage-summary ul, .town-damage-rounds ul { margin: 0; padding-inline-start: 17px; color: var(--town-muted); font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
 .town-damage-rounds { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.town-damage-rounds h5 { margin: 8px 0 2px; font-size: 13px; overflow-wrap: anywhere; }
+.town-damage-rounds p { margin: 8px 0 0; color: var(--town-muted); font-size: 13px; overflow-wrap: anywhere; }
 .town-outcome { flex: none; padding: 3px 7px; border-radius: 5px; background: #edf1f7; }
 .town-outcome-left { color: #226342; background: #e5f5e8; }
 .town-outcome-right { color: #a13740; background: #fbe8ea; }

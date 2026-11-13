@@ -234,8 +234,8 @@ function simulateBattle() {
  const hp = {left:100, right:100};
  const turns = [];
  while (hp.left > 0 && hp.right > 0) {
-  const number = turns.length + 1;
-  const attacker = number % 2 === 1 ? 'left' : 'right';
+  const number = Math.floor(turns.length / 2) + 1;
+  const attacker = turns.length % 2 === 0 ? 'left' : 'right';
   const defender = attacker === 'left' ? 'right' : 'left';
   const roll = Math.random();
   const dodge = !demoAttack && roll < .16;
@@ -313,7 +313,7 @@ function showSkippedOutcome(hp, turns) {
   reportWeaponDraw(turn);
   reportTurnResult(turn);
  }
- say(`已跳过剩余战斗动画，共 ${turns.length} 回合。`);
+ say('已跳过剩余战斗动画。');
  logs.scrollTop = 0;
 }
 function showDamageTotals(totals) {
@@ -358,9 +358,17 @@ async function playBattle({turns, hp, winner, players, damageTotals}) {
  if (skipping) showSkippedOutcome(hp, turns);
  const winningSide = winner ?? (hp.left > 0 ? 'left' : 'right');
  const title = winningSide === 'draw' ? '平局' : fighterNames[winningSide] + '获胜！';
+ const completedRounds = Math.floor(turns.length / 2);
+ const incompleteRound = turns.length % 2 === 1;
+ if (incompleteRound) {
+  const lastTurn = turns.at(-1);
+  reportTurnEvent(lastTurn.number, `${fighterNames[lastTurn.defender]}未出手，本回合未打完。`);
+ }
  $('round').textContent = '战斗结束';
  $('winner').textContent = title;
- $('result-text').textContent = skipping ? `战斗已结算，共 ${turns.length} 回合。` : '精彩的一场对决，给两位选手鼓鼓掌！';
+ $('result-text').textContent = incompleteRound
+  ? `打完 ${completedRounds} 回合，第 ${completedRounds + 1} 回合提前结束。`
+  : `打完 ${completedRounds} 回合。`;
  say('🎉 ' + title);
  showDamageTotals(damageTotals);
  result.hidden = false;
