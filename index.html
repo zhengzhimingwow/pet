@@ -1,10 +1,90 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f4ead5"><title>毛球大乱斗 · 战斗演示</title><link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image"><link rel="stylesheet" href="style.css?v=pan-smash"></head>
-<body><main class="shell"><header class="top"><div class="brand"><span class="brand-icon">✳</span><div><strong>毛球大乱斗</strong><small>FUZZY BATTLE CLUB</small></div></div><span class="demo-label"><i></i> <span id="demo-label">战斗演示</span></span></header>
-<section class="intro"><div><p class="eyebrow">WELCOME TO THE ARENA <span>✦</span></p><h1>准备好，大闹一场！</h1><p class="subtitle">两位小选手已经就位，一起来看看谁能笑到最后。</p></div><div class="round-stamp"><span>FRIENDLY</span><b>乐斗<br>时间</b><span>★ ★ ★</span></div></section>
-<section class="game"><div class="game-head"><div><span class="live-dot"></span><b>欢乐竞技场</b><span class="game-sub">FRIENDLY MATCH</span></div><div class="head-actions"><button class="sound-toggle" id="sound" type="button" aria-pressed="true" aria-label="关闭音效">🔊 音效开</button><span class="round" id="round">准备开战</span></div></div>
-<div class="arena" id="arena"><div class="cloud cloud-one"></div><div class="cloud cloud-two"></div><span class="spark s1">✦</span><span class="spark s2">✧</span><div class="hills hill-back"></div><div class="hills hill-front"></div><div class="ground"></div>
-<div class="fighter left" id="left"><div class="shadow"></div><div class="fighter-art fighter-art-left" role="img" aria-label="蓝围巾企鹅小团子"></div><div class="floating" id="float-left"></div></div>
-<div class="vs">VS</div><div class="fighter right" id="right"><div class="shadow"></div><div class="fighter-art fighter-art-right" role="img" aria-label="红围巾企鹅大壮"></div><div class="floating" id="float-right"></div></div><div class="impact" id="impact">✦</div><div class="result" id="result" hidden><div class="result-card"><span>✦ MATCH COMPLETE ✦</span><h2 id="winner"></h2><p id="result-text"></p><button id="again">再来一场 ↗</button></div></div></div>
-<div class="status-row"><div class="status"><div class="status-title"><div><span class="avatar penguin-avatar">●</span><b>小团子</b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div><div class="bar"><div id="hp-left"></div></div><small>勇敢又有一点点冒失的小企鹅</small></div><div class="status status-right"><div class="status-title"><div><span class="avatar penguin-avatar second-avatar">●</span><b>大壮</b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div><div class="bar"><div id="hp-right"></div></div><small>看起来很凶，其实很温柔的小企鹅</small></div></div></section>
-<section class="bottom"><div class="log-panel"><div class="section-title"><div><span class="mini-icon">≋</span><b>战斗实况</b><small> BATTLE LOG</small></div><span class="log-live">● LIVE</span></div><div class="logs" id="logs" aria-live="polite"><p class="empty">选手已就位，点击右侧按钮开始战斗。</p></div></div><div class="action-panel"><p class="action-kicker">READY TO RUMBLE?</p><h2 id="action-title">一场快乐的较量</h2><p id="action-desc">点击开始，看看这次会发生什么意外！</p><button class="start" id="start">开始战斗 <span>↗</span></button><div class="note"><span>✳</span> 自动战斗 · 每次都有新惊喜</div></div></section><footer><span>MADE FOR LITTLE MOMENTS OF JOY</span><span>✦ &nbsp; HAVE A NICE BATTLE &nbsp; ✦</span></footer></main><script src="game.js?v=pan-smash-contact"></script></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f1e6">
+  <title>企鹅大乐斗 · 欢乐竞技场</title>
+  <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
+  <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
+  <link rel="stylesheet" href="style.css?v=skip-battle">
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div class="brand"><span class="brand-icon" aria-hidden="true">✦</span><strong>企鹅大乐斗</strong></div>
+      <nav class="mode-nav" aria-label="出招模式">
+        <a href="?demo=pan" data-mode="pan">平底锅</a>
+        <a href="?demo=blade" data-mode="blade">青龙偃月刀</a>
+        <a href="?demo=sword" data-mode="sword">轩辕剑</a>
+        <a href="?demo=normal" data-mode="normal">随机出招</a>
+      </nav>
+    </header>
+
+    <section class="game" aria-labelledby="arena-title">
+      <div class="game-head">
+        <div><h1 id="arena-title">欢乐竞技场</h1><span class="demo-label" id="demo-label">随机出招</span></div>
+        <div class="head-actions">
+          <button class="sound-toggle" id="music-toggle" type="button" aria-pressed="true" aria-label="背景音乐">♫ 音乐开</button>
+          <button class="sound-toggle" id="sound" type="button" aria-pressed="true" aria-label="关闭音效">🔊 音效开</button>
+          <button class="sound-toggle" id="speed-toggle" type="button" aria-pressed="false" aria-label="战斗倍速">倍速 1×</button>
+          <button class="sound-toggle" id="skip" type="button" hidden>跳过战斗</button>
+          <span class="round" id="round">准备开战</span>
+        </div>
+      </div>
+      <div class="arena" id="arena">
+        <div class="arena-scenery" aria-hidden="true">
+          <div class="ridge"></div><div class="meadow"></div><div class="sand-ring"></div>
+        </div>
+        <div class="fighter left" id="left">
+          <div class="shadow"></div>
+          <div class="fighter-art fighter-art-left" role="img" aria-label="蓝围巾企鹅小团子"></div>
+          <div class="floating" id="float-left"></div>
+        </div>
+        <div class="vs" aria-hidden="true">VS</div>
+        <div class="fighter right" id="right">
+          <div class="shadow"></div>
+          <div class="fighter-art fighter-art-right" role="img" aria-label="红围巾企鹅大壮"></div>
+          <div class="floating" id="float-right"></div>
+        </div>
+        <div class="dust" id="dust" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="impact" id="impact" aria-hidden="true">
+          <span>✦</span>
+          <div class="impact-sparks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="result" id="result" hidden>
+          <div class="result-card">
+            <h2 id="winner"></h2>
+            <p id="result-text"></p>
+            <button id="again" type="button">再来一场 ↗</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="status">
+          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b>小团子</b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
+          <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-left"></div></div>
+        </div>
+        <div class="status status-right">
+          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b>大壮</b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
+          <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-right"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom" aria-label="战斗操作与记录">
+      <div class="log-panel">
+        <h2>战斗实况</h2>
+        <div class="logs" id="logs" aria-live="polite"><p class="empty">开战后，招式和伤害会显示在这里。</p></div>
+      </div>
+      <div class="action-panel">
+        <div><h2 id="action-title">准备就绪</h2><p id="action-desc">双方轮流随机出招。</p></div>
+        <button class="start" id="start" type="button">开始战斗 <span aria-hidden="true">↗</span></button>
+      </div>
+    </section>
+  </main>
+  <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
+  <script src="game.js?v=round-numbered-report"></script>
+</body>
+</html>
