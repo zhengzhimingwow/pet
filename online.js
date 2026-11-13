@@ -386,10 +386,8 @@ if (onlineMode) {
    const requestId = [...crypto.getRandomValues(new Uint8Array(16))].map(byte => byte.toString(16).padStart(2, '0')).join('');
    pending = {target_zone:session.zone, target_player_id:playerId, request_id:requestId};
   }
-  townFeedback.textContent = '正在计算战斗…';
   const report = await api(session.zone, '/battles', pending);
   pending = null;
-  townFeedback.textContent = '';
   await playback(report);
   await refreshHistory();
  }
