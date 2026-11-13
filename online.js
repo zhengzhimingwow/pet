@@ -1,14 +1,14 @@
 if (onlineMode) {
- const panel = $('online-panel');
  const entry = $('account-entry');
- const shell = $('game-shell');
  const lobby = $('account-lobby');
+ const townStage = $('town-stage');
+ const battleView = $('town-battle-view');
+ const townFeedback = $('town-feedback');
+ const backToSquare = $('back-lobby');
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
  const challengeForm = $('online-challenge');
- const history = $('battle-history');
  const townHistory = $('town-battle-history');
- const feedback = $('online-feedback');
  const challengeButton = $('challenge');
  const zoneGroups = $('zone-groups');
  const zoneOptions = $('zone-options');
@@ -56,8 +56,8 @@ if (onlineMode) {
  }
 
  function showEntry() {
-  shell.hidden = true;
-  document.documentElement.classList.remove('in-arena');
+  battleView.hidden = true;
+  townStage.hidden = false;
   entry.hidden = Boolean(session);
   $('account-login').hidden = Boolean(account);
   const choosingZone = Boolean(account && !session);
@@ -105,9 +105,9 @@ if (onlineMode) {
  async function showZones() {
   const {zones} = await api(null, '/zones');
   session = pending = lastReport = null;
-  history.replaceChildren();
   townHistory.replaceChildren();
   $('zone-account-name').textContent = account.username;
+  $('target-zone').replaceChildren(...zones.map(zone => new Option(zone.name, zone.id)));
   const groups = new Map();
   for (const zone of [...zones].sort((a, b) => a.id - b.id)) {
    const group = Math.floor((zone.id - 1) / zonesPerGroup) * zonesPerGroup + 1;
@@ -151,7 +151,7 @@ if (onlineMode) {
   $('town-weapon').textContent = weapon ?? '未装备';
   $('town-weapon-icon').textContent = player.weapon_id === 'pan' ? '🍳' : weapon ? '⚔' : '–';
   $('town-skill').textContent = player.skill_id === 'combo' ? '连击' : '未装备';
-  $('town-feedback').textContent = '';
+  townFeedback.textContent = '';
   $('town-history-empty').hidden = true;
   $('target-zone').value = String(zone);
   $('target-player').value = player.player_id === `${zone}001` ? `${zone}002` : `${zone}001`;
@@ -169,9 +169,7 @@ if (onlineMode) {
   savedAccount.disabled = value;
   $('saved-login').disabled = value;
   $('saved-forget').disabled = value;
-  $('enter-arena').disabled = value;
-  $('back-lobby').disabled = value;
-  for (const button of history.querySelectorAll('button')) button.disabled = value;
+  backToSquare.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
@@ -179,6 +177,10 @@ if (onlineMode) {
  }
 
  function playback(report) {
+  townStage.hidden = true;
+  battleView.hidden = false;
+  $('arena-title').focus({preventScroll:true});
+  battleView.scrollIntoView({block:'nearest'});
   lastReport = report;
   const turns = [];
   const totals = new Map();
@@ -211,22 +213,9 @@ if (onlineMode) {
 
  async function refreshHistory() {
   const {battles} = await api(session.zone, '/battles');
-  history.replaceChildren();
   townHistory.replaceChildren();
   $('town-history-empty').hidden = Boolean(battles.length);
   for (const report of battles) {
-   const item = document.createElement('li');
-   const button = document.createElement('button');
-   const outcome = {left:'胜', right:'负', draw:'平局'}[report.winner];
-   button.type = 'button';
-   button.className = 'sound-toggle';
-   button.textContent = `回放 · ${report.opponent} · ${outcome} · ${report.created_at.slice(0, 19)}`;
-   button.disabled = busy;
-   button.addEventListener('click', () => run(async () => playback(await api(session.zone, `/battles/${report.battle_id}`))));
-   item.append(button);
-   history.append(item);
-  }
-  for (const report of battles.slice(0, 5)) {
    const item = document.createElement('li');
    const button = document.createElement('button');
    const name = document.createElement('span');
@@ -237,12 +226,9 @@ if (onlineMode) {
    result.className = `town-outcome town-outcome-${report.winner}`;
    result.textContent = {left:'胜', right:'负', draw:'平'}[report.winner];
    button.setAttribute('aria-label', `回放对战 ${report.opponent}，${result.textContent}`);
+   button.title = report.created_at.slice(0, 19);
    button.append(name, result);
-   button.addEventListener('click', () => run(async () => {
-    const battleReport = await api(session.zone, `/battles/${report.battle_id}`);
-    showArena();
-    await playback(battleReport);
-   }));
+   button.addEventListener('click', () => run(async () => playback(await api(session.zone, `/battles/${report.battle_id}`))));
    item.append(button);
    townHistory.append(item);
   }
@@ -251,7 +237,7 @@ if (onlineMode) {
  async function run(action) {
   if (busy) return;
   lock(true);
-  const status = !shell.hidden ? feedback : !lobby.hidden ? $('town-feedback') : accountFeedback;
+  const status = lobby.hidden ? accountFeedback : townFeedback;
   status.textContent = '';
   try {
    await action();
@@ -264,7 +250,7 @@ if (onlineMode) {
     accountFeedback.textContent = messages.unauthorized;
     await refreshSavedAccounts().catch(() => {});
    } else {
-    const activeStatus = !shell.hidden ? feedback : !lobby.hidden ? $('town-feedback') : accountFeedback;
+    const activeStatus = lobby.hidden ? accountFeedback : townFeedback;
     activeStatus.textContent = error instanceof SyntaxError || error instanceof TypeError ? messages.unavailable : error.message;
    }
   } finally {
@@ -360,28 +346,9 @@ if (onlineMode) {
   });
  });
 
- function showArena() {
-  entry.hidden = true;
-  lobby.hidden = true;
-  shell.hidden = false;
-  document.documentElement.classList.add('in-arena');
-  panel.hidden = false;
-  $('online-session').hidden = false;
-  start.hidden = true;
-  $('demo-label').textContent = '联机对战';
-  $('action-desc').textContent = '选择区服和对手即可开打。';
-  again.textContent = '回放本场 ↗';
- }
-
- $('enter-arena').addEventListener('click', () => run(async () => {
-  showArena();
-  await refreshHistory();
- }));
-
- $('back-lobby').addEventListener('click', () => {
-  document.documentElement.classList.remove('in-arena');
+ backToSquare.addEventListener('click', () => {
   showEntry();
-  $('enter-arena').focus();
+  $('town-title').focus();
  });
 
  challengeForm.addEventListener('submit', event => {
@@ -394,10 +361,10 @@ if (onlineMode) {
     const requestId = [...crypto.getRandomValues(new Uint8Array(16))].map(byte => byte.toString(16).padStart(2, '0')).join('');
     pending = {...target, request_id:requestId};
    }
-   feedback.textContent = '正在计算战斗…';
+   townFeedback.textContent = '正在计算战斗…';
    const report = await api(session.zone, '/battles', pending);
    pending = null;
-   feedback.textContent = '';
+   townFeedback.textContent = '';
    await playback(report);
    await refreshHistory();
   });
@@ -419,6 +386,11 @@ if (onlineMode) {
  again.addEventListener('click', () => {
   if (lastReport) run(() => playback(lastReport));
  });
+ battleView.append($('battle-game'), $('battle-log'));
+ $('arena-title').textContent = '乐斗';
+ $('demo-label').hidden = true;
+ backToSquare.hidden = false;
+ again.textContent = '回放本场 ↗';
  showEntry();
  run(async () => {
   try {

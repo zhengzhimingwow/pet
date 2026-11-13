@@ -11,8 +11,8 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=zone-directory">
-  <link rel="stylesheet" href="lobby.css?v=city-square">
+  <link rel="stylesheet" href="style.css?v=game-views">
+  <link rel="stylesheet" href="lobby.css?v=inline-battle">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -92,13 +92,14 @@
     </header>
     <div class="town-game-layout">
       <div class="town-character">
-        <section class="town-stage" aria-labelledby="town-title">
+        <section id="town-stage" class="town-stage" aria-labelledby="town-title">
           <h1 id="town-title" tabindex="-1">企鹅广场</h1>
           <div class="town-pet">
             <div class="town-pet-shadow" aria-hidden="true"></div>
             <div class="fighter-art town-pet-art" role="img" aria-label="蓝围巾企鹅"></div>
           </div>
         </section>
+        <section id="town-battle-view" class="town-battle-view" aria-labelledby="arena-title" hidden></section>
         <section class="town-sheet" aria-labelledby="town-player-name">
           <div class="town-profile">
             <div class="town-profile-name">
@@ -123,10 +124,15 @@
           </div>
         </section>
       </div>
-      <aside class="town-sidebar" aria-label="小镇功能">
+      <aside class="town-sidebar" aria-label="广场功能">
         <section class="town-activity" aria-labelledby="town-arena-title">
-          <h2 id="town-arena-title">乐斗</h2>
-          <button id="enter-arena" type="button"><span aria-hidden="true">⚔</span> 竞技场 <span class="town-link-arrow" aria-hidden="true">›</span></button>
+          <h2 id="town-arena-title">发起乐斗</h2>
+          <form id="online-challenge" class="town-challenge">
+            <label>对手区服 <select id="target-zone"></select></label>
+            <label>对手 UID <input id="target-player" required inputmode="numeric" maxlength="20" pattern="[1-9][0-9]{0,19}" placeholder="输入对手 UID"></label>
+            <button id="challenge" type="submit">挑战</button>
+            <p id="town-feedback" class="town-feedback" role="status"></p>
+          </form>
         </section>
         <section class="town-history" aria-labelledby="town-history-title">
           <h2 id="town-history-title">乐斗记录</h2>
@@ -135,7 +141,6 @@
         </section>
       </aside>
     </div>
-    <p id="town-feedback" class="town-feedback" role="status"></p>
   </main>
   <main id="game-shell" class="shell">
     <header class="top">
@@ -149,26 +154,11 @@
       </nav>
     </header>
 
-    <section id="online-panel" class="online-panel" aria-label="联机挑战" hidden>
-      <div id="online-session" hidden>
-        <button id="back-lobby" class="sound-toggle" type="button">返回广场</button>
-        <form id="online-challenge" class="online-form">
-          <label>对手区服 <select id="target-zone"><option value="1">1 服</option><option value="2">2 服</option></select></label>
-          <label>对手 UID <input id="target-player" required inputmode="numeric" maxlength="20" pattern="[1-9][0-9]{0,19}"></label>
-          <button id="challenge" class="sound-toggle" type="submit">挑战</button>
-        </form>
-        <details>
-          <summary>历史战报</summary>
-          <ul id="battle-history"></ul>
-        </details>
-      </div>
-      <p id="online-feedback" role="status"></p>
-    </section>
-
-    <section class="game" aria-labelledby="arena-title">
+    <section id="battle-game" class="game" aria-labelledby="arena-title">
       <div class="game-head">
-        <div><h1 id="arena-title">欢乐竞技场</h1><span class="demo-label" id="demo-label">随机出招</span></div>
+        <div><h1 id="arena-title" tabindex="-1">欢乐竞技场</h1><span class="demo-label" id="demo-label">随机出招</span></div>
         <div class="head-actions">
+          <button id="back-lobby" class="sound-toggle" type="button" hidden>返回广场</button>
           <button class="sound-toggle" id="music-toggle" type="button" aria-pressed="true" aria-label="背景音乐">♫ 音乐开</button>
           <button class="sound-toggle" id="sound" type="button" aria-pressed="true" aria-label="关闭音效">🔊 音效开</button>
           <button class="sound-toggle" id="speed-toggle" type="button" aria-pressed="false" aria-label="战斗倍速">倍速 1×</button>
@@ -218,7 +208,7 @@
     </section>
 
     <section class="bottom" aria-label="战斗操作与记录">
-      <div class="log-panel">
+      <div id="battle-log" class="log-panel">
         <h2>战斗实况</h2>
         <div class="logs" id="logs" aria-live="polite"><p class="empty">开战后，招式和伤害会显示在这里。</p></div>
         <details id="damage-stats" hidden><summary>伤害统计</summary><ul id="damage-totals"></ul></details>
@@ -231,6 +221,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=city-square"></script>
+  <script src="online.js?v=game-views"></script>
 </body>
 </html>

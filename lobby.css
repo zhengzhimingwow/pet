@@ -124,13 +124,20 @@
   background: #edf4ff;
   font-size: 15px;
 }
-#enter-arena {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: calc(100% - 24px);
-  min-height: 46px;
-  margin: 12px;
+.town-challenge { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; padding: 12px; }
+.town-challenge label { display: grid; gap: 5px; font-size: 13px; color: var(--town-muted); }
+.town-challenge input, .town-challenge select {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid #c8d6eb;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--town-ink);
+  font: inherit;
+}
+#challenge {
+  min-height: 40px;
   padding: 7px 13px;
   border: 1px solid #d09a35;
   border-radius: 8px;
@@ -138,9 +145,8 @@
   color: #4d3513;
   font-weight: 800;
 }
-#enter-arena:hover { background: #ffde8a; }
-.town-link-arrow { margin-left: auto; font-size: 21px; line-height: 1; }
-#town-battle-history { margin: 0; padding: 0 12px; list-style: none; }
+#challenge:hover { background: #ffde8a; }
+#town-battle-history { max-height: 246px; overflow: auto; margin: 0; padding: 0 12px; list-style: none; }
 #town-battle-history li + li { border-top: 1px solid var(--town-line); }
 #town-battle-history button {
   display: flex;
@@ -161,10 +167,21 @@
 .town-outcome { flex: none; padding: 3px 7px; border-radius: 5px; background: #edf1f7; }
 .town-outcome-left { color: #226342; background: #e5f5e8; }
 .town-outcome-right { color: #a13740; background: #fbe8ea; }
-.town-empty, .town-feedback { margin: 0; padding: 13px 15px; color: var(--town-muted); font-size: 13px; }
-.town-feedback { color: #ffe9bc; padding: 12px 0 0; }
+.town-empty { margin: 0; padding: 13px 15px; color: var(--town-muted); font-size: 13px; }
+.town-feedback { margin: 0; color: #8d3f29; font-size: 13px; overflow-wrap: anywhere; }
 .town-feedback:empty { display: none; }
 .town-game button:disabled { opacity: .58; cursor: wait; }
+.town-battle-view { display: grid; gap: 12px; }
+.town-battle-view .game, .town-battle-view .log-panel { border-color: #9dbbe69e; border-radius: 12px; background: #f9fbff; }
+.town-battle-view .game-head { flex-wrap: wrap; padding: 10px 14px; }
+.town-battle-view .game-head h1 { font-size: 20px; }
+.town-battle-view .head-actions { justify-content: flex-start; }
+.town-battle-view .arena { height: clamp(245px, 29vw, 330px); background: #82b3cf url('assets/penguin-city.webp') center 54% / cover no-repeat; }
+.town-battle-view .arena-scenery, .town-battle-view .status-title em { display: none; }
+.town-battle-view .fighter { bottom: 12%; }
+.town-battle-view .result-card h2 { overflow-wrap: anywhere; }
+.town-battle-view .status-title > div { min-width: 0; }
+.town-battle-view .status-title b { overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 720px) {
   .town-game { padding: 15px 12px 24px; }
   .town-game-layout { grid-template-columns: 1fr; }
