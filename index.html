@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=game-views">
-  <link rel="stylesheet" href="lobby.css?v=paired-rounds">
+  <link rel="stylesheet" href="lobby.css?v=record-actions">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -144,7 +144,7 @@
     <dialog id="town-damage-dialog" class="town-damage-dialog" aria-labelledby="town-damage-title">
       <div class="town-damage-header">
         <div>
-          <h2 id="town-damage-title">伤害详情</h2>
+          <h2 id="town-damage-title">文字战报</h2>
           <p id="town-damage-match"></p>
         </div>
         <form method="dialog"><button type="submit" autofocus>关闭</button></form>
@@ -236,6 +236,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=paired-rounds"></script>
-  <script src="online.js?v=paired-round-report"></script>
+  <script src="online.js?v=record-actions"></script>
 </body>
 </html>

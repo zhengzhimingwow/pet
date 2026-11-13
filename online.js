@@ -318,15 +318,16 @@ if (onlineMode) {
   $('town-history-empty').hidden = Boolean(battles.length);
   for (const report of battles) {
    const item = document.createElement('li');
-   const button = document.createElement('button');
-   const damageButton = document.createElement('button');
+   const playButton = document.createElement('button');
+   const reportButton = document.createElement('button');
+   const actions = document.createElement('div');
+   const info = document.createElement('div');
    const details = document.createElement('span');
    const name = document.createElement('span');
    const time = document.createElement('time');
    const result = document.createElement('span');
-   button.type = 'button';
-   button.className = 'town-history-replay';
-   button.disabled = busy;
+   info.className = 'town-history-info';
+   actions.className = 'town-history-actions';
    details.className = 'town-history-details';
    name.textContent = report.opponent;
    const playedAt = new Date(Number(report.created_at_epoch) * 1000);
@@ -339,19 +340,24 @@ if (onlineMode) {
    details.append(name, time);
    result.className = `town-outcome town-outcome-${report.winner}`;
    result.textContent = {left:'胜', right:'负', draw:'平'}[report.winner];
-   button.setAttribute('aria-label', `回放对战 ${report.opponent}，${result.textContent}，${time.textContent}`);
-   button.append(details, result);
-   button.addEventListener('click', () => run(async () => playback(await api(session.zone, `/battles/${report.battle_id}`))));
-   damageButton.type = 'button';
-   damageButton.className = 'town-history-damage';
-   damageButton.disabled = busy;
-   damageButton.textContent = '伤害详情';
-   damageButton.setAttribute('aria-label', `伤害详情，${report.opponent}，${time.textContent}`);
-   damageButton.addEventListener('click', () => run(async () => {
-    const battle = await api(session.zone, `/battles/${report.battle_id}`);
-    showDamageReport(battle, time.textContent, damageButton);
+   info.append(details, result);
+   const matchLabel = `${report.opponent}，${time.textContent}`;
+   const path = `/battles/${report.battle_id}`;
+   playButton.type = 'button';
+   playButton.disabled = busy;
+   playButton.textContent = '播放';
+   playButton.setAttribute('aria-label', `播放，${matchLabel}`);
+   playButton.addEventListener('click', () => run(async () => playback(await api(session.zone, path))));
+   reportButton.type = 'button';
+   reportButton.disabled = busy;
+   reportButton.textContent = '文字战报';
+   reportButton.setAttribute('aria-label', `文字战报，${matchLabel}`);
+   reportButton.addEventListener('click', () => run(async () => {
+    const battle = await api(session.zone, path);
+    showDamageReport(battle, time.textContent, reportButton);
    }));
-   item.append(button, damageButton);
+   actions.append(reportButton, playButton);
+   item.append(info, actions);
    townHistory.append(item);
   }
  }

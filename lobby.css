@@ -162,26 +162,21 @@
 }
 #town-opponents button:hover { background: #ffde8a; }
 #town-battle-history { max-height: 246px; overflow: auto; margin: 0; padding: 0 12px; list-style: none; }
-#town-battle-history li { display: flex; align-items: center; gap: 8px; }
+#town-battle-history li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 6px 0; }
 #town-battle-history li + li { border-top: 1px solid var(--town-line); }
-.town-history-replay {
+.town-history-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
-  min-height: 41px;
-  padding: 6px 3px;
-  border: 0;
-  background: transparent;
   color: var(--town-ink);
-  text-align: left;
   font-size: 13px;
   overflow-wrap: anywhere;
 }
-.town-history-replay:hover { color: #2454ae; }
-.town-history-damage, .town-damage-header button {
+.town-history-actions { display: flex; flex: none; gap: 6px; margin-inline-start: auto; }
+.town-history-actions button, .town-damage-header button {
   flex: none;
   min-height: 32px;
   padding: 4px 9px;
@@ -191,7 +186,7 @@
   color: #344e75;
   font-size: 12px;
 }
-.town-history-damage:hover, .town-damage-header button:hover { background: #dceaff; }
+.town-history-actions button:hover, .town-damage-header button:hover { background: #dceaff; }
 .town-history-details { display: grid; gap: 2px; min-width: 0; }
 .town-history-details time { color: var(--town-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .town-damage-dialog {
