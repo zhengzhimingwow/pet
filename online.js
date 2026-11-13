@@ -8,6 +8,7 @@ if (onlineMode) {
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
  const townHistory = $('town-battle-history');
+ const damageDialog = $('town-damage-dialog');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
@@ -28,6 +29,7 @@ if (onlineMode) {
  let pending;
  let lastReport;
  let returnToSquareTimer;
+ let damageReportButton;
 
  const messages = {
   unauthorized: '登录已失效，请重新登录。',
@@ -184,6 +186,18 @@ if (onlineMode) {
   zoneEnter.disabled = value || !selectedZone;
  }
 
+ function damageBySource(events) {
+  const totals = new Map();
+  for (const event of events) {
+   if (event.kind !== 'hit') continue;
+   const key = `${event.actor}:${event.source_type}:${event.source_id}`;
+   const total = totals.get(key) ?? {actor:event.actor, name:event.source_name, damage:0};
+   total.damage += event.applied_damage;
+   totals.set(key, total);
+  }
+  return [...totals.values()];
+ }
+
  async function playback(report) {
   clearTimeout(returnToSquareTimer);
   townStage.hidden = true;
@@ -192,7 +206,6 @@ if (onlineMode) {
   battleView.scrollIntoView({block:'nearest'});
   lastReport = report;
   const turns = [];
-  const totals = new Map();
   const moves = {pan:panAttack, blade:bladeAttack, sword:swordAttack, punch};
   for (const event of report.events) {
    let turn = turns.at(-1);
@@ -207,19 +220,75 @@ if (onlineMode) {
    turn.events.push(event);
    turn.damage += event.applied_damage;
    turn.remainingHp = event.remaining_hp;
-   if (event.kind === 'hit') {
-    const key = `${event.actor}:${event.source_type}:${event.source_id}`;
-    const total = totals.get(key) ?? {actor:event.actor, name:event.source_name, damage:0};
-    total.damage += event.applied_damage;
-    totals.set(key, total);
-   }
   }
   await playBattle({
    turns, hp:{left:report.left_hp, right:report.right_hp}, winner:report.winner,
-   players:{left:report.attacker, right:report.defender}, damageTotals:[...totals.values()],
+   players:{left:report.attacker, right:report.defender}, damageTotals:damageBySource(report.events),
   });
   returnToSquareTimer = setTimeout(returnToSquare, 3000);
  }
+
+ function showDamageReport(report, time, opener) {
+  const names = {left:report.attacker.name, right:report.defender.name};
+  const outcome = report.winner === 'draw' ? '平局' : `${names[report.winner]}获胜`;
+  $('town-damage-match').textContent = `${names.left} 对战 ${names.right} · ${outcome} · ${time}`;
+
+  const totals = damageBySource(report.events);
+  const summary = $('town-damage-summary');
+  summary.replaceChildren();
+  for (const [side, name] of Object.entries(names)) {
+   const sources = totals.filter(total => total.actor === side);
+   const card = document.createElement('section');
+   const title = document.createElement('h4');
+   title.textContent = `${name} · 实际伤害 ${sources.reduce((sum, source) => sum + source.damage, 0)}`;
+   const list = document.createElement('ul');
+   for (const source of sources) {
+    const item = document.createElement('li');
+    item.textContent = `${source.name} · ${source.damage} 点`;
+    list.append(item);
+   }
+   card.append(title, list);
+   summary.append(card);
+  }
+
+  const rounds = $('town-damage-rounds');
+  rounds.replaceChildren();
+  let round;
+  let events;
+  for (const event of report.events) {
+   if (round !== event.round) {
+    round = event.round;
+    const item = document.createElement('li');
+    const title = document.createElement('h4');
+    title.textContent = `第 ${round} 回合`;
+    events = document.createElement('ul');
+    item.append(title, events);
+    rounds.append(item);
+   }
+   const item = document.createElement('li');
+   const attacker = names[event.actor];
+   const defender = names[event.target];
+   const move = `${event.source_name} · ${event.move_name}`;
+   if (event.kind === 'dodge') {
+    item.textContent = `${defender} 闪避了 ${attacker} 的「${move}」。`;
+   } else if (event.kind === 'knockout') {
+    item.textContent = `${defender} 倒下了。`;
+   } else {
+    const calculated = event.damage !== event.applied_damage ? `（计算伤害 ${event.damage}）` : '';
+    const critical = event.critical ? '（暴击）' : '';
+    item.textContent = `${attacker} 使用「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
+   }
+   events.append(item);
+  }
+
+  damageReportButton = opener;
+  damageDialog.showModal();
+  damageDialog.querySelector('.town-damage-content').scrollTop = 0;
+ }
+
+ damageDialog.addEventListener('close', () => {
+  damageReportButton?.focus({preventScroll:true});
+ });
 
  async function refreshHistory() {
   const {battles} = await api(session.zone, '/battles');
@@ -228,11 +297,13 @@ if (onlineMode) {
   for (const report of battles) {
    const item = document.createElement('li');
    const button = document.createElement('button');
+   const damageButton = document.createElement('button');
    const details = document.createElement('span');
    const name = document.createElement('span');
    const time = document.createElement('time');
    const result = document.createElement('span');
    button.type = 'button';
+   button.className = 'town-history-replay';
    button.disabled = busy;
    details.className = 'town-history-details';
    name.textContent = report.opponent;
@@ -249,7 +320,16 @@ if (onlineMode) {
    button.setAttribute('aria-label', `回放对战 ${report.opponent}，${result.textContent}，${time.textContent}`);
    button.append(details, result);
    button.addEventListener('click', () => run(async () => playback(await api(session.zone, `/battles/${report.battle_id}`))));
-   item.append(button);
+   damageButton.type = 'button';
+   damageButton.className = 'town-history-damage';
+   damageButton.disabled = busy;
+   damageButton.textContent = '伤害详情';
+   damageButton.setAttribute('aria-label', `伤害详情，${report.opponent}，${time.textContent}`);
+   damageButton.addEventListener('click', () => run(async () => {
+    const battle = await api(session.zone, `/battles/${report.battle_id}`);
+    showDamageReport(battle, time.textContent, damageButton);
+   }));
+   item.append(button, damageButton);
    townHistory.append(item);
   }
  }

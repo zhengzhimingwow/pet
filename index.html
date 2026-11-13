@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=game-views">
-  <link rel="stylesheet" href="lobby.css?v=battle-details">
+  <link rel="stylesheet" href="lobby.css?v=damage-report">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -141,6 +141,21 @@
         </section>
       </aside>
     </div>
+    <dialog id="town-damage-dialog" class="town-damage-dialog" aria-labelledby="town-damage-title">
+      <div class="town-damage-header">
+        <div>
+          <h2 id="town-damage-title">伤害详情</h2>
+          <p id="town-damage-match"></p>
+        </div>
+        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
+      </div>
+      <div class="town-damage-content">
+        <h3>伤害汇总</h3>
+        <div id="town-damage-summary" class="town-damage-summary"></div>
+        <h3>逐回合明细</h3>
+        <ol id="town-damage-rounds" class="town-damage-rounds"></ol>
+      </div>
+    </dialog>
   </main>
   <main id="game-shell" class="shell">
     <header class="top">
@@ -221,6 +236,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=battle-details"></script>
+  <script src="online.js?v=damage-report"></script>
 </body>
 </html>

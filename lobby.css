@@ -162,13 +162,15 @@
 }
 #town-opponents button:hover { background: #ffde8a; }
 #town-battle-history { max-height: 246px; overflow: auto; margin: 0; padding: 0 12px; list-style: none; }
+#town-battle-history li { display: flex; align-items: center; gap: 8px; }
 #town-battle-history li + li { border-top: 1px solid var(--town-line); }
-#town-battle-history button {
+.town-history-replay {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   min-height: 41px;
   padding: 6px 3px;
   border: 0;
@@ -178,9 +180,51 @@
   font-size: 13px;
   overflow-wrap: anywhere;
 }
-#town-battle-history button:hover { color: #2454ae; }
+.town-history-replay:hover { color: #2454ae; }
+.town-history-damage, .town-damage-header button {
+  flex: none;
+  min-height: 32px;
+  padding: 4px 9px;
+  border: 1px solid #c8d6eb;
+  border-radius: 7px;
+  background: #edf4ff;
+  color: #344e75;
+  font-size: 12px;
+}
+.town-history-damage:hover, .town-damage-header button:hover { background: #dceaff; }
 .town-history-details { display: grid; gap: 2px; min-width: 0; }
 .town-history-details time { color: var(--town-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.town-damage-dialog {
+  width: min(680px, calc(100% - 24px));
+  max-height: min(78svh, 740px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #9dbbe6;
+  border-radius: 14px;
+  background: #f9fbff;
+  color: var(--town-ink);
+  box-shadow: 0 16px 60px #07102466;
+}
+.town-damage-dialog[open] { display: flex; flex-direction: column; }
+.town-damage-dialog::backdrop { background: #101a33a6; }
+.town-damage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--town-line);
+  background: #edf4ff;
+}
+.town-damage-header h2 { margin: 0; font-size: 20px; }
+.town-damage-header p { margin: 4px 0 0; color: var(--town-muted); font-size: 13px; overflow-wrap: anywhere; }
+.town-damage-content { padding: 16px; overflow: auto; overscroll-behavior: contain; }
+.town-damage-content h3 { margin: 0 0 8px; font-size: 15px; }
+.town-damage-content h4 { margin: 0 0 4px; font-size: 13px; overflow-wrap: anywhere; }
+.town-damage-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(225px, 100%), 1fr)); gap: 8px; margin-bottom: 16px; }
+.town-damage-summary section, .town-damage-rounds > li { padding: 9px 12px; border: 1px solid var(--town-line); border-radius: 8px; background: #fff; }
+.town-damage-summary ul, .town-damage-rounds ul { margin: 0; padding-inline-start: 17px; color: var(--town-muted); font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.town-damage-rounds { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .town-outcome { flex: none; padding: 3px 7px; border-radius: 5px; background: #edf1f7; }
 .town-outcome-left { color: #226342; background: #e5f5e8; }
 .town-outcome-right { color: #a13740; background: #fbe8ea; }
