@@ -11,7 +11,7 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=town-login">
+  <link rel="stylesheet" href="style.css?v=remember-account">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -22,8 +22,16 @@
       </div>
       <section class="entry-panel" aria-label="游戏入口">
         <div id="account-login">
-          <h2>欢迎回家</h2>
-          <p class="entry-copy">登录账号，回到你的企鹅小镇。</p>
+          <h2 id="login-title">欢迎回家</h2>
+          <p id="login-copy" class="entry-copy">登录账号后，选择你要进入的区服。</p>
+          <div id="saved-account-panel" class="login-form saved-account-panel" hidden>
+            <label for="saved-account">常用账号</label>
+            <select id="saved-account"></select>
+            <div class="saved-account-actions">
+              <button id="saved-login" class="entry-button" type="button">使用此账号登录 <span aria-hidden="true">→</span></button>
+              <button id="saved-forget" class="entry-demo" type="button">移除此账号</button>
+            </div>
+          </div>
           <form id="online-login" class="login-form">
             <label for="login-account">账号</label>
             <input id="login-account" name="username" autocomplete="username" required maxlength="32" pattern="[A-Za-z0-9_]+" placeholder="请输入账号">
@@ -32,18 +40,33 @@
               <input id="login-password" name="password" type="password" required maxlength="128" autocomplete="current-password" placeholder="请输入密码">
               <button id="password-visibility" type="button" aria-label="显示密码" aria-pressed="false">显示</button>
             </div>
-            <label for="login-zone">区服</label>
-            <select id="login-zone" name="zone"><option value="1">1 服</option><option value="2">2 服</option></select>
-            <button id="login-submit" class="entry-button" type="submit">登录游戏 <span aria-hidden="true">→</span></button>
+            <div id="confirm-field" hidden>
+              <label for="confirm-password">确认密码</label>
+              <input id="confirm-password" name="password-confirmation" type="password" maxlength="128" autocomplete="new-password" disabled placeholder="请再输入一次密码">
+            </div>
+            <label class="remember-choice"><input id="remember-account" type="checkbox" checked> 在这台设备上记住账号 30 天</label>
+            <button id="login-submit" class="entry-button" type="submit"><span id="login-submit-label">登录游戏</span><span aria-hidden="true">→</span></button>
           </form>
-          <a class="entry-demo" href="?demo=pan">试玩战斗演示 <span aria-hidden="true">↗</span></a>
+          <div class="entry-links">
+            <button id="toggle-register" class="entry-demo" type="button">注册账号</button>
+            <a class="entry-demo" href="?demo=pan">试玩战斗演示 <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <div id="account-zones" hidden>
+          <h2 id="zone-title" tabindex="-1">选择区服</h2>
+          <p id="zone-copy" class="entry-copy"></p>
+          <div id="zone-options" class="zone-options" aria-label="可选区服"></div>
+          <button id="zone-logout" class="entry-demo" type="button">退出登录</button>
         </div>
         <div id="account-lobby" hidden>
           <h2>企鹅小镇</h2>
           <p id="online-player" class="entry-copy"></p>
           <div class="lobby-actions">
             <button id="enter-arena" class="entry-button" type="button">进入竞技场 <span aria-hidden="true">→</span></button>
-            <button id="online-logout" class="entry-demo" type="button">退出登录</button>
+            <div class="entry-links">
+              <button id="switch-zone" class="entry-demo" type="button">切换区服</button>
+              <button id="online-logout" class="entry-demo" type="button">退出登录</button>
+            </div>
           </div>
         </div>
         <p id="account-feedback" role="status"></p>
@@ -144,6 +167,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=town-login"></script>
+  <script src="online.js?v=remember-account"></script>
 </body>
 </html>

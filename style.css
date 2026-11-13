@@ -626,6 +626,15 @@ button { font: inherit; cursor: pointer; }
 .entry-button:hover { background: #225c54; }
 .entry-button:disabled { opacity: .6; cursor: wait; }
 .entry-demo { display: inline-block; margin-top: 18px; padding: 0; border: 0; background: none; color: #335c58; font-size: 13px; text-underline-offset: 4px; }
+.entry-links { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.entry-links button { text-decoration: underline; }
+#confirm-field label { display: block; margin-bottom: 8px; }
+.zone-options { display: grid; gap: 12px; }
+.saved-account-panel { margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid #d8d5c6; }
+.saved-account-actions { display: flex; align-items: center; gap: 12px; }
+.saved-account-actions .entry-demo { margin: 0; flex-shrink: 0; }
+.remember-choice { display: flex; align-items: center; gap: 8px; margin: 0 0 9px; color: #335c58; }
+.login-form .remember-choice input { width: 16px; min-height: 16px; margin: 0; accent-color: #1b695f; }
 #account-feedback { margin: 16px 0 0; color: #843c32; font-size: 13px; min-height: 1.5em; }
 #account-feedback:empty { display: none; }
 @media (max-width: 700px) {
