@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=game-views">
-  <link rel="stylesheet" href="lobby.css?v=inline-battle">
+  <link rel="stylesheet" href="lobby.css?v=local-players">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -123,21 +123,21 @@
             </section>
           </div>
         </section>
-      </div>
-      <aside class="town-sidebar" aria-label="广场功能">
-        <section class="town-activity" aria-labelledby="town-arena-title">
-          <h2 id="town-arena-title">发起乐斗</h2>
-          <form id="online-challenge" class="town-challenge">
-            <label>对手区服 <select id="target-zone"></select></label>
-            <label>对手 UID <input id="target-player" required inputmode="numeric" maxlength="20" pattern="[1-9][0-9]{0,19}" placeholder="输入对手 UID"></label>
-            <button id="challenge" type="submit">挑战</button>
-            <p id="town-feedback" class="town-feedback" role="status"></p>
-          </form>
-        </section>
         <section class="town-history" aria-labelledby="town-history-title">
           <h2 id="town-history-title">乐斗记录</h2>
           <ul id="town-battle-history"></ul>
           <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
+        </section>
+      </div>
+      <aside class="town-sidebar" aria-labelledby="town-opponents-title">
+        <section class="town-activity">
+          <div class="town-panel-header">
+            <h2 id="town-opponents-title">本服玩家</h2>
+            <button id="refresh-opponents" type="button">换一批</button>
+          </div>
+          <ul id="town-opponents"></ul>
+          <p id="town-opponents-empty" class="town-empty" hidden>本服暂时没有其他玩家</p>
+          <p id="town-feedback" class="town-feedback" role="status"></p>
         </section>
       </aside>
     </div>
@@ -221,6 +221,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=game-views"></script>
+  <script src="online.js?v=local-players"></script>
 </body>
 </html>

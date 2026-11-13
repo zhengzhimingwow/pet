@@ -7,9 +7,10 @@ if (onlineMode) {
  const backToSquare = $('back-lobby');
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
- const challengeForm = $('online-challenge');
  const townHistory = $('town-battle-history');
- const challengeButton = $('challenge');
+ const opponentsList = $('town-opponents');
+ const opponentsEmpty = $('town-opponents-empty');
+ const refreshOpponentsButton = $('refresh-opponents');
  const zoneGroups = $('zone-groups');
  const zoneOptions = $('zone-options');
  const zoneEnter = $('zone-enter');
@@ -106,8 +107,8 @@ if (onlineMode) {
   const {zones} = await api(null, '/zones');
   session = pending = lastReport = null;
   townHistory.replaceChildren();
+  opponentsList.replaceChildren();
   $('zone-account-name').textContent = account.username;
-  $('target-zone').replaceChildren(...zones.map(zone => new Option(zone.name, zone.id)));
   const groups = new Map();
   for (const zone of [...zones].sort((a, b) => a.id - b.id)) {
    const group = Math.floor((zone.id - 1) / zonesPerGroup) * zonesPerGroup + 1;
@@ -135,7 +136,7 @@ if (onlineMode) {
   if (!selectedZone) return;
   acceptSession(await api(selectedZone.id, '/enter', {}));
   $('town-title').focus();
-  await refreshHistory();
+  await Promise.all([refreshOpponents(), refreshHistory()]);
  }));
 
  function acceptSession(data) {
@@ -153,15 +154,15 @@ if (onlineMode) {
   $('town-skill').textContent = player.skill_id === 'combo' ? '连击' : '未装备';
   townFeedback.textContent = '';
   $('town-history-empty').hidden = true;
-  $('target-zone').value = String(zone);
-  $('target-player').value = player.player_id === `${zone}001` ? `${zone}002` : `${zone}001`;
+  opponentsEmpty.hidden = true;
+  opponentsList.replaceChildren();
   showEntry();
  }
 
  function lock(value) {
   busy = value;
   $('login-submit').disabled = value;
-  challengeButton.disabled = value;
+  refreshOpponentsButton.disabled = value;
   $('online-logout').disabled = value;
   $('zone-logout').disabled = value;
   $('switch-zone').disabled = value;
@@ -171,6 +172,7 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   backToSquare.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
+  for (const button of opponentsList.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
   zoneEnter.disabled = value || !selectedZone;
@@ -232,6 +234,32 @@ if (onlineMode) {
    item.append(button);
    townHistory.append(item);
   }
+ }
+
+ async function refreshOpponents() {
+  const {opponents} = await api(session.zone, '/opponents');
+  opponentsList.replaceChildren(...opponents.map(player => {
+   const row = document.createElement('li');
+   const avatar = document.createElement('span');
+   const details = document.createElement('span');
+   const name = document.createElement('strong');
+   const uid = document.createElement('small');
+   const button = document.createElement('button');
+   avatar.className = 'avatar';
+   avatar.setAttribute('aria-hidden', 'true');
+   details.className = 'town-opponent-details';
+   name.textContent = player.name;
+   uid.textContent = `UID ${player.player_id}`;
+   details.append(name, uid);
+   button.type = 'button';
+   button.disabled = busy;
+   button.textContent = '挑战';
+   button.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
+   button.addEventListener('click', () => run(() => challenge(player.player_id)));
+   row.append(avatar, details, button);
+   return row;
+  }));
+  opponentsEmpty.hidden = opponents.length > 0;
  }
 
  async function run(action) {
@@ -351,24 +379,22 @@ if (onlineMode) {
   $('town-title').focus();
  });
 
- challengeForm.addEventListener('submit', event => {
-  event.preventDefault();
-  run(async () => {
-   prepareSound();
-   playMusic();
-   const target = {target_zone:Number($('target-zone').value), target_player_id:$('target-player').value.trim()};
-   if (pending?.target_zone !== target.target_zone || pending.target_player_id !== target.target_player_id) {
-    const requestId = [...crypto.getRandomValues(new Uint8Array(16))].map(byte => byte.toString(16).padStart(2, '0')).join('');
-    pending = {...target, request_id:requestId};
-   }
-   townFeedback.textContent = '正在计算战斗…';
-   const report = await api(session.zone, '/battles', pending);
-   pending = null;
-   townFeedback.textContent = '';
-   await playback(report);
-   await refreshHistory();
-  });
- });
+ async function challenge(playerId) {
+  prepareSound();
+  playMusic();
+  if (pending?.target_player_id !== playerId) {
+   const requestId = [...crypto.getRandomValues(new Uint8Array(16))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+   pending = {target_zone:session.zone, target_player_id:playerId, request_id:requestId};
+  }
+  townFeedback.textContent = '正在计算战斗…';
+  const report = await api(session.zone, '/battles', pending);
+  pending = null;
+  townFeedback.textContent = '';
+  await playback(report);
+  await refreshHistory();
+ }
+
+ refreshOpponentsButton.addEventListener('click', () => run(refreshOpponents));
 
  $('switch-zone').addEventListener('click', () => run(showZones));
  function logout() {
