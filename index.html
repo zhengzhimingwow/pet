@@ -108,7 +108,7 @@
         <button id="back-lobby" class="sound-toggle" type="button">返回小镇</button>
         <form id="online-challenge" class="online-form">
           <label>对手区服 <select id="target-zone"><option value="1">1 服</option><option value="2">2 服</option></select></label>
-          <label>角色编号 <input id="target-player" required maxlength="32" pattern="[a-zA-Z0-9]+"></label>
+          <label>对手 UID <input id="target-player" required inputmode="numeric" maxlength="20" pattern="[1-9][0-9]{0,19}"></label>
           <button id="challenge" class="sound-toggle" type="submit">挑战</button>
         </form>
         <details>
@@ -185,6 +185,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=zone-directory"></script>
+  <script src="online.js?v=numeric-uid"></script>
 </body>
 </html>

@@ -31,7 +31,7 @@ if (onlineMode) {
   rate_limited: '登录尝试较多，请稍后重试。',
   not_found: '没有找到该角色或战报。',
   same_player: '请选择其他玩家。',
-  invalid_request: '请检查区服和角色编号。',
+  invalid_request: '请检查区服和角色 UID。',
   request_conflict: '请求编号已被使用，请重新选择对手。',
   unavailable: '区服或战斗服暂时不可用，请稍后重试。',
  };
@@ -137,7 +137,7 @@ if (onlineMode) {
  function acceptSession(data) {
   session = data;
   const {player, zone} = data;
-  $('online-player').textContent = `${player.name} · ${zone} 服 · 角色编号 ${player.player_id}`;
+  $('online-player').textContent = `${player.name} · ${zone} 服 · UID ${player.player_id}`;
   $('target-zone').value = String(zone);
   $('target-player').value = player.player_id === `${zone}001` ? `${zone}002` : `${zone}001`;
   showEntry();
