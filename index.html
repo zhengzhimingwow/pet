@@ -11,7 +11,7 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=remember-account">
+  <link rel="stylesheet" href="style.css?v=zone-directory">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -53,10 +53,28 @@
           </div>
         </div>
         <div id="account-zones" hidden>
-          <h2 id="zone-title" tabindex="-1">选择区服</h2>
-          <p id="zone-copy" class="entry-copy"></p>
-          <div id="zone-options" class="zone-options" aria-label="可选区服"></div>
-          <button id="zone-logout" class="entry-demo" type="button">退出登录</button>
+          <div class="zone-header">
+            <h2 id="zone-title" tabindex="-1">选择区服</h2>
+            <div class="zone-account">
+              <span id="zone-account-name"></span>
+              <button id="zone-logout" class="entry-demo" type="button">退出登录</button>
+            </div>
+          </div>
+          <div class="zone-directory">
+            <div id="zone-groups" class="zone-groups" role="group" aria-label="区服分组"></div>
+            <div class="zone-results">
+              <div class="zone-results-header">
+                <h3 id="zone-group-title">区服列表</h3>
+                <span id="zone-count"></span>
+              </div>
+              <ul id="zone-options" class="zone-options" aria-labelledby="zone-group-title"></ul>
+              <p id="zone-empty" hidden>暂无可选区服，请稍后再试。</p>
+            </div>
+          </div>
+          <div class="zone-footer">
+            <p id="zone-selection" role="status"></p>
+            <button id="zone-enter" class="entry-button" type="button" disabled>进入游戏 <span aria-hidden="true">→</span></button>
+          </div>
         </div>
         <div id="account-lobby" hidden>
           <h2>企鹅小镇</h2>
@@ -167,6 +185,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=registration-password"></script>
+  <script src="online.js?v=zone-directory"></script>
 </body>
 </html>

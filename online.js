@@ -8,10 +8,14 @@ if (onlineMode) {
  const history = $('battle-history');
  const feedback = $('online-feedback');
  const challengeButton = $('challenge');
+ const zoneGroups = $('zone-groups');
  const zoneOptions = $('zone-options');
+ const zoneEnter = $('zone-enter');
  const savedAccount = $('saved-account');
+ const zonesPerGroup = 10;
  let account;
  let session;
+ let selectedZone;
  let registering = false;
  let busy = false;
  let pending;
@@ -54,30 +58,81 @@ if (onlineMode) {
   document.documentElement.classList.remove('in-arena');
   entry.hidden = false;
   $('account-login').hidden = Boolean(account);
-  $('account-zones').hidden = !account || Boolean(session);
+  const choosingZone = Boolean(account && !session);
+  $('account-zones').hidden = !choosingZone;
+  entry.classList.toggle('choosing-zone', choosingZone);
   $('account-lobby').hidden = !session;
+ }
+
+ function selectZone(zone) {
+  selectedZone = zone;
+  $('zone-selection').textContent = zone ? `已选 ${zone.name}` : '';
+  zoneEnter.disabled = busy || !zone;
+  for (const button of zoneOptions.querySelectorAll('button')) {
+   button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === zone?.id));
+  }
+ }
+
+ function renderZoneGroup(group, zones) {
+  for (const button of zoneGroups.querySelectorAll('button')) {
+   button.setAttribute('aria-pressed', String(Number(button.dataset.group) === group));
+  }
+  $('zone-group-title').textContent = group ? `${group}–${group + zonesPerGroup - 1} 服` : '区服列表';
+  $('zone-count').textContent = zones.length ? `${zones.length} 个区服` : '';
+  $('zone-empty').hidden = Boolean(zones.length);
+  zoneOptions.replaceChildren(...zones.map(zone => {
+   const row = document.createElement('li');
+   const button = document.createElement('button');
+   const name = document.createElement('span');
+   const indicator = document.createElement('span');
+   button.type = 'button';
+   button.className = 'zone-row';
+   button.dataset.zone = zone.id;
+   button.disabled = busy;
+   name.textContent = zone.name;
+   indicator.className = 'zone-indicator';
+   indicator.setAttribute('aria-hidden', 'true');
+   button.append(name, indicator);
+   button.addEventListener('click', () => selectZone(zone));
+   row.append(button);
+   return row;
+  }));
+  selectZone(zones.find(zone => zone.id === selectedZone?.id) ?? zones[0]);
  }
 
  async function showZones() {
   const {zones} = await api(null, '/zones');
   session = pending = lastReport = null;
   history.replaceChildren();
-  $('zone-copy').textContent = `已登录 ${account.username}，请选择要进入的区服。`;
-  zoneOptions.replaceChildren(...zones.map(zone => {
+  $('zone-account-name').textContent = account.username;
+  const groups = new Map();
+  for (const zone of [...zones].sort((a, b) => a.id - b.id)) {
+   const group = Math.floor((zone.id - 1) / zonesPerGroup) * zonesPerGroup + 1;
+   if (!groups.has(group)) groups.set(group, []);
+   groups.get(group).push(zone);
+  }
+  zoneGroups.replaceChildren(...[...groups].map(([group, members]) => {
    const button = document.createElement('button');
    button.type = 'button';
-   button.className = 'entry-button';
+   button.className = 'zone-group-button';
+   button.dataset.group = group;
    button.disabled = busy;
-   button.textContent = `进入 ${zone.name}`;
-   button.addEventListener('click', () => run(async () => {
-    acceptSession(await api(zone.id, '/enter', {}));
-    requestAnimationFrame(() => $('enter-arena').focus());
-   }));
+   button.textContent = `${group}–${group + zonesPerGroup - 1} 服`;
+   button.addEventListener('click', () => renderZoneGroup(group, members));
    return button;
   }));
+  const previousGroup = [...groups].find(([, members]) => members.some(zone => zone.id === selectedZone?.id));
+  const [group, members] = previousGroup ?? groups.entries().next().value ?? [null, []];
+  renderZoneGroup(group, members);
   showEntry();
   $('zone-title').focus();
  }
+
+ zoneEnter.addEventListener('click', () => run(async () => {
+  if (!selectedZone) return;
+  acceptSession(await api(selectedZone.id, '/enter', {}));
+  requestAnimationFrame(() => $('enter-arena').focus());
+ }));
 
  function acceptSession(data) {
   session = data;
@@ -103,6 +158,8 @@ if (onlineMode) {
   $('back-lobby').disabled = value;
   for (const button of history.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
+  for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
+  zoneEnter.disabled = value || !selectedZone;
  }
 
  function playback(report) {
@@ -163,6 +220,7 @@ if (onlineMode) {
   } catch (error) {
    if (error.code === 'unauthorized') {
     account = session = pending = lastReport = null;
+    selectedZone = null;
     setRegistration(false);
     showEntry();
     accountFeedback.textContent = messages.unauthorized;
@@ -306,6 +364,7 @@ if (onlineMode) {
   return run(async () => {
    await api(null, '/logout', {});
    account = session = pending = lastReport = null;
+   selectedZone = null;
    showEntry();
    await refreshSavedAccounts();
    requestAnimationFrame(() => ($('saved-account-panel').hidden ? username : savedAccount).focus());
