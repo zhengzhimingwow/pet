@@ -195,12 +195,18 @@
 .town-battle-view .arena-scenery, .town-battle-view .status-title em { display: none; }
 .town-battle-view .fighter { bottom: 12%; }
 .town-battle-view .result-card h2 { overflow-wrap: anywhere; }
+.town-battle-view .status { display: flex; flex-direction: column; }
+.town-battle-view .status-title { flex: 1; }
 .town-battle-view .status-title > div { min-width: 0; }
-.town-battle-view .status-title b { overflow: hidden; text-overflow: ellipsis; }
+.town-battle-view .status-title b { white-space: normal; overflow-wrap: anywhere; }
 @media (max-width: 720px) {
   .town-game { padding: 15px 12px 24px; }
   .town-game-layout { grid-template-columns: 1fr; }
   .town-game-header, .town-game-brand, .town-game-account { gap: 6px; }
   .town-game-account button { padding-inline: 4px; }
   .town-profile { flex-wrap: wrap; }
+}
+@media (max-width: 480px) {
+  .town-battle-view .status-title { flex-direction: column; align-items: stretch; }
+  .town-battle-view .status-title strong { align-self: flex-end; }
 }
