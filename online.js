@@ -20,7 +20,7 @@ if (onlineMode) {
  const messages = {
   unauthorized: '登录已失效，请重新登录。',
   invalid_credentials: '账号或密码有误，请检查后重试。',
-  invalid_registration: '请使用 3–32 位字母、数字或下划线作为账号，密码至少 12 个字符。',
+  invalid_registration: '请使用 3–32 位字母、数字或下划线作为账号。',
   account_taken: '这个账号已被注册，可以直接登录或换一个账号。',
   remember_expired: '这个账号的免密登录已过期，请输入密码重新登录。',
   zone_not_entered: '请先选择区服。',
@@ -239,7 +239,7 @@ if (onlineMode) {
   confirmation.required = value;
   username.minLength = value ? 3 : 1;
   username.placeholder = value ? '3–32 位字母、数字或下划线' : '请输入账号';
-  password.placeholder = value ? '至少 12 个字符' : '请输入密码';
+  password.placeholder = value ? '请设置密码' : '请输入密码';
   password.autocomplete = value ? 'new-password' : 'current-password';
   password.value = confirmation.value = '';
   showPassword(false);
@@ -255,7 +255,6 @@ if (onlineMode) {
   event.preventDefault();
   run(async () => {
    if (registering && password.value !== confirmation.value) throw new Error('两次输入的密码不一致。');
-   if (registering && [...password.value].length < 12) throw new Error('密码至少需要 12 个字符。');
    if (new TextEncoder().encode(password.value).length > 128) throw new Error('密码过长，请缩短后重试。');
    accountFeedback.textContent = registering ? '正在注册…' : '正在登录…';
    await finishLogin(await api(null, registering ? '/register' : '/login', {
