@@ -260,7 +260,7 @@ if (onlineMode) {
     round = event.round;
     const item = document.createElement('li');
     const title = document.createElement('h4');
-    title.textContent = `第 ${round} 回合`;
+    title.textContent = `第 ${round} 回合 · ${names[event.actor]}出手`;
     events = document.createElement('ul');
     item.append(title, events);
     rounds.append(item);
@@ -270,13 +270,14 @@ if (onlineMode) {
    const defender = names[event.target];
    const move = `${event.source_name} · ${event.move_name}`;
    if (event.kind === 'dodge') {
-    item.textContent = `${defender} 闪避了 ${attacker} 的「${move}」。`;
+    item.textContent = `${attacker} 使用「${move}」，被 ${defender} 闪避。`;
    } else if (event.kind === 'knockout') {
     item.textContent = `${defender} 倒下了。`;
    } else {
     const calculated = event.damage !== event.applied_damage ? `（计算伤害 ${event.damage}）` : '';
     const critical = event.critical ? '（暴击）' : '';
-    item.textContent = `${attacker} 使用「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
+    const action = event.source_id === 'combo' ? '本回合追加连击' : '出招';
+    item.textContent = `${action}「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
    }
    events.append(item);
   }
