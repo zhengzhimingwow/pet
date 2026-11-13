@@ -6,7 +6,7 @@ const queryParams = new URLSearchParams(location.search);
 const onlineMode = queryParams.has('online') || !queryParams.has('demo');
 const requestedDemo = queryParams.get('demo') ?? 'pan';
 const panAttack = {
- name:'抡下平底锅', label:'平底锅', draw:'掏出平底锅 🍳', damage:18, icon:'🍳',
+ name:'抡击', label:'平底锅', draw:'掏出平底锅 🍳', damage:18, icon:'🍳',
  weapon:'pan', spacing:.91, windUp:350, contact:[.78, .86],
  description:'双方每回合先掏锅，走近后举过头顶，再向下砸。',
 };
@@ -23,9 +23,10 @@ const swordAttack = {
  description:'亮剑上前，收剑蓄势，剑尖向前直刺。',
 };
 const weaponDemos = {pan:panAttack, blade:bladeAttack, sword:swordAttack};
-const mode = Object.hasOwn(weaponDemos, requestedDemo) ? requestedDemo : 'normal';
-const demoAttack = onlineMode ? null : weaponDemos[mode];
-const specialAttacks = [...Object.values(weaponDemos), {name:'使出旋风拳', damage:16, icon:'✊'}, {name:'挥舞软绵绵拖鞋', damage:14, icon:'🩴'}];
+const weaponMoves = {...weaponDemos, ...customWeaponMoves};
+const mode = Object.hasOwn(weaponMoves, requestedDemo) ? requestedDemo : 'normal';
+const demoAttack = onlineMode ? null : weaponMoves[mode];
+const specialAttacks = Object.values(weaponMoves);
 const punch = {name:'挥出一拳', damage:10, icon:'✦'};
 const maxHp = {left:100, right:100};
 const fighterNames = {left:'小团子', right:'大壮'};
@@ -69,10 +70,16 @@ speedToggle.addEventListener('click', () => {
 });
 
 const currentMode = onlineMode ? $('online-link') : document.querySelector(`[data-mode="${mode}"]`);
-currentMode.setAttribute('aria-current', 'page');
+currentMode?.setAttribute('aria-current', 'page');
+if (!onlineMode) {
+ const picker = $('weapon-demo-select');
+ for (const [id, move] of Object.entries(weaponMoves)) picker.add(new Option(move.label, id));
+ picker.value = mode;
+ picker.addEventListener('change', () => { location.search = new URLSearchParams({demo:picker.value}); });
+}
 if (demoAttack) {
  $('demo-label').textContent = `${demoAttack.label}验收`;
- $('action-desc').textContent = demoAttack.description;
+ $('action-desc').textContent = demoAttack.description ?? `双方轮流使用${demoAttack.label}，演示「${demoAttack.name}」。`;
  if (demoAttack.sprite) new Image().src = demoAttack.sprite;
 }
 function prepareSound() {
@@ -89,7 +96,7 @@ function hitSound(weapon) {
  const samples = buffer.getChannelData(0); for (let i = 0; i < samples.length; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / samples.length);
  const noise = audioContext.createBufferSource(), noiseGain = audioContext.createGain(); noise.buffer = buffer; noiseGain.gain.setValueAtTime(.1, now); noiseGain.gain.exponentialRampToValueAtTime(.001, now + .07); noise.connect(noiseGain).connect(audioContext.destination); noise.start(now);
  if (weapon) {
-  for (const [frequency, volume, duration] of metalOvertones[weapon]) {
+  for (const [frequency, volume, duration] of metalOvertones[weapon] ?? []) {
    const metal = audioContext.createOscillator();
    const envelope = audioContext.createGain();
    metal.frequency.value = frequency;
@@ -137,6 +144,8 @@ function impactAt(attacker, defender, melee, move) {
  impact.style.left = (contactX - rect.left) + 'px';
  impact.style.top = (contactY - rect.top) + 'px';
  impact.dataset.weapon = move.weapon ?? '';
+ impact.toggleAttribute('data-custom-weapon', Boolean(move.color));
+ impact.style.setProperty('--weapon-color', move.color ?? '');
  animate(impact, 'show');
  animate(arena, 'shake');
  hitSound(move.weapon);
@@ -216,7 +225,7 @@ function reportTurnResult({number, attacker, defender, move, dodge, damage, rema
   reportTurnEvent(number, name + '挥出一拳，' + target + '灵巧地躲开了！');
   return;
  }
- const attackName = move.icon ? `${move.name} ${move.icon}` : `用${move.label}${move.name}`;
+ const attackName = move.label ? `用${move.label}使出「${move.name}」` : move.name;
  reportTurnEvent(number, name + attackName + '，对' + target + '造成 ' + damage + ' 点伤害！');
  if (remainingHp === 0) reportTurnEvent(number, target + '倒下了！');
 }
@@ -253,21 +262,27 @@ async function playTurns(turns) {
   if (skipping) return;
   const {number, attacker, defender, move, dodge, damage, remainingHp} = turn;
   $('round').textContent = `第 ${number} 回合${demoAttack ? ' · ' + demoAttack.label : ''}`;
-  // Melee attacks approach first; future ranged moves can set range: 'ranged'.
   const attackerEl = $(attacker), defenderEl = $(defender);
   const melee = move.range !== 'ranged';
   const weaponClass = move.weapon && `using-${move.weapon}`;
+  const custom = move.frames && prepareWeaponMove(attackerEl, move);
   if (weaponClass) {
    attackerEl.classList.add(weaponClass, 'drawing-weapon');
    reportWeaponDraw(turn);
-   await wait(550);
+   if (custom) await custom.draw();
+   else await wait(550);
    if (skipping) return;
    attackerEl.classList.remove('drawing-weapon');
   }
   const distance = melee ? await moveToOpponent(attackerEl, defenderEl, move) : 0;
   if (skipping) return;
-  attackerEl.classList.add('striking');
-  await wait(move.windUp ?? 315);
+  if (custom) await custom.strike();
+  else {
+   attackerEl.classList.add('striking');
+   await wait(move.windUp ?? 315);
+  }
+  if (skipping) return;
+  const finishFlight = move.flight && await launchWeapon(move, custom.prop, defenderEl);
   if (skipping) return;
   if (dodge) {
    animate(defenderEl, 'dodge');
@@ -280,25 +295,39 @@ async function playTurns(turns) {
    if (remainingHp === 0) defenderEl.classList.add('defeated');
   }
   reportTurnResult(turn);
+  if (finishFlight) await finishFlight();
+  if (skipping) return;
   if (!dodge) {
-   await hitPause(attackerEl, demoAttack ? 320 : 85);
+   if (custom) await wait(demoAttack ? 220 : 85);
+   else await hitPause(attackerEl, demoAttack ? 320 : 85);
    if (skipping) return;
   }
-  await wait(400);
+  if (custom) await custom.recover();
+  else await wait(400);
   if (skipping) return;
   attackerEl.classList.remove('striking');
   if (melee) await returnToPlace(attackerEl, distance);
   if (skipping) return;
   if (weaponClass) attackerEl.classList.remove(weaponClass);
+  if (custom) clearWeaponProps(attackerEl);
  }
  await wait(700);
 }
+function clearWeaponProps(fighter) {
+ fighter.classList.remove('custom-weapon');
+ fighter.querySelectorAll('.custom-weapon-prop').forEach(prop => prop.remove());
+ for (const animation of fighter.querySelector('.fighter-art').getAnimations()) {
+  if (!(animation instanceof CSSAnimation)) animation.cancel();
+ }
+}
 function showSkippedOutcome(hp, turns) {
  game.classList.add('is-skipped');
- const weaponClasses = Object.keys(weaponDemos).map(weapon => `using-${weapon}`);
+ const weaponClasses = Object.keys(weaponMoves).map(weapon => `using-${weapon}`);
+ arena.querySelectorAll('.weapon-projectile, .weapon-tether').forEach(prop => prop.remove());
  for (const side of Object.keys(hp)) {
   const fighter = $(side);
   fighter.classList.remove('striking', 'drawing-weapon', 'dragging-blade', 'hit', 'dodge', ...weaponClasses);
+  clearWeaponProps(fighter);
   clearMovement(fighter);
   fighter.classList.toggle('defeated', hp[side] === 0);
   $('float-' + side).classList.remove('show');
@@ -327,7 +356,7 @@ function showDamageTotals(totals) {
  $('damage-stats').hidden = !totals?.length;
 }
 
-async function playBattle({turns, hp, winner, players, damageTotals}) {
+async function playBattle({turns, hp, winner, players, damageTotals, rewardText}) {
  if (running) return;
  prepareSound();
  playMusic();
@@ -369,6 +398,8 @@ async function playBattle({turns, hp, winner, players, damageTotals}) {
  $('result-text').textContent = incompleteRound
   ? `打完 ${completedRounds} 回合，第 ${completedRounds + 1} 回合提前结束。`
   : `打完 ${completedRounds} 回合。`;
+ $('battle-reward').textContent = rewardText ?? '';
+ $('battle-reward').hidden = !rewardText;
  say('🎉 ' + title);
  showDamageTotals(damageTotals);
  result.hidden = false;

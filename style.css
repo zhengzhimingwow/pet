@@ -279,6 +279,61 @@ button { font: inherit; cursor: pointer; }
 /* The battle controller handles approach and return; only the pose animates here. */
 .fighter.striking .fighter-art{animation:punch-frames .7s steps(1,end)}
 
+.fighter.custom-weapon .fighter-art { animation: none; }
+.custom-weapon-prop {
+  position: absolute;
+  left: 51%;
+  top: 43%;
+  display: grid;
+  width: 44%;
+  height: 44%;
+  place-items: center;
+  transform-origin: 35% 65%;
+  font-size: clamp(30px, 6vw, 58px);
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 2px #392a39a8);
+}
+.custom-weapon-prop[data-weapon="spatula"] { font-size: 0; }
+.custom-weapon-prop[data-weapon="spatula"]::before {
+  content: "";
+  width: 34%;
+  height: 72%;
+  background: linear-gradient(90deg, #a5bbc8, #f3faff 55%, #8497a3);
+  clip-path: polygon(4% 0,96% 0,100% 44%,62% 55%,62% 100%,38% 100%,38% 55%,0 44%);
+  transform: rotate(-24deg);
+}
+.weapon-projectile {
+  position: absolute;
+  z-index: 9;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin: -22px;
+  place-items: center;
+  opacity: 0;
+  color: var(--weapon-color);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 0 7px var(--weapon-color)) drop-shadow(0 2px 2px #263f60);
+}
+.weapon-projectile[data-weapon="fan"] { width: 68px; margin-left: -34px; font-size: 56px; }
+.weapon-tether {
+  position: absolute;
+  z-index: 8;
+  height: 2px;
+  background: #fff4d5;
+  box-shadow: 0 1px 2px #5b365d;
+  transform-origin: left center;
+  pointer-events: none;
+}
+.impact[data-custom-weapon] span { color: var(--weapon-color); text-shadow: 0 0 11px var(--weapon-color); }
+.weapon-demo-picker { display: flex; align-items: center; gap: 8px; }
+.weapon-demo-picker select { padding: 5px 9px; border: 1px solid #b7cce3; border-radius: 7px; background: #fff; font: inherit; }
+.result-card #battle-reward { color: #755322; font-weight: 700; }
+
 @keyframes idle-breathe {
   50% { scale: 1.008 1.018; }
 }
@@ -324,7 +379,7 @@ button { font: inherit; cursor: pointer; }
   background-position: 33.333% var(--sprite-row);
   animation: none;
 }
-.fighter.drawing-weapon .fighter-art {
+.fighter.drawing-weapon:not(.custom-weapon) .fighter-art {
   animation: weapon-draw-frames .44s steps(1, end) both;
 }
 .fighter.striking.using-pan .fighter-art {
@@ -522,8 +577,8 @@ button { font: inherit; cursor: pointer; }
   width: 13px;
   height: 3px;
   border-radius: 100%;
-  background: #ffe5a1;
-  box-shadow: 0 0 6px #ec9c44;
+  background: var(--weapon-color, #ffe5a1);
+  box-shadow: 0 0 6px var(--weapon-color, #ec9c44);
   opacity: 0;
   rotate: var(--angle);
 }

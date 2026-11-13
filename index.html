@@ -11,8 +11,8 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=game-views">
-  <link rel="stylesheet" href="lobby.css?v=record-actions">
+  <link rel="stylesheet" href="style.css?v=weapon-collection">
+  <link rel="stylesheet" href="lobby.css?v=weapon-collection">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -106,6 +106,11 @@
               <h2 id="town-player-name"></h2>
               <span id="online-player"></span>
             </div>
+            <div class="town-growth">
+              <span id="town-level"></span>
+              <progress id="town-xp" aria-label="升级经验" max="100" value="0"></progress>
+              <span id="town-xp-text"></span>
+            </div>
             <dl class="town-attributes">
               <div><dt>生命</dt><dd id="town-hp"></dd></div>
               <div><dt>攻击</dt><dd id="town-attack"></dd></div>
@@ -114,7 +119,10 @@
           </div>
           <div class="town-equipment">
             <section aria-label="武器">
-              <h3>武器</h3>
+              <div class="town-equipment-header">
+                <h3>武器</h3>
+                <button id="open-weapon-collection" type="button">武器库</button>
+              </div>
               <div class="town-item"><span id="town-weapon-icon" class="town-item-icon" aria-hidden="true"></span><span id="town-weapon"></span></div>
             </section>
             <section aria-label="技能">
@@ -141,6 +149,19 @@
         </section>
       </aside>
     </div>
+    <dialog id="town-weapon-dialog" class="town-damage-dialog" aria-labelledby="town-weapon-title">
+      <div class="town-damage-header">
+        <div>
+          <h2 id="town-weapon-title">武器库</h2>
+          <p id="town-weapon-count"></p>
+        </div>
+        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
+      </div>
+      <div class="town-damage-content">
+        <p id="town-weapon-feedback" role="status"></p>
+        <ul id="town-weapon-list"></ul>
+      </div>
+    </dialog>
     <dialog id="town-damage-dialog" class="town-damage-dialog" aria-labelledby="town-damage-title">
       <div class="town-damage-header">
         <div>
@@ -162,10 +183,9 @@
       <div class="brand"><span class="brand-icon" aria-hidden="true">✦</span><strong>企鹅大乐斗</strong></div>
       <nav class="mode-nav" aria-label="出招模式">
         <a href="?online" id="online-link">联机对战</a>
-        <a href="?demo=pan" data-mode="pan">平底锅</a>
-        <a href="?demo=blade" data-mode="blade">青龙偃月刀</a>
-        <a href="?demo=sword" data-mode="sword">轩辕剑</a>
-        <a href="?demo=normal" data-mode="normal">随机出招</a>
+        <label class="weapon-demo-picker">武器演示
+          <select id="weapon-demo-select"><option value="normal">随机出招</option></select>
+        </label>
       </nav>
     </header>
 
@@ -205,6 +225,7 @@
           <div class="result-card">
             <h2 id="winner"></h2>
             <p id="result-text"></p>
+            <p id="battle-reward" hidden></p>
             <button id="again" type="button">再来一场 ↗</button>
           </div>
         </div>
@@ -235,7 +256,8 @@
     </section>
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
-  <script src="game.js?v=paired-rounds"></script>
-  <script src="online.js?v=record-actions"></script>
+  <script src="weapon-moves.js?v=weapon-collection"></script>
+  <script src="game.js?v=weapon-collection"></script>
+  <script src="online.js?v=weapon-collection"></script>
 </body>
 </html>
