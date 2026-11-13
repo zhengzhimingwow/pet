@@ -12,6 +12,7 @@ if (onlineMode) {
  const weaponDialog = $('town-weapon-dialog');
  const weaponList = $('town-weapon-list');
  const weaponFeedback = $('town-weapon-feedback');
+ const equipWeapon = $('equip-selected-weapon');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
@@ -33,6 +34,7 @@ if (onlineMode) {
  let lastReport;
  let returnToSquareTimer;
  let damageReportButton;
+ let selectedWeaponId;
 
  const messages = {
   unauthorized: '登录已失效，请重新登录。',
@@ -172,68 +174,107 @@ if (onlineMode) {
   $('town-defense').textContent = player.defense;
   $('town-weapon').textContent = weapon?.label ?? '未装备';
   $('town-weapon-icon').textContent = weapon?.icon || (weapon ? '⚔' : '–');
+  $('town-weapon-move').textContent = weapon ? weaponMoveLabel(weapon) : '';
   $('town-skill').textContent = player.skill_id === 'combo' ? '连击' : '未装备';
   $('town-level').textContent = `Lv. ${progression.level}`;
   $('town-xp').max = progression.next_level_xp;
   $('town-xp').value = progression.xp;
   $('town-xp-text').textContent = `${progression.xp} / ${progression.next_level_xp} 经验`;
+  $('town-xp-remaining').textContent = `距升级还差 ${progression.next_level_xp - progression.xp} 经验`;
   if (weaponDialog.open) renderWeaponCollection();
+ }
+
+ function weaponMoveLabel(move) {
+  return `${move.name} · ${move.range === 'ranged' ? '远程' : '近战'}`;
+ }
+
+ function selectWeapon(id) {
+  selectedWeaponId = id;
+  const currentId = session.player.weapon_id;
+  const current = weaponMoves[currentId];
+  const selected = weaponMoves[id];
+  const owned = session.progression.weapons.includes(id);
+  const equipped = id === currentId;
+  for (const [slot, weapon] of [['current', current], ['selected', selected]]) {
+   $(`weapon-${slot}-name`).textContent = weapon?.label ?? '未装备';
+   $(`weapon-${slot}-move`).textContent = weapon ? weaponMoveLabel(weapon) : '';
+   $(`weapon-${slot}-damage`).textContent = weapon?.damage ?? '—';
+  }
+  const change = $('weapon-damage-change');
+  change.hidden = !current || !selected || equipped;
+  if (!change.hidden) {
+   const delta = selected.damage - current.damage;
+   change.textContent = delta > 0 ? `+${delta}` : delta < 0 ? `−${Math.abs(delta)}` : '相同';
+   change.dataset.direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+  }
+  $('weapon-selection-status').textContent = equipped ? '已装备' : owned ? '已拥有' : '未获得';
+  equipWeapon.hidden = !owned || equipped || !selected;
+  equipWeapon.disabled = busy;
+  if (selected) equipWeapon.setAttribute('aria-label', `装备${selected.label}`);
+  for (const button of weaponList.querySelectorAll('button')) {
+   button.setAttribute('aria-pressed', String(button.dataset.weapon === id));
+  }
  }
 
  function renderWeaponCollection() {
   const owned = new Set(session.progression.weapons);
-  const catalog = Object.entries(weaponMoves);
-  $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length} · 每次升级随机获得一把未拥有的武器`;
+  const equippedId = session.player.weapon_id;
+  const priority = id => id === equippedId ? 2 : Number(owned.has(id));
+  const catalog = Object.entries(weaponMoves).sort(([a], [b]) => priority(b) - priority(a));
+  $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
   weaponList.replaceChildren(...catalog.map(([id, move]) => {
    const item = document.createElement('li');
-   const hasWeapon = owned.has(id);
-   const equipped = session.player.weapon_id === id;
+   const button = document.createElement('button');
+   button.type = 'button';
+   button.dataset.weapon = id;
+   button.disabled = busy;
    const icon = document.createElement('span');
    icon.className = 'town-item-icon';
    icon.textContent = move.icon || '⚔';
    icon.setAttribute('aria-hidden', 'true');
-   const info = document.createElement('div');
+   const info = document.createElement('span');
    const label = document.createElement('strong');
    label.textContent = move.label;
    const detail = document.createElement('small');
-   detail.textContent = `${move.range === 'ranged' ? '远程' : '近战'} · ${move.name}`;
+   detail.textContent = weaponMoveLabel(move);
    info.append(label, detail);
-   item.append(icon, info);
-   if (hasWeapon && !equipped) {
-    const equip = document.createElement('button');
-    equip.type = 'button';
-    equip.textContent = '装备';
-    equip.setAttribute('aria-label', `装备${move.label}`);
-    equip.disabled = busy;
-    equip.addEventListener('click', () => run(async () => {
-     weaponFeedback.textContent = '';
-     try {
-      renderPlayer(await api(session.zone, '/equipment', {weapon_id:id}));
-      weaponFeedback.textContent = `已装备${move.label}`;
-      weaponDialog.querySelector('[autofocus]').focus({preventScroll:true});
-     } catch (error) {
-      if (error.code === 'unauthorized') {
-       weaponDialog.close();
-       throw error;
-      }
-      weaponFeedback.textContent = error.code ? error.message : messages.unavailable;
-     }
-    }));
-    item.append(equip);
-   } else {
-    const state = document.createElement('span');
-    state.className = equipped ? 'weapon-equipped' : 'weapon-locked';
-    state.textContent = equipped ? '已装备' : '未获得';
-    item.append(state);
-   }
+   const state = document.createElement('span');
+   state.className = id === equippedId ? 'weapon-equipped' : 'weapon-state';
+   state.textContent = id === equippedId ? '已装备' : owned.has(id) ? '已拥有' : '未获得';
+   button.append(icon, info, state);
+   button.addEventListener('click', () => {
+    weaponFeedback.textContent = '';
+    selectWeapon(id);
+   });
+   item.append(button);
    return item;
   }));
+  selectWeapon(selectedWeaponId);
  }
  $('open-weapon-collection').addEventListener('click', () => {
   weaponFeedback.textContent = '';
+  const equippedId = session.player.weapon_id;
+  selectedWeaponId = session.progression.weapons.find(id => id !== equippedId)
+   ?? Object.keys(weaponMoves).find(id => id !== equippedId);
   renderWeaponCollection();
   weaponDialog.showModal();
+  weaponList.parentElement.scrollTop = 0;
  });
+ equipWeapon.addEventListener('click', () => run(async () => {
+  const id = selectedWeaponId;
+  weaponFeedback.textContent = '';
+  try {
+   renderPlayer(await api(session.zone, '/equipment', {weapon_id:id}));
+   weaponFeedback.textContent = `已装备${weaponMoves[id].label}`;
+   if (weaponDialog.open) weaponDialog.querySelector('[autofocus]').focus({preventScroll:true});
+  } catch (error) {
+   if (error.code === 'unauthorized') {
+    if (weaponDialog.open) weaponDialog.close();
+    throw error;
+   }
+   weaponFeedback.textContent = error.code ? error.message : messages.unavailable;
+  }
+ }));
 
  function lock(value) {
   busy = value;
@@ -248,6 +289,7 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   backToSquare.disabled = value;
   $('open-weapon-collection').disabled = value;
+  equipWeapon.disabled = value;
   for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
   for (const button of opponentsList.querySelectorAll('button')) button.disabled = value;
