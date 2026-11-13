@@ -16,6 +16,10 @@ if (onlineMode) {
  const zoneEnter = $('zone-enter');
  const savedAccount = $('saved-account');
  const zonesPerGroup = 10;
+ const historyTimeFormat = new Intl.DateTimeFormat('zh-CN', {
+  timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit',
+  hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23',
+ });
  let account;
  let session;
  let selectedZone;
@@ -224,16 +228,26 @@ if (onlineMode) {
   for (const report of battles) {
    const item = document.createElement('li');
    const button = document.createElement('button');
+   const details = document.createElement('span');
    const name = document.createElement('span');
+   const time = document.createElement('time');
    const result = document.createElement('span');
    button.type = 'button';
    button.disabled = busy;
+   details.className = 'town-history-details';
    name.textContent = report.opponent;
+   const playedAt = new Date(Number(report.created_at_epoch) * 1000);
+   if (Number.isFinite(playedAt.getTime())) {
+    time.dateTime = playedAt.toISOString();
+    time.textContent = historyTimeFormat.format(playedAt);
+   } else {
+    time.textContent = report.created_at.slice(0, 19);
+   }
+   details.append(name, time);
    result.className = `town-outcome town-outcome-${report.winner}`;
    result.textContent = {left:'胜', right:'负', draw:'平'}[report.winner];
-   button.setAttribute('aria-label', `回放对战 ${report.opponent}，${result.textContent}`);
-   button.title = report.created_at.slice(0, 19);
-   button.append(name, result);
+   button.setAttribute('aria-label', `回放对战 ${report.opponent}，${result.textContent}，${time.textContent}`);
+   button.append(details, result);
    button.addEventListener('click', () => run(async () => playback(await api(session.zone, `/battles/${report.battle_id}`))));
    item.append(button);
    townHistory.append(item);
@@ -417,6 +431,18 @@ if (onlineMode) {
   if (lastReport) run(() => playback(lastReport));
  });
  battleView.append($('battle-game'), $('battle-log'));
+ const battleNames = [$('name-left'), $('name-right')];
+ const nameSizeObserver = new ResizeObserver(() => {
+  for (const name of battleNames) {
+   const width = name.offsetWidth;
+   const available = name.parentElement.clientWidth;
+   name.style.scale = width > available && available > 0 ? `${available / width} 1` : '';
+  }
+ });
+ for (const name of battleNames) {
+  nameSizeObserver.observe(name);
+  nameSizeObserver.observe(name.parentElement);
+ }
  $('arena-title').textContent = '乐斗';
  $('demo-label').hidden = true;
  backToSquare.hidden = false;

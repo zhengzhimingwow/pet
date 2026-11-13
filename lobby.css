@@ -179,6 +179,8 @@
   overflow-wrap: anywhere;
 }
 #town-battle-history button:hover { color: #2454ae; }
+.town-history-details { display: grid; gap: 2px; min-width: 0; }
+.town-history-details time { color: var(--town-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .town-outcome { flex: none; padding: 3px 7px; border-radius: 5px; background: #edf1f7; }
 .town-outcome-left { color: #226342; background: #e5f5e8; }
 .town-outcome-right { color: #a13740; background: #fbe8ea; }
@@ -186,7 +188,7 @@
 .town-feedback { margin: 0; padding: 10px 12px; color: #8d3f29; font-size: 13px; overflow-wrap: anywhere; }
 .town-feedback:empty { display: none; }
 .town-game button:disabled { opacity: .58; cursor: wait; }
-.town-battle-view { display: grid; gap: 12px; }
+.town-battle-view { display: grid; gap: 12px; container-type: inline-size; }
 .town-battle-view .game, .town-battle-view .log-panel { border-color: #9dbbe69e; border-radius: 12px; background: #f9fbff; }
 .town-battle-view .game-head { flex-wrap: wrap; padding: 10px 14px; }
 .town-battle-view .game-head h1 { font-size: 20px; }
@@ -196,9 +198,11 @@
 .town-battle-view .fighter { bottom: 12%; }
 .town-battle-view .result-card h2 { overflow-wrap: anywhere; }
 .town-battle-view .status { display: flex; flex-direction: column; }
-.town-battle-view .status-title { flex: 1; }
+.town-battle-view .status-title { flex: 1; flex-direction: column; align-items: stretch; }
 .town-battle-view .status-title > div { min-width: 0; }
-.town-battle-view .status-title b { white-space: normal; overflow-wrap: anywhere; }
+.town-battle-view .status-title b { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+.town-battle-view .status-title b span { display: inline-block; transform-origin: left center; }
+.town-battle-view .status-title strong { align-self: flex-end; }
 @media (max-width: 720px) {
   .town-game { padding: 15px 12px 24px; }
   .town-game-layout { grid-template-columns: 1fr; }
@@ -206,7 +210,7 @@
   .town-game-account button { padding-inline: 4px; }
   .town-profile { flex-wrap: wrap; }
 }
-@media (max-width: 480px) {
-  .town-battle-view .status-title { flex-direction: column; align-items: stretch; }
-  .town-battle-view .status-title strong { align-self: flex-end; }
+@container (max-width: 600px) {
+  .town-battle-view .status-row { grid-template-columns: 1fr; gap: 12px; }
+  .town-battle-view .status-title { gap: 3px; }
 }

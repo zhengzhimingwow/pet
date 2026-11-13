@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=game-views">
-  <link rel="stylesheet" href="lobby.css?v=full-battle-names">
+  <link rel="stylesheet" href="lobby.css?v=battle-details">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -197,11 +197,11 @@
 
       <div class="status-row">
         <div class="status">
-          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b id="name-left">小团子</b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
+          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b><span id="name-left">小团子</span></b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-left"></div></div>
         </div>
         <div class="status status-right">
-          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b id="name-right">大壮</b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
+          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b><span id="name-right">大壮</span></b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-right"></div></div>
         </div>
       </div>
@@ -221,6 +221,6 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="game.js?v=town-login"></script>
-  <script src="online.js?v=battle-auto-return"></script>
+  <script src="online.js?v=battle-details"></script>
 </body>
 </html>
