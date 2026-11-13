@@ -23,6 +23,7 @@ if (onlineMode) {
  let busy = false;
  let pending;
  let lastReport;
+ let returnToSquareTimer;
 
  const messages = {
   unauthorized: '登录已失效，请重新登录。',
@@ -57,6 +58,7 @@ if (onlineMode) {
  }
 
  function showEntry() {
+  clearTimeout(returnToSquareTimer);
   battleView.hidden = true;
   townStage.hidden = false;
   entry.hidden = Boolean(session);
@@ -178,7 +180,8 @@ if (onlineMode) {
   zoneEnter.disabled = value || !selectedZone;
  }
 
- function playback(report) {
+ async function playback(report) {
+  clearTimeout(returnToSquareTimer);
   townStage.hidden = true;
   battleView.hidden = false;
   $('arena-title').focus({preventScroll:true});
@@ -207,10 +210,11 @@ if (onlineMode) {
     totals.set(key, total);
    }
   }
-  return playBattle({
+  await playBattle({
    turns, hp:{left:report.left_hp, right:report.right_hp}, winner:report.winner,
    players:{left:report.attacker, right:report.defender}, damageTotals:[...totals.values()],
   });
+  returnToSquareTimer = setTimeout(returnToSquare, 3000);
  }
 
  async function refreshHistory() {
@@ -374,10 +378,12 @@ if (onlineMode) {
   });
  });
 
- backToSquare.addEventListener('click', () => {
+ function returnToSquare() {
   showEntry();
   $('town-title').focus();
- });
+ }
+
+ backToSquare.addEventListener('click', returnToSquare);
 
  async function challenge(playerId) {
   prepareSound();
