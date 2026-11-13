@@ -2,10 +2,12 @@ if (onlineMode) {
  const panel = $('online-panel');
  const entry = $('account-entry');
  const shell = $('game-shell');
+ const lobby = $('account-lobby');
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
  const challengeForm = $('online-challenge');
  const history = $('battle-history');
+ const townHistory = $('town-battle-history');
  const feedback = $('online-feedback');
  const challengeButton = $('challenge');
  const zoneGroups = $('zone-groups');
@@ -56,12 +58,12 @@ if (onlineMode) {
  function showEntry() {
   shell.hidden = true;
   document.documentElement.classList.remove('in-arena');
-  entry.hidden = false;
+  entry.hidden = Boolean(session);
   $('account-login').hidden = Boolean(account);
   const choosingZone = Boolean(account && !session);
   $('account-zones').hidden = !choosingZone;
   entry.classList.toggle('choosing-zone', choosingZone);
-  $('account-lobby').hidden = !session;
+  lobby.hidden = !session;
  }
 
  function selectZone(zone) {
@@ -104,6 +106,7 @@ if (onlineMode) {
   const {zones} = await api(null, '/zones');
   session = pending = lastReport = null;
   history.replaceChildren();
+  townHistory.replaceChildren();
   $('zone-account-name').textContent = account.username;
   const groups = new Map();
   for (const zone of [...zones].sort((a, b) => a.id - b.id)) {
@@ -131,13 +134,25 @@ if (onlineMode) {
  zoneEnter.addEventListener('click', () => run(async () => {
   if (!selectedZone) return;
   acceptSession(await api(selectedZone.id, '/enter', {}));
-  requestAnimationFrame(() => $('enter-arena').focus());
+  $('town-title').focus();
+  await refreshHistory();
  }));
 
  function acceptSession(data) {
   session = data;
   const {player, zone} = data;
-  $('online-player').textContent = `${player.name} · ${zone} 服 · UID ${player.player_id}`;
+  const weapon = {pan:panAttack.label, blade:bladeAttack.label, sword:swordAttack.label}[player.weapon_id];
+  $('town-zone').textContent = `${zone} 服`;
+  $('town-player-name').textContent = player.name;
+  $('online-player').textContent = `UID ${player.player_id}`;
+  $('town-hp').textContent = player.max_hp;
+  $('town-attack').textContent = player.attack;
+  $('town-defense').textContent = player.defense;
+  $('town-weapon').textContent = weapon ?? '未装备';
+  $('town-weapon-icon').textContent = player.weapon_id === 'pan' ? '🍳' : weapon ? '⚔' : '–';
+  $('town-skill').textContent = player.skill_id === 'combo' ? '连击' : '未装备';
+  $('town-feedback').textContent = '';
+  $('town-history-empty').hidden = true;
   $('target-zone').value = String(zone);
   $('target-player').value = player.player_id === `${zone}001` ? `${zone}002` : `${zone}001`;
   showEntry();
@@ -157,6 +172,7 @@ if (onlineMode) {
   $('enter-arena').disabled = value;
   $('back-lobby').disabled = value;
   for (const button of history.querySelectorAll('button')) button.disabled = value;
+  for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
   zoneEnter.disabled = value || !selectedZone;
@@ -196,6 +212,8 @@ if (onlineMode) {
  async function refreshHistory() {
   const {battles} = await api(session.zone, '/battles');
   history.replaceChildren();
+  townHistory.replaceChildren();
+  $('town-history-empty').hidden = Boolean(battles.length);
   for (const report of battles) {
    const item = document.createElement('li');
    const button = document.createElement('button');
@@ -208,12 +226,32 @@ if (onlineMode) {
    item.append(button);
    history.append(item);
   }
+  for (const report of battles.slice(0, 5)) {
+   const item = document.createElement('li');
+   const button = document.createElement('button');
+   const name = document.createElement('span');
+   const result = document.createElement('span');
+   button.type = 'button';
+   button.disabled = busy;
+   name.textContent = report.opponent;
+   result.className = `town-outcome town-outcome-${report.winner}`;
+   result.textContent = {left:'胜', right:'负', draw:'平'}[report.winner];
+   button.setAttribute('aria-label', `回放对战 ${report.opponent}，${result.textContent}`);
+   button.append(name, result);
+   button.addEventListener('click', () => run(async () => {
+    const battleReport = await api(session.zone, `/battles/${report.battle_id}`);
+    showArena();
+    await playback(battleReport);
+   }));
+   item.append(button);
+   townHistory.append(item);
+  }
  }
 
  async function run(action) {
   if (busy) return;
   lock(true);
-  const status = shell.hidden ? accountFeedback : feedback;
+  const status = !shell.hidden ? feedback : !lobby.hidden ? $('town-feedback') : accountFeedback;
   status.textContent = '';
   try {
    await action();
@@ -226,7 +264,8 @@ if (onlineMode) {
     accountFeedback.textContent = messages.unauthorized;
     await refreshSavedAccounts().catch(() => {});
    } else {
-    status.textContent = error instanceof SyntaxError || error instanceof TypeError ? messages.unavailable : error.message;
+    const activeStatus = !shell.hidden ? feedback : !lobby.hidden ? $('town-feedback') : accountFeedback;
+    activeStatus.textContent = error instanceof SyntaxError || error instanceof TypeError ? messages.unavailable : error.message;
    }
   } finally {
    lock(false);
@@ -321,8 +360,9 @@ if (onlineMode) {
   });
  });
 
- $('enter-arena').addEventListener('click', () => run(async () => {
+ function showArena() {
   entry.hidden = true;
+  lobby.hidden = true;
   shell.hidden = false;
   document.documentElement.classList.add('in-arena');
   panel.hidden = false;
@@ -331,6 +371,10 @@ if (onlineMode) {
   $('demo-label').textContent = '联机对战';
   $('action-desc').textContent = '选择区服和对手即可开打。';
   again.textContent = '回放本场 ↗';
+ }
+
+ $('enter-arena').addEventListener('click', () => run(async () => {
+  showArena();
   await refreshHistory();
  }));
 
