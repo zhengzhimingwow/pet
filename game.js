@@ -2,7 +2,9 @@ const $ = id => document.getElementById(id);
 const start = $('start'), again = $('again'), skip = $('skip'), result = $('result'), logs = $('logs');
 const arenaMusic = $('arena-music'), musicToggle = $('music-toggle');
 const arena = $('arena'), game = arena.closest('.game'), speedToggle = $('speed-toggle');
-const requestedDemo = new URLSearchParams(location.search).get('demo') ?? 'pan';
+const queryParams = new URLSearchParams(location.search);
+const onlineMode = queryParams.has('online');
+const requestedDemo = queryParams.get('demo') ?? 'pan';
 const panAttack = {
  name:'抡下平底锅', label:'平底锅', draw:'掏出平底锅 🍳', damage:18, icon:'🍳',
  weapon:'pan', spacing:.91, windUp:350, contact:[.78, .86],
@@ -22,9 +24,10 @@ const swordAttack = {
 };
 const weaponDemos = {pan:panAttack, blade:bladeAttack, sword:swordAttack};
 const mode = Object.hasOwn(weaponDemos, requestedDemo) ? requestedDemo : 'normal';
-const demoAttack = weaponDemos[mode];
+const demoAttack = onlineMode ? null : weaponDemos[mode];
 const specialAttacks = [...Object.values(weaponDemos), {name:'使出旋风拳', damage:16, icon:'✊'}, {name:'挥舞软绵绵拖鞋', damage:14, icon:'🩴'}];
 const punch = {name:'挥出一拳', damage:10, icon:'✦'};
+const maxHp = {left:100, right:100};
 const fighterNames = {left:'小团子', right:'大壮'};
 const battleOpening = '叮！战斗开始，双方选手准备就绪。';
 const metalOvertones = {
@@ -65,7 +68,8 @@ speedToggle.addEventListener('click', () => {
  syncBattleAnimations();
 });
 
-document.querySelector(`[data-mode="${mode}"]`).setAttribute('aria-current', 'page');
+const currentMode = onlineMode ? $('online-link') : document.querySelector(`[data-mode="${mode}"]`);
+currentMode.setAttribute('aria-current', 'page');
 if (demoAttack) {
  $('demo-label').textContent = `${demoAttack.label}验收`;
  $('action-desc').textContent = demoAttack.description;
@@ -194,8 +198,20 @@ function reportTurnEvent(number, text) {
 function reportWeaponDraw({number, attacker, move}) {
  if (move.weapon) reportTurnEvent(number, fighterNames[attacker] + move.draw + '！');
 }
-function reportTurnResult({number, attacker, defender, move, dodge, damage, remainingHp}) {
+function reportTurnResult({number, attacker, defender, move, dodge, damage, remainingHp, events}) {
  const name = fighterNames[attacker], target = fighterNames[defender];
+ if (events) {
+  for (const event of events) {
+   const action = `${name}的【${event.source_name}·${event.move_name}】`;
+   if (event.kind === 'knockout') reportTurnEvent(number, target + '倒下了！');
+   if (event.kind === 'dodge') reportTurnEvent(number, action + '被' + target + '闪避。');
+   if (event.kind === 'hit') {
+    const hit = event.critical ? '暴击' : '命中';
+    reportTurnEvent(number, `${action}${hit}，对${target}造成 ${event.damage} 点伤害，实际扣血 ${event.applied_damage}，剩余 ${event.remaining_hp} 血。`);
+   }
+  }
+  return;
+ }
  if (dodge) {
   reportTurnEvent(number, name + '挥出一拳，' + target + '灵巧地躲开了！');
   return;
@@ -208,10 +224,11 @@ function showFloat(side, text) { const el = $('float-' + side); el.textContent =
 function updateHp(side, hp) {
  const fill = $('hp-' + side);
  const bar = fill.parentElement;
- bar.classList.toggle('is-damaged', hp < 100);
- fill.style.width = `${hp}%`;
- bar.querySelector('.bar-ghost').style.width = `${hp}%`;
- $('hp-' + side + '-text').textContent = `${hp} / 100`;
+ const width = `${100 * hp / maxHp[side]}%`;
+ bar.classList.toggle('is-damaged', hp < maxHp[side]);
+ fill.style.width = width;
+ bar.querySelector('.bar-ghost').style.width = width;
+ $('hp-' + side + '-text').textContent = `${hp} / ${maxHp[side]}`;
 }
 function simulateBattle() {
  const hp = {left:100, right:100};
@@ -299,9 +316,19 @@ function showSkippedOutcome(hp, turns) {
  say(`已跳过剩余战斗动画，共 ${turns.length} 回合。`);
  logs.scrollTop = 0;
 }
-async function battle() {
+function showDamageTotals(totals) {
+ const list = $('damage-totals');
+ list.replaceChildren();
+ for (const total of totals ?? []) {
+  const item = document.createElement('li');
+  item.textContent = `${fighterNames[total.actor]} · ${total.name} · ${total.damage} 点实际扣血`;
+  list.append(item);
+ }
+ $('damage-stats').hidden = !totals?.length;
+}
+
+async function playBattle({turns, hp, winner, players, damageTotals}) {
  if (running) return;
- const {turns, hp} = simulateBattle();
  prepareSound();
  playMusic();
  running = true;
@@ -315,18 +342,27 @@ async function battle() {
  $('action-title').textContent = '战斗进行中！';
  $('action-desc').textContent = '小选手们正在全力以赴。';
  logs.replaceChildren();
+ showDamageTotals(null);
  for (const side of Object.keys(hp)) {
   $(side).classList.remove('defeated');
-  updateHp(side, 100);
+  if (players) {
+   fighterNames[side] = players[side].name;
+   maxHp[side] = players[side].max_hp;
+   $('name-' + side).textContent = fighterNames[side];
+   $(side).querySelector('.fighter-art').setAttribute('aria-label', fighterNames[side]);
+  }
+  updateHp(side, maxHp[side]);
  }
  say(battleOpening);
  await playTurns(turns);
  if (skipping) showSkippedOutcome(hp, turns);
- const win = fighterNames[hp.left > 0 ? 'left' : 'right'];
+ const winningSide = winner ?? (hp.left > 0 ? 'left' : 'right');
+ const title = winningSide === 'draw' ? '平局' : fighterNames[winningSide] + '获胜！';
  $('round').textContent = '战斗结束';
- $('winner').textContent = win + '获胜！';
+ $('winner').textContent = title;
  $('result-text').textContent = skipping ? `战斗已结算，共 ${turns.length} 回合。` : '精彩的一场对决，给两位选手鼓鼓掌！';
- say('🎉 ' + win + '赢得了这场欢乐对决！');
+ say('🎉 ' + title);
+ showDamageTotals(damageTotals);
  result.hidden = false;
  skip.hidden = true;
  running = false;
@@ -337,7 +373,11 @@ async function battle() {
  if (skipping) again.focus({preventScroll:true});
  syncBattleAnimations();
 }
-start.addEventListener('click',battle); again.addEventListener('click',battle);
+if (!onlineMode) {
+ const battle = () => playBattle(simulateBattle());
+ start.addEventListener('click', battle);
+ again.addEventListener('click', battle);
+}
 skip.addEventListener('click', () => {
  if (!running || skipping) return;
  skipping = true;

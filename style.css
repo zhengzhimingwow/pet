@@ -571,3 +571,14 @@ button { font: inherit; cursor: pointer; }
   .impact[data-weapon]:not([data-weapon='']).show .impact-sparks i,
   .dust.show i { animation: none; }
 }
+
+.online-panel { margin-bottom: 14px; padding: 15px 20px; background: #fffdf6; border: 1px solid #dfdccd; border-radius: 15px; }
+.online-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.online-form[hidden], .start[hidden] { display: none; }
+.online-form label { display: grid; gap: 4px; font-size: 13px; }
+.online-form input, .online-form select { max-width: 100%; padding: 6px 8px; color: inherit; background: #fcfbf3; border: 1px solid #d7dbce; border-radius: 8px; font: inherit; }
+.online-panel p { margin: 8px 0; font-size: 13px; }
+#online-feedback:empty { display: none; }
+#battle-history, #damage-totals { padding-left: 18px; font-size: 13px; }
+#battle-history li + li { margin-top: 4px; }
+#damage-stats { margin-top: 10px; font-size: 13px; }

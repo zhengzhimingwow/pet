@@ -7,19 +7,43 @@
   <title>企鹅大乐斗 · 欢乐竞技场</title>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=skip-battle">
+  <link rel="stylesheet" href="style.css?v=online-battles">
 </head>
 <body>
   <main class="shell">
     <header class="top">
       <div class="brand"><span class="brand-icon" aria-hidden="true">✦</span><strong>企鹅大乐斗</strong></div>
       <nav class="mode-nav" aria-label="出招模式">
+        <a href="?online" id="online-link">联机对战</a>
         <a href="?demo=pan" data-mode="pan">平底锅</a>
         <a href="?demo=blade" data-mode="blade">青龙偃月刀</a>
         <a href="?demo=sword" data-mode="sword">轩辕剑</a>
         <a href="?demo=normal" data-mode="normal">随机出招</a>
       </nav>
     </header>
+
+    <section id="online-panel" class="online-panel" aria-label="联机挑战" hidden>
+      <form id="online-login" class="online-form">
+        <label>登录区服 <select id="login-zone"><option value="1">1 服</option><option value="2">2 服</option></select></label>
+        <label>试玩口令 <input id="login-token" type="password" required autocomplete="off" pattern="[a-fA-F0-9]{32}"></label>
+        <button class="sound-toggle" type="submit">登录试玩</button>
+      </form>
+      <div id="online-session" hidden>
+        <p id="online-player"></p>
+        <form id="online-challenge" class="online-form">
+          <label>对手区服 <select id="target-zone"><option value="1">1 服</option><option value="2">2 服</option></select></label>
+          <label>角色编号 <input id="target-player" required maxlength="32" pattern="[a-zA-Z0-9]+"></label>
+          <button id="challenge" class="sound-toggle" type="submit">挑战</button>
+          <button id="online-logout" class="sound-toggle" type="button">退出</button>
+        </form>
+        <p id="online-hint"></p>
+        <details>
+          <summary>历史战报</summary>
+          <ul id="battle-history"></ul>
+        </details>
+      </div>
+      <p id="online-feedback" role="status"></p>
+    </section>
 
     <section class="game" aria-labelledby="arena-title">
       <div class="game-head">
@@ -63,11 +87,11 @@
 
       <div class="status-row">
         <div class="status">
-          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b>小团子</b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
+          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b id="name-left">小团子</b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-left"></div></div>
         </div>
         <div class="status status-right">
-          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b>大壮</b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
+          <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b id="name-right">大壮</b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-right"></div></div>
         </div>
       </div>
@@ -77,6 +101,7 @@
       <div class="log-panel">
         <h2>战斗实况</h2>
         <div class="logs" id="logs" aria-live="polite"><p class="empty">开战后，招式和伤害会显示在这里。</p></div>
+        <details id="damage-stats" hidden><summary>伤害统计</summary><ul id="damage-totals"></ul></details>
       </div>
       <div class="action-panel">
         <div><h2 id="action-title">准备就绪</h2><p id="action-desc">双方轮流随机出招。</p></div>
@@ -85,6 +110,7 @@
     </section>
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
-  <script src="game.js?v=round-numbered-report"></script>
+  <script src="game.js?v=online-battles"></script>
+  <script src="online.js?v=online-battles"></script>
 </body>
 </html>
