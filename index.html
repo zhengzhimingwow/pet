@@ -4,13 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f1e6">
-  <title>企鹅大乐斗 · 欢乐竞技场</title>
+  <title>企鹅大乐斗</title>
+  <script>
+    const page = new URLSearchParams(location.search);
+    if (page.has('online') || !page.has('demo')) document.documentElement.classList.add('online-entry');
+  </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=online-battles">
+  <link rel="stylesheet" href="style.css?v=town-login">
 </head>
 <body>
-  <main class="shell">
+  <main id="account-entry" class="account-entry" hidden>
+    <div class="entry-frame">
+      <div class="town-art">
+        <img src="assets/penguin-town.webp" alt="蓝围巾和红围巾企鹅在海边小镇散步">
+        <div class="town-brand"><span class="brand-icon" aria-hidden="true">✦</span><h1>企鹅大乐斗</h1></div>
+      </div>
+      <section class="entry-panel" aria-label="游戏入口">
+        <div id="account-login">
+          <h2>欢迎回家</h2>
+          <p class="entry-copy">登录账号，回到你的企鹅小镇。</p>
+          <form id="online-login" class="login-form">
+            <label for="login-account">账号</label>
+            <input id="login-account" name="username" autocomplete="username" required maxlength="32" pattern="[A-Za-z0-9_]+" placeholder="请输入账号">
+            <label for="login-password">密码</label>
+            <div class="password-field">
+              <input id="login-password" name="password" type="password" required maxlength="128" autocomplete="current-password" placeholder="请输入密码">
+              <button id="password-visibility" type="button" aria-label="显示密码" aria-pressed="false">显示</button>
+            </div>
+            <label for="login-zone">区服</label>
+            <select id="login-zone" name="zone"><option value="1">1 服</option><option value="2">2 服</option></select>
+            <button id="login-submit" class="entry-button" type="submit">登录游戏 <span aria-hidden="true">→</span></button>
+          </form>
+          <a class="entry-demo" href="?demo=pan">试玩战斗演示 <span aria-hidden="true">↗</span></a>
+        </div>
+        <div id="account-lobby" hidden>
+          <h2>企鹅小镇</h2>
+          <p id="online-player" class="entry-copy"></p>
+          <div class="lobby-actions">
+            <button id="enter-arena" class="entry-button" type="button">进入竞技场 <span aria-hidden="true">→</span></button>
+            <button id="online-logout" class="entry-demo" type="button">退出登录</button>
+          </div>
+        </div>
+        <p id="account-feedback" role="status"></p>
+      </section>
+    </div>
+  </main>
+  <main id="game-shell" class="shell">
     <header class="top">
       <div class="brand"><span class="brand-icon" aria-hidden="true">✦</span><strong>企鹅大乐斗</strong></div>
       <nav class="mode-nav" aria-label="出招模式">
@@ -23,20 +63,13 @@
     </header>
 
     <section id="online-panel" class="online-panel" aria-label="联机挑战" hidden>
-      <form id="online-login" class="online-form">
-        <label>登录区服 <select id="login-zone"><option value="1">1 服</option><option value="2">2 服</option></select></label>
-        <label>试玩口令 <input id="login-token" type="password" required autocomplete="off" pattern="[a-fA-F0-9]{32}"></label>
-        <button class="sound-toggle" type="submit">登录试玩</button>
-      </form>
       <div id="online-session" hidden>
-        <p id="online-player"></p>
+        <button id="back-lobby" class="sound-toggle" type="button">返回小镇</button>
         <form id="online-challenge" class="online-form">
           <label>对手区服 <select id="target-zone"><option value="1">1 服</option><option value="2">2 服</option></select></label>
           <label>角色编号 <input id="target-player" required maxlength="32" pattern="[a-zA-Z0-9]+"></label>
           <button id="challenge" class="sound-toggle" type="submit">挑战</button>
-          <button id="online-logout" class="sound-toggle" type="button">退出</button>
         </form>
-        <p id="online-hint"></p>
         <details>
           <summary>历史战报</summary>
           <ul id="battle-history"></ul>
@@ -110,7 +143,7 @@
     </section>
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
-  <script src="game.js?v=online-battles"></script>
-  <script src="online.js?v=online-battles"></script>
+  <script src="game.js?v=town-login"></script>
+  <script src="online.js?v=town-login"></script>
 </body>
 </html>

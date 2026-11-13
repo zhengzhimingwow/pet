@@ -3,7 +3,7 @@ const start = $('start'), again = $('again'), skip = $('skip'), result = $('resu
 const arenaMusic = $('arena-music'), musicToggle = $('music-toggle');
 const arena = $('arena'), game = arena.closest('.game'), speedToggle = $('speed-toggle');
 const queryParams = new URLSearchParams(location.search);
-const onlineMode = queryParams.has('online');
+const onlineMode = queryParams.has('online') || !queryParams.has('demo');
 const requestedDemo = queryParams.get('demo') ?? 'pan';
 const panAttack = {
  name:'抡下平底锅', label:'平底锅', draw:'掏出平底锅 🍳', damage:18, icon:'🍳',
