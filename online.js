@@ -564,7 +564,7 @@ if (onlineMode) {
  function weaponMoveLabel(move) {
   return `${move.name} · ${move.range === 'ranged' ? '远程' : '近战'}`;
  }
- function weaponCard(move, owned) {
+ function weaponCard(id, move, owned) {
   const item = document.createElement('li');
   const icon = document.createElement('span');
   icon.className = 'town-item-icon';
@@ -576,6 +576,12 @@ if (onlineMode) {
   const detail = document.createElement('small');
   detail.textContent = `${weaponMoveLabel(move)} · 基础伤害 ${move.damage}`;
   info.append(label, detail);
+  if (weaponEffects[id]) {
+   const effect = document.createElement('small');
+   effect.className = 'town-weapon-effect';
+   effect.textContent = weaponEffects[id];
+   info.append(effect);
+  }
   item.append(icon, info);
   if (owned !== undefined) {
    const state = document.createElement('span');
@@ -590,7 +596,7 @@ if (onlineMode) {
   const owned = new Set(session.progression.weapons);
   const catalog = Object.entries(weaponMoves).sort(([a], [b]) => Number(owned.has(b)) - Number(owned.has(a)));
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
-  weaponList.replaceChildren(...catalog.map(([id, move]) => weaponCard(move, owned.has(id))));
+  weaponList.replaceChildren(...catalog.map(([id, move]) => weaponCard(id, move, owned.has(id))));
  }
  $('open-weapon-collection').addEventListener('click', () => run(async () => {
   renderPlayer(await api(session.zone, '/session'));
@@ -741,6 +747,14 @@ if (onlineMode) {
      item.textContent = `${action}「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
     }
     events.append(item);
+    for (const effect of event.effects ?? []) {
+     const text = effectText(effect, names);
+     if (!text) continue;
+     const note = document.createElement('li');
+     note.className = 'town-battle-effect';
+     note.textContent = text;
+     events.append(note);
+    }
    }
    roundActions.append(title, events);
   }
@@ -841,9 +855,9 @@ if (onlineMode) {
   $('town-opponent-hp').textContent = player.max_hp;
   $('town-opponent-attack').textContent = player.attack;
   $('town-opponent-defense').textContent = player.defense;
-  const moves = progression.weapons.map(id => weaponMoves[id]).filter(Boolean);
   $('town-opponent-weapon-count').textContent = `已收集 ${progression.weapons.length} 把`;
-  $('town-opponent-weapons').replaceChildren(...moves.map(move => weaponCard(move)));
+  $('town-opponent-weapons').replaceChildren(...progression.weapons.filter(id => weaponMoves[id])
+   .map(id => weaponCard(id, weaponMoves[id])));
   $('town-opponent-weapons-empty').hidden = progression.weapons.length > 0;
   const skills = $('town-opponent-skills');
   skills.replaceChildren();

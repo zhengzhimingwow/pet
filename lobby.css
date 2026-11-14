@@ -334,6 +334,8 @@
   text-align: left;
 }
 .town-weapon-list small { display: block; color: var(--town-muted); overflow-wrap: anywhere; }
+.town-weapon-list .town-weapon-effect { margin-top: 4px; color: #365785; line-height: 1.45; }
+.town-damage-rounds .town-battle-effect { color: #4d468a; font-weight: 650; }
 #town-opponent-weapons li { grid-template-columns: auto minmax(0, 1fr); }
 .town-opponent-profile { display: grid; gap: 14px; }
 .town-opponent-profile-header {

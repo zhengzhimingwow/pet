@@ -24,6 +24,12 @@ const swordAttack = {
 };
 const weaponDemos = {pan:panAttack, blade:bladeAttack, sword:swordAttack};
 const weaponMoves = {...weaponDemos, ...customWeaponMoves};
+const weaponEffects = {
+ pan:'手麻 · 命中后，对手下一次命中的伤害降低 25%。',
+ sword:'破甲 · 命中时无视对手一半防御。',
+ blade:'斩杀 · 命中生命低于 30% 的对手时，伤害提高 35%。',
+ umbrella:'护盾 · 命中后获得一层护盾，抵挡下一次命中的最多 12 点伤害。',
+};
 const mode = Object.hasOwn(weaponMoves, requestedDemo) ? requestedDemo : 'normal';
 const demoAttack = onlineMode ? null : weaponMoves[mode];
 const punch = {name:'挥出一拳', damage:10, icon:'✦'};
@@ -208,6 +214,61 @@ function reportWeaponDraw({number, attacker, move, drawsFromPool}) {
  const action = drawsFromPool ? `抽到${move.label}` : move.draw;
  reportTurnEvent(number, `${fighterNames[attacker]}${action}！`);
 }
+function effectText(effect, names) {
+ const name = names[effect.side];
+ switch (effect.id) {
+  case 'numb': return `${name}进入手麻状态，下一次命中伤害降低 25%。`;
+  case 'numb_spent': return `${name}受手麻影响，这次命中少打 ${effect.amount} 点伤害。`;
+  case 'shield': return `${name}获得护盾，可抵挡下一次命中的最多 ${effect.amount} 点伤害。`;
+  case 'shield_spent': return `${name}的护盾抵挡了 ${effect.amount} 点伤害，护盾消失。`;
+  case 'pierce': return `轩辕剑无视 ${name}的 ${effect.value} 点防御，增加 ${effect.amount} 点计算伤害。`;
+  case 'execute': return `${name}生命低于 30%，青龙偃月刀追加 ${effect.amount} 点计算伤害。`;
+  default: return '';
+ }
+}
+
+function displayStatus(side, id, text) {
+ const fighter = $(side);
+ const badge = $('status-' + side + '-' + id);
+ fighter.classList.toggle('has-' + id, Boolean(text));
+ badge.textContent = text ?? '';
+ badge.hidden = !text;
+}
+
+function clearBattleStatuses() {
+ for (const side of ['left', 'right']) {
+  displayStatus(side, 'numb');
+  displayStatus(side, 'shield');
+  $('effect-' + side).classList.remove('show');
+ }
+}
+
+function showBattleEffects(events = []) {
+ const labels = {numb:'手麻', numb_spent:'攻击减弱', shield:'护盾', shield_spent:'格挡',
+  pierce:'破甲', execute:'斩杀加成'};
+ const callouts = {left:[], right:[]};
+ for (const event of events) {
+  for (const effect of event.effects ?? []) {
+   const {id, side, amount} = effect;
+   if (id === 'numb') displayStatus(side, 'numb', '手麻');
+   if (id === 'numb_spent') displayStatus(side, 'numb');
+   if (id === 'shield') displayStatus(side, 'shield', `护盾 ${amount}`);
+   if (id === 'shield_spent') displayStatus(side, 'shield');
+   if (labels[id]) callouts[side].push({id, text: amount == null ? labels[id] : `${labels[id]} ${amount}`});
+  }
+  if (event.kind === 'knockout') {
+   displayStatus(event.target, 'numb');
+   displayStatus(event.target, 'shield');
+  }
+ }
+ for (const [side, callout] of Object.entries(callouts)) {
+  if (!callout.length) continue;
+  const element = $('effect-' + side);
+  element.textContent = callout.map(effect => effect.text).join(' · ');
+  element.dataset.effect = callout.at(-1).id;
+  animate(element, 'show');
+ }
+}
 function reportTurnResult({number, attacker, defender, move, dodge, damage, remainingHp, events}) {
  const name = fighterNames[attacker], target = fighterNames[defender];
  if (events) {
@@ -218,6 +279,10 @@ function reportTurnResult({number, attacker, defender, move, dodge, damage, rema
    if (event.kind === 'hit') {
     const hit = event.critical ? '暴击' : '命中';
     reportTurnEvent(number, `${action}${hit}，对${target}造成 ${event.damage} 点伤害，实际扣血 ${event.applied_damage}，剩余 ${event.remaining_hp} 血。`);
+   }
+   for (const effect of event.effects ?? []) {
+    const text = effectText(effect, fighterNames);
+    if (text) reportTurnEvent(number, text);
    }
   }
   return;
@@ -290,12 +355,13 @@ async function playTurns(turns) {
    animate(defenderEl, 'dodge');
    showFloat(defender, '闪避！');
   } else {
-   animate(defenderEl, 'hit');
-   showFloat(defender, '−' + damage);
+   if (damage > 0) animate(defenderEl, 'hit');
+   showFloat(defender, damage > 0 ? '−' + damage : '抵挡');
    impactAt(attackerEl, defenderEl, melee, move);
    updateHp(defender, remainingHp);
    if (remainingHp === 0) defenderEl.classList.add('defeated');
   }
+  showBattleEffects(turn.events);
   reportTurnResult(turn);
   if (finishFlight) await finishFlight();
   if (skipping) return;
@@ -336,6 +402,7 @@ function showSkippedOutcome(hp, turns) {
   updateHp(side, hp[side]);
  }
  arena.classList.remove('shake');
+ clearBattleStatuses();
  $('impact').classList.remove('show');
  $('dust').classList.remove('show');
  logs.replaceChildren();
@@ -374,6 +441,7 @@ async function playBattle({turns, hp, winner, players, damageTotals, rewardText}
  $('action-desc').textContent = '小选手们正在全力以赴。';
  logs.replaceChildren();
  showDamageTotals(null);
+ clearBattleStatuses();
  for (const side of Object.keys(hp)) {
   $(side).classList.remove('defeated');
   if (players) {
@@ -387,6 +455,7 @@ async function playBattle({turns, hp, winner, players, damageTotals, rewardText}
  say(battleOpening);
  await playTurns(turns);
  if (skipping) showSkippedOutcome(hp, turns);
+ else clearBattleStatuses();
  const winningSide = winner ?? (hp.left > 0 ? 'left' : 'right');
  const title = winningSide === 'draw' ? '平局' : fighterNames[winningSide] + '获胜！';
  const completedRounds = Math.floor(turns.length / 2);

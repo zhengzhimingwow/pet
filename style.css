@@ -149,6 +149,72 @@ button { font: inherit; cursor: pointer; }
   pointer-events: none;
 }
 .floating.show { animation: float-up .85s cubic-bezier(.2,.74,.3,1) both; }
+.effect-float {
+  position: absolute;
+  z-index: 6;
+  top: 28px;
+  left: 50%;
+  translate: -50% 0;
+  max-width: 140px;
+  padding: 3px 8px;
+  border-radius: 9px;
+  background: #42275c;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+}
+.effect-float[data-effect^="shield"] { background: #235a94; }
+.effect-float[data-effect="execute"] { background: #863747; }
+.effect-float[data-effect="pierce"] { background: #655021; }
+.effect-float.show { animation: effect-callout 1.25s ease-out both; }
+@keyframes effect-callout {
+  0% { opacity: 0; transform: translateY(4px); }
+  11%, 75% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+.fighter.has-shield::before {
+  content: "";
+  position: absolute;
+  inset: 17% 2% 5%;
+  border: 3px solid #87dcff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #80d7ff, inset 0 0 17px #9bdeff90;
+  pointer-events: none;
+  z-index: 2;
+}
+.fighter.has-numb::after {
+  content: "✦ · ✦";
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  translate: -50% 0;
+  color: #fff0a9;
+  font-size: 18px;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px #59398f, 0 0 7px #9f69ed;
+  pointer-events: none;
+  z-index: 2;
+}
+.battle-status-list { display: flex; gap: 5px; flex-wrap: wrap; }
+.battle-status {
+  margin-top: 5px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.battle-status.numb { background: #f2e8fc; color: #543273; }
+.battle-status.shield { background: #dceeff; color: #215287; }
+@media (prefers-reduced-motion: reduce) {
+  .effect-float.show { animation-name: effect-callout-fade; }
+  @keyframes effect-callout-fade {
+    0%, 95% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
 @keyframes float-up {
   0% { opacity: 0; transform: translateY(4px) scale(.72); }
   17% { opacity: 1; transform: translateY(-6px) scale(1.16); }

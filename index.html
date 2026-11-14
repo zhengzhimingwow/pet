@@ -11,8 +11,8 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=zone-art-fit">
-  <link rel="stylesheet" href="lobby.css?v=attribute-tooltip">
+  <link rel="stylesheet" href="style.css?v=weapon-effects">
+  <link rel="stylesheet" href="lobby.css?v=weapon-effects">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -343,12 +343,14 @@
           <div class="shadow"></div>
           <div class="fighter-art fighter-art-left" role="img" aria-label="蓝围巾企鹅小团子"></div>
           <div class="floating" id="float-left"></div>
+          <div class="effect-float" id="effect-left" aria-hidden="true"></div>
         </div>
         <div class="vs" aria-hidden="true">VS</div>
         <div class="fighter right" id="right">
           <div class="shadow"></div>
           <div class="fighter-art fighter-art-right" role="img" aria-label="红围巾企鹅大壮"></div>
           <div class="floating" id="float-right"></div>
+          <div class="effect-float" id="effect-right" aria-hidden="true"></div>
         </div>
         <div class="dust" id="dust" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
         <div class="impact" id="impact" aria-hidden="true">
@@ -370,10 +372,12 @@
         <div class="status">
           <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b><span id="name-left">小团子</span></b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-left"></div></div>
+          <div class="battle-status-list"><span id="status-left-numb" class="battle-status numb" hidden></span><span id="status-left-shield" class="battle-status shield" hidden></span></div>
         </div>
         <div class="status status-right">
           <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b><span id="name-right">大壮</span></b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-right"></div></div>
+          <div class="battle-status-list"><span id="status-right-numb" class="battle-status numb" hidden></span><span id="status-right-shield" class="battle-status shield" hidden></span></div>
         </div>
       </div>
     </section>
@@ -392,7 +396,7 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
-  <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=gm-inventory-refresh"></script>
+  <script src="game.js?v=weapon-effects"></script>
+  <script src="online.js?v=weapon-effects"></script>
 </body>
 </html>
