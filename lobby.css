@@ -8,14 +8,12 @@
   background: radial-gradient(ellipse at 48% 0%, #284b7b, transparent 70%), #101a33;
   color: var(--town-ink);
 }
-.town-game-header, .town-game-brand, .town-game-account {
+.town-game-header, .town-game-account {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.town-game-header { justify-content: space-between; margin-bottom: 16px; color: #eef5ff; }
-.town-game-brand { font: 900 clamp(20px, 3vw, 28px)/1.1 Nunito, 'PingFang SC', sans-serif; }
-.town-game-brand .brand-icon { background: #ffcf64; color: #2b3560; box-shadow: none; }
+.town-game-header { justify-content: flex-end; margin-bottom: 16px; color: #eef5ff; }
 .town-game-account { font-size: 13px; flex-wrap: wrap; justify-content: flex-end; }
 .town-zone { padding: 5px 11px; border-radius: 6px; background: #d8e8ff24; font-weight: 800; }
 .town-game-account button {
@@ -38,20 +36,7 @@
   border-radius: 14px;
   background: #82b3cf url('assets/penguin-city.webp') center 54% / cover no-repeat;
 }
-.town-stage h1 {
-  position: absolute;
-  z-index: 2;
-  top: 18px;
-  left: 18px;
-  margin: 0;
-  padding: 7px 14px;
-  border: 1px solid #d5e7ff8f;
-  border-radius: 8px;
-  background: #17294de8;
-  color: #f7faff;
-  font: 900 clamp(18px, 2.6vw, 25px)/1.25 Nunito, 'PingFang SC', sans-serif;
-}
-.town-stage h1:focus { outline: none; }
+.town-stage:focus { outline: none; }
 .town-pet {
   position: absolute;
   bottom: 6%;
@@ -85,6 +70,52 @@
 }
 .town-profile-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .town-profile-name h2 { margin: 0; font-size: clamp(18px, 2.4vw, 23px); overflow-wrap: anywhere; }
+#open-avatar-picker {
+  flex: none;
+  width: 50px;
+  height: 50px;
+  padding: 2px;
+  border: 1px solid #9dbbe6;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px #254e8422;
+}
+#open-avatar-picker:hover { border-color: #3878cf; }
+#town-player-avatar, .town-avatar-options img, .town-opponent-avatar {
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+  aspect-ratio: 1;
+}
+#town-player-avatar { width: 100%; }
+.town-opponent-avatar { width: 34px; flex: none; }
+.town-avatar-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 105px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.town-avatar-options button {
+  display: grid;
+  width: 100%;
+  min-height: 134px;
+  padding: 9px 4px;
+  grid-template-rows: auto auto 1fr;
+  justify-items: center;
+  gap: 5px;
+  border: 1px solid var(--town-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--town-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.town-avatar-options button:hover { background: #f1f6ff; }
+.town-avatar-options button[aria-pressed="true"] { border-color: #3878cf; background: #e7f1ff; }
+.town-avatar-options img { width: 64px; max-width: 100%; }
+.town-avatar-options small { color: #244e84; }
 #town-level {
   flex: none;
   padding: 4px 7px;
@@ -432,11 +463,8 @@
 @media (max-width: 720px) {
   .town-game { padding: 15px 12px 24px; }
   .town-game-layout { grid-template-columns: 1fr; }
-  .town-game-header, .town-game-brand, .town-game-account { gap: 6px; }
+  .town-game-header, .town-game-account { gap: 6px; }
   .town-game-account button { padding-inline: 4px; }
-}
-@media (max-width: 580px) {
-  .town-stage h1 { top: 12px; left: 12px; }
 }
 @container (max-width: 600px) {
   .town-battle-view .status-row { grid-template-columns: 1fr; gap: 12px; }

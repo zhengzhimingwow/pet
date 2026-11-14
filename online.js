@@ -2,6 +2,11 @@ if (onlineMode) {
  const entry = $('account-entry');
  const lobby = $('account-lobby');
  const townStage = $('town-stage');
+ const avatarDialog = $('town-avatar-dialog');
+ const avatarPicker = $('open-avatar-picker');
+ const avatarOptions = $('town-avatar-options');
+ const avatarFeedback = $('town-avatar-feedback');
+ const avatarChoices = {blue:'蓝围巾', red:'红围巾', green:'薄荷帽', gold:'星星领结'};
  const battleView = $('town-battle-view');
  const townFeedback = $('town-feedback');
  const closeBattleResult = $('close-battle-result');
@@ -149,7 +154,7 @@ if (onlineMode) {
  zoneEnter.addEventListener('click', () => run(async () => {
   if (!selectedZone) return;
   acceptSession(await api(selectedZone.id, '/enter', {}));
-  $('town-title').focus();
+  townStage.focus();
   await Promise.all([refreshOpponents(), refreshHistory()]);
  }));
 
@@ -167,6 +172,7 @@ if (onlineMode) {
   const {player, zone, progression} = data;
   $('town-zone').textContent = `${zone} 服`;
   $('town-player-name').textContent = player.name;
+  $('town-player-avatar').src = avatarUrl(player.avatar_id);
   $('online-player').textContent = `UID ${player.player_id}`;
   $('town-hp').textContent = player.max_hp;
   $('town-attack').textContent = player.attack;
@@ -184,6 +190,62 @@ if (onlineMode) {
   $('town-xp-remaining').textContent = `距升级还差 ${progression.next_level_xp - progression.xp} 经验`;
   if (weaponDialog.open) renderWeaponCollection();
  }
+
+ function avatarUrl(id) {
+  return `assets/avatar-${Object.hasOwn(avatarChoices, id) ? id : 'blue'}.jpg`;
+ }
+
+ function updateAvatarSelection() {
+  const current = session.player.avatar_id ?? 'blue';
+  for (const button of avatarOptions.querySelectorAll('button')) {
+   const selected = button.dataset.avatar === current;
+   button.setAttribute('aria-pressed', String(selected));
+   button.querySelector('small').hidden = !selected;
+  }
+ }
+
+ for (const [id, label] of Object.entries(avatarChoices)) {
+  const item = document.createElement('li');
+  const button = document.createElement('button');
+  const portrait = document.createElement('img');
+  const name = document.createElement('span');
+  const selected = document.createElement('small');
+  button.type = 'button';
+  button.dataset.avatar = id;
+  button.setAttribute('aria-label', label);
+  portrait.src = avatarUrl(id);
+  portrait.alt = '';
+  name.textContent = label;
+  selected.textContent = '使用中';
+  selected.hidden = true;
+  button.append(portrait, name, selected);
+  button.addEventListener('click', () => {
+   if (id === session.player.avatar_id) return;
+   run(async () => {
+    avatarFeedback.textContent = '';
+    try {
+     const {avatar_id} = await api(session.zone, '/avatar', {avatar_id:id});
+     session.player.avatar_id = avatar_id;
+     $('town-player-avatar').src = avatarUrl(avatar_id);
+     updateAvatarSelection();
+     avatarFeedback.textContent = `已更换为「${label}」`;
+    } catch (error) {
+     if (error.code === 'unauthorized') {
+      if (avatarDialog.open) avatarDialog.close();
+      throw error;
+     }
+     avatarFeedback.textContent = error.code ? error.message : messages.unavailable;
+    }
+   });
+  });
+  item.append(button);
+  avatarOptions.append(item);
+ }
+ avatarPicker.addEventListener('click', () => {
+  avatarFeedback.textContent = '';
+  updateAvatarSelection();
+  avatarDialog.showModal();
+ });
 
  function weaponMoveLabel(move) {
   return `${move.name} · ${move.range === 'ranged' ? '远程' : '近战'}`;
@@ -270,6 +332,8 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
   openSkillCollection.disabled = value;
+  avatarPicker.disabled = value;
+  for (const button of avatarOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
   for (const button of opponentsList.querySelectorAll('button')) button.disabled = value;
@@ -457,13 +521,14 @@ if (onlineMode) {
   const {opponents} = await api(session.zone, '/opponents');
   opponentsList.replaceChildren(...opponents.map(player => {
    const row = document.createElement('li');
-   const avatar = document.createElement('span');
+   const avatar = document.createElement('img');
    const details = document.createElement('span');
    const name = document.createElement('strong');
    const uid = document.createElement('small');
    const button = document.createElement('button');
-   avatar.className = 'avatar';
-   avatar.setAttribute('aria-hidden', 'true');
+   avatar.className = 'town-opponent-avatar';
+   avatar.src = avatarUrl(player.avatar_id);
+   avatar.alt = '';
    details.className = 'town-opponent-details';
    name.textContent = player.name;
    uid.textContent = `UID ${player.player_id}`;
@@ -593,7 +658,7 @@ if (onlineMode) {
 
  function returnToSquare() {
   showEntry();
-  $('town-title').focus();
+  townStage.focus();
  }
 
  closeBattleResult.addEventListener('click', returnToSquare);
