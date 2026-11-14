@@ -29,7 +29,31 @@ const weaponEffects = {
  sword:'破甲 · 命中时无视对手一半防御。',
  blade:'斩杀 · 命中生命低于 30% 的对手时，伤害提高 35%。',
  umbrella:'护盾 · 命中后获得一层护盾，抵挡下一次命中的最多 12 点伤害。',
+ hammer:'碎盾 · 命中时击碎护盾，本次攻击不被该护盾减伤。',
+ bat:'开场重击 · 对生命至少还有 70% 的对手额外造成 7 点伤害。',
+ broom:'露出破绽 · 命中后，己方下次具备连击条件时必定追加连击。',
+ spatula:'翻身 · 命中后清除自身减益，并恢复最多 4 点生命。',
+ boxing:'补拳 · 主击命中且对手未倒下时，追加一拳，基础伤害 5 点。',
+ yo_yo:'专注 · 命中后，下次主击命中的暴击率提高 20 个百分点。',
+ boomerang:'折返 · 首击被闪避时，折返追击，基础伤害 5 点。',
+ snowball:'冰冷 · 命中后，对手下一次主击命中无法暴击。',
+ water:'浸湿 · 命中后，对手下一次受击的计算伤害增加 5 点。',
+ fan:'借风 · 命中后，下次被主击时的闪避率提高 18 个百分点。',
+ slipper:'精准 · 使对手对本次攻击的闪避率降低 12 个百分点。',
+ carrot:'急救 · 自身生命低于 50% 时，命中后恢复最多 10 点生命。',
+ fish:'盐渍 · 命中后，对手接下来两次受击的计算伤害各增加 3 点。',
+ guitar:'封招 · 命中后，对手下一次主击命中无法触发连击功法。',
+ rubber_duck:'分心 · 命中后，对手下一次主击被闪避的概率提高 12 个百分点。',
+ lantern:'灯火 · 命中后，接下来两次命中各恢复最多 4 点生命。',
 };
+const battleStatusLabels = {numb:'手麻', shield:'护盾', opening:'破绽', focus:'专注',
+ chill:'冰冷', soak:'浸湿', tailwind:'借风', salt:'盐渍', silence:'封招', distract:'分心', glow:'灯火'};
+const battleEffectLabels = {...battleStatusLabels, numb_spent:'攻击减弱', shield_spent:'格挡',
+ pierce:'破甲', execute:'斩杀加成', opening_hit:'开场重击', shatter:'碎盾', opening_spent:'破绽连击',
+ cleanse:'清除减益', spatula_heal:'翻身回血', carrot_heal:'急救回血', glow_heal:'灯火回血',
+ jab:'补拳', focus_spent:'专注生效', return_hit:'折返追击', chill_spent:'冰冷生效',
+ soak_spent:'浸湿增伤', tailwind_spent:'借风生效', accurate:'精准', salt_spent:'盐渍增伤',
+ silence_spent:'连击封锁', distract_spent:'分心生效'};
 const mode = Object.hasOwn(weaponMoves, requestedDemo) ? requestedDemo : 'normal';
 const demoAttack = onlineMode ? null : weaponMoves[mode];
 const punch = {name:'挥出一拳', damage:10, icon:'✦'};
@@ -223,42 +247,84 @@ function effectText(effect, names) {
   case 'shield_spent': return `${name}的护盾抵挡了 ${effect.amount} 点伤害，护盾消失。`;
   case 'pierce': return `轩辕剑无视 ${name}的 ${effect.value} 点防御，增加 ${effect.amount} 点计算伤害。`;
   case 'execute': return `${name}生命低于 30%，青龙偃月刀追加 ${effect.amount} 点计算伤害。`;
+  case 'shatter': return `玩具锤击碎了${name}的护盾，跳过本次护盾减伤。`;
+  case 'opening_hit': return `${name}生命至少还有 70%，棒球棍额外打出 ${effect.amount} 点计算伤害。`;
+  case 'opening': return `${name}露出破绽，对手下次具备连击条件时必定连击。`;
+  case 'opening_spent': return `${name}的破绽被抓住，触发连击。`;
+  case 'cleanse': return `${name}清除了${battleStatusLabels[effect.status]}。`;
+  case 'spatula_heal': case 'carrot_heal': case 'glow_heal':
+   return `${name}触发${battleEffectLabels[effect.id]}，恢复 ${effect.amount} 点生命，当前生命 ${effect.hp}。`;
+  case 'jab': return `拳击手套对${name}追加一拳。`;
+  case 'return_hit': return `回旋镖折返，追击${name}。`;
+  case 'focus': return `${name}获得专注，下次主击命中的暴击率提高 20 个百分点。`;
+  case 'focus_spent': return `${name}的专注生效，本次暴击率提高 ${effect.amount} 个百分点。`;
+  case 'chill': return `${name}进入冰冷状态，下次主击命中无法暴击。`;
+  case 'chill_spent': return `${name}受到冰冷影响，本次主击无法暴击。`;
+  case 'soak': return `${name}被浸湿，下次受击的计算伤害增加 5 点。`;
+  case 'soak_spent': return `${name}受到浸湿影响，本次计算伤害增加 ${effect.amount} 点。`;
+  case 'tailwind': return `${name}获得借风，下次被主击时闪避率提高 18 个百分点。`;
+  case 'tailwind_spent': return `${name}的借风生效，本次闪避率提高 ${effect.amount} 个百分点。`;
+  case 'accurate': return `${name}触发精准，本次目标的闪避率降低 ${effect.amount} 个百分点。`;
+  case 'salt': return `${name}沾上盐渍，接下来两次受击的计算伤害各增加 3 点。`;
+  case 'salt_spent': return `${name}的盐渍使本次计算伤害增加 ${effect.amount} 点，还剩 ${effect.remaining} 次。`;
+  case 'silence': return `${name}被封招，下次主击命中无法触发连击。`;
+  case 'silence_spent': return `${name}的封招生效，本次主击不会触发连击。`;
+  case 'distract': return `${name}进入分心状态，下次主击被闪避的概率提高 12 个百分点。`;
+  case 'distract_spent': return `${name}受到分心影响，本次目标的闪避率提高 ${effect.amount} 个百分点。`;
+  case 'glow': return `${name}获得灯火，接下来两次命中各恢复最多 4 点生命。`;
+  case 'glow_spent': return `${name}消耗一层灯火，还剩 ${effect.remaining} 次。`;
   default: return '';
  }
 }
 
 function displayStatus(side, id, text) {
  const fighter = $(side);
- const badge = $('status-' + side + '-' + id);
+ const list = $('status-' + side);
+ let badge = list.querySelector(`[data-status="${id}"]`);
  fighter.classList.toggle('has-' + id, Boolean(text));
- badge.textContent = text ?? '';
- badge.hidden = !text;
+ if (!text) return badge?.remove();
+ if (!badge) {
+  badge = document.createElement('span');
+  badge.className = 'battle-status ' + id;
+  badge.dataset.status = id;
+  list.append(badge);
+ }
+ badge.textContent = text;
 }
 
+function clearSideStatuses(side) {
+ for (const badge of $('status-' + side).children) $(side).classList.remove('has-' + badge.dataset.status);
+ $('status-' + side).replaceChildren();
+}
 function clearBattleStatuses() {
  for (const side of ['left', 'right']) {
-  displayStatus(side, 'numb');
-  displayStatus(side, 'shield');
+  clearSideStatuses(side);
   $('effect-' + side).classList.remove('show');
  }
 }
 
 function showBattleEffects(events = []) {
- const labels = {numb:'手麻', numb_spent:'攻击减弱', shield:'护盾', shield_spent:'格挡',
-  pierce:'破甲', execute:'斩杀加成'};
  const callouts = {left:[], right:[]};
  for (const event of events) {
   for (const effect of event.effects ?? []) {
    const {id, side, amount} = effect;
-   if (id === 'numb') displayStatus(side, 'numb', '手麻');
-   if (id === 'numb_spent') displayStatus(side, 'numb');
-   if (id === 'shield') displayStatus(side, 'shield', `护盾 ${amount}`);
-   if (id === 'shield_spent') displayStatus(side, 'shield');
-   if (labels[id]) callouts[side].push({id, text: amount == null ? labels[id] : `${labels[id]} ${amount}`});
+   if (effect.status && Object.hasOwn(battleStatusLabels, effect.status)) {
+    const count = effect.remaining > 1 ? ` ${effect.remaining}` : '';
+    displayStatus(side, effect.status, effect.remaining ? battleStatusLabels[effect.status] + count : null);
+   } else if (id === 'numb' || id === 'shield') {
+    displayStatus(side, id, id === 'shield' ? `护盾 ${amount}` : '手麻');
+   } else if (id === 'numb_spent' || id === 'shield_spent') {
+    displayStatus(side, id === 'numb_spent' ? 'numb' : 'shield');
+   }
+   if (effect.hp != null) updateHp(side, effect.hp);
+   const label = battleEffectLabels[id];
+   if (label) {
+    const suffix = effect.hp != null ? ` +${amount}` : amount != null && id !== 'chill_spent' ? ` ${amount}` : '';
+    callouts[side].push({id, text:label + suffix});
+   }
   }
   if (event.kind === 'knockout') {
-   displayStatus(event.target, 'numb');
-   displayStatus(event.target, 'shield');
+   clearSideStatuses(event.target);
   }
  }
  for (const [side, callout] of Object.entries(callouts)) {
@@ -351,19 +417,38 @@ async function playTurns(turns) {
   if (skipping) return;
   const finishFlight = move.flight && await launchWeapon(move, custom.prop, defenderEl);
   if (skipping) return;
+  const showHit = (amount, hp, attack = move) => {
+   if (amount > 0) animate(defenderEl, 'hit');
+   showFloat(defender, amount > 0 ? '−' + amount : '抵挡');
+   impactAt(attackerEl, defenderEl, melee, attack);
+   updateHp(defender, hp);
+   if (hp === 0) defenderEl.classList.add('defeated');
+  };
+  const hits = turn.events;
   if (dodge) {
    animate(defenderEl, 'dodge');
    showFloat(defender, '闪避！');
-  } else {
-   if (damage > 0) animate(defenderEl, 'hit');
-   showFloat(defender, damage > 0 ? '−' + damage : '抵挡');
-   impactAt(attackerEl, defenderEl, melee, move);
-   updateHp(defender, remainingHp);
-   if (remainingHp === 0) defenderEl.classList.add('defeated');
+  } else if (!hits) {
+   showHit(damage, remainingHp);
   }
-  showBattleEffects(turn.events);
+  if (hits?.length) {
+   if (hits[0].kind === 'hit') showHit(hits[0].applied_damage, hits[0].remaining_hp);
+   showBattleEffects([hits[0]]);
+  }
   reportTurnResult(turn);
-  if (finishFlight) await finishFlight();
+  const returningHit = hits?.some(event => event.effects?.some(effect => effect.id === 'return_hit'));
+  if (finishFlight && !returningHit) await finishFlight();
+  if (skipping) return;
+  for (const event of hits?.slice(1) ?? []) {
+   if (event.kind === 'hit') {
+    await wait(260);
+    if (skipping) return;
+    defenderEl.classList.remove('dodge');
+    showHit(event.applied_damage, event.remaining_hp, returningHit ? move : punch);
+   }
+   showBattleEffects([event]);
+  }
+  if (finishFlight && returningHit) await finishFlight();
   if (skipping) return;
   if (!dodge) {
    if (custom) await wait(demoAttack ? 220 : 85);

@@ -743,7 +743,7 @@ if (onlineMode) {
     } else {
      const calculated = event.damage !== event.applied_damage ? `（计算伤害 ${event.damage}）` : '';
      const critical = event.critical ? '（暴击）' : '';
-     const action = event.source_id === 'combo' ? '追加连击' : '出招';
+     const action = event.source_id === 'combo' ? '追加连击' : event.source_type === 'effect' ? '追击' : '出招';
      item.textContent = `${action}「${move}」${critical}，${defender} 扣血 ${event.applied_damage}${calculated}，剩余生命 ${event.remaining_hp}。`;
     }
     events.append(item);

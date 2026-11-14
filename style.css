@@ -169,6 +169,9 @@ button { font: inherit; cursor: pointer; }
 .effect-float[data-effect^="shield"] { background: #235a94; }
 .effect-float[data-effect="execute"] { background: #863747; }
 .effect-float[data-effect="pierce"] { background: #655021; }
+.effect-float:is([data-effect$="_heal"], [data-effect="cleanse"]) { background: #235e49; }
+.effect-float:is([data-effect^="soak"], [data-effect^="chill"], [data-effect^="tailwind"]) { background: #225578; }
+.effect-float:is([data-effect="shatter"], [data-effect="return_hit"], [data-effect="jab"]) { background: #783c43; }
 .effect-float.show { animation: effect-callout 1.25s ease-out both; }
 @keyframes effect-callout {
   0% { opacity: 0; transform: translateY(4px); }
@@ -205,9 +208,14 @@ button { font: inherit; cursor: pointer; }
   border-radius: 6px;
   font-size: 11px;
   font-weight: 800;
+  background: #eee6f8;
+  color: #543273;
 }
 .battle-status.numb { background: #f2e8fc; color: #543273; }
 .battle-status.shield { background: #dceeff; color: #215287; }
+.battle-status:is(.focus, .glow, .tailwind) { background: #e1f2e9; color: #235e49; }
+.battle-status:is(.soak, .chill) { background: #ddf1ff; color: #225578; }
+.battle-status:is(.opening, .salt) { background: #fae8db; color: #773f1e; }
 @media (prefers-reduced-motion: reduce) {
   .effect-float.show { animation-name: effect-callout-fade; }
   @keyframes effect-callout-fade {

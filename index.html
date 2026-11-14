@@ -11,7 +11,7 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=weapon-effects">
+  <link rel="stylesheet" href="style.css?v=full-weapon-effects">
   <link rel="stylesheet" href="lobby.css?v=weapon-effects">
 </head>
 <body>
@@ -372,12 +372,12 @@
         <div class="status">
           <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b><span id="name-left">小团子</span></b><em>Lv. 5</em></div><strong id="hp-left-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-left"></div></div>
-          <div class="battle-status-list"><span id="status-left-numb" class="battle-status numb" hidden></span><span id="status-left-shield" class="battle-status shield" hidden></span></div>
+          <div id="status-left" class="battle-status-list"></div>
         </div>
         <div class="status status-right">
           <div class="status-title"><div><span class="avatar" aria-hidden="true"></span><b><span id="name-right">大壮</span></b><em>Lv. 5</em></div><strong id="hp-right-text">100 / 100</strong></div>
           <div class="bar"><div class="bar-ghost"></div><div class="bar-fill" id="hp-right"></div></div>
-          <div class="battle-status-list"><span id="status-right-numb" class="battle-status numb" hidden></span><span id="status-right-shield" class="battle-status shield" hidden></span></div>
+          <div id="status-right" class="battle-status-list"></div>
         </div>
       </div>
     </section>
@@ -396,7 +396,7 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
-  <script src="game.js?v=weapon-effects"></script>
-  <script src="online.js?v=weapon-effects"></script>
+  <script src="game.js?v=full-weapon-effects"></script>
+  <script src="online.js?v=full-weapon-effects"></script>
 </body>
 </html>
