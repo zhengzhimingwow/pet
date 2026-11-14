@@ -42,7 +42,7 @@ const weaponEffects = {
  slipper:'精准 · 使对手对本次攻击的闪避率降低 12 个百分点。',
  carrot:'急救 · 自身生命低于 50% 时，命中后恢复最多 10 点生命。',
  fish:'盐渍 · 命中后，对手接下来两次受击的计算伤害各增加 3 点。',
- guitar:'封招 · 命中后，对手下一次主击命中无法触发连击功法。',
+ guitar:'封招 · 命中后，对手暂时无法追加招式，直到下一次主击命中消耗封招。',
  rubber_duck:'分心 · 命中后，对手下一次主击被闪避的概率提高 12 个百分点。',
  lantern:'灯火 · 命中后，接下来两次命中各恢复最多 4 点生命。',
 };
@@ -53,7 +53,14 @@ const battleEffectLabels = {...battleStatusLabels, numb_spent:'攻击减弱', sh
  cleanse:'清除减益', spatula_heal:'翻身回血', carrot_heal:'急救回血', glow_heal:'灯火回血',
  jab:'补拳', focus_spent:'专注生效', return_hit:'折返追击', chill_spent:'冰冷生效',
  soak_spent:'浸湿增伤', tailwind_spent:'借风生效', accurate:'精准', salt_spent:'盐渍增伤',
- silence_spent:'连击封锁', distract_spent:'分心生效'};
+ silence_spent:'封招生效', distract_spent:'分心生效',
+ dragon_regret:'亢龙有悔', dragon_flight:'飞龙在天', dragon_guard:'见龙在田', out_of_nowhere:'无中生有',
+ palm_break:'破掌式', dragon_rest:'潜龙勿用', energy_break:'破气式', dead_end:'穷途末路',
+ dragon_rest_heal:'潜龙回气', energy_break_pierce:'无视防御'};
+const techniqueColors = {
+ dragon_regret:'#ffba5a', dragon_flight:'#ffed9f', out_of_nowhere:'#a9b6ff',
+ palm_break:'#c6eeff', energy_break:'#7be8e1', dead_end:'#ff94a7',
+};
 const mode = Object.hasOwn(weaponMoves, requestedDemo) ? requestedDemo : 'normal';
 const demoAttack = onlineMode ? null : weaponMoves[mode];
 const punch = {name:'挥出一拳', damage:10, icon:'✦'};
@@ -257,7 +264,7 @@ function effectText(effect, names) {
   case 'opening': return `${name}露出破绽，对手下次具备连击条件时必定连击。`;
   case 'opening_spent': return `${name}的破绽被抓住，触发连击。`;
   case 'cleanse': return `${name}清除了${battleStatusLabels[effect.status]}。`;
-  case 'spatula_heal': case 'carrot_heal': case 'glow_heal':
+  case 'spatula_heal': case 'carrot_heal': case 'glow_heal': case 'dragon_rest_heal':
    return `${name}触发${battleEffectLabels[effect.id]}，恢复 ${effect.amount} 点生命，当前生命 ${effect.hp}。`;
   case 'jab': return `拳击手套对${name}追加一拳。`;
   case 'return_hit': return `回旋镖折返，追击${name}。`;
@@ -272,12 +279,13 @@ function effectText(effect, names) {
   case 'accurate': return `${name}触发精准，本次目标的闪避率降低 ${effect.amount} 个百分点。`;
   case 'salt': return `${name}沾上盐渍，接下来两次受击的计算伤害各增加 3 点。`;
   case 'salt_spent': return `${name}的盐渍使本次计算伤害增加 ${effect.amount} 点，还剩 ${effect.remaining} 次。`;
-  case 'silence': return `${name}被封招，下次主击命中无法触发连击。`;
-  case 'silence_spent': return `${name}的封招生效，本次主击不会触发连击。`;
+  case 'silence': return `${name}被封招，下一次主击命中前无法追加招式。`;
+  case 'silence_spent': return `${name}的封招生效，本次主击不会追加招式。`;
   case 'distract': return `${name}进入分心状态，下次主击被闪避的概率提高 12 个百分点。`;
   case 'distract_spent': return `${name}受到分心影响，本次目标的闪避率提高 ${effect.amount} 个百分点。`;
   case 'glow': return `${name}获得灯火，接下来两次命中各恢复最多 4 点生命。`;
   case 'glow_spent': return `${name}消耗一层灯火，还剩 ${effect.remaining} 次。`;
+  case 'energy_break_pierce': return `破气式无视${name}的 ${effect.value} 点防御。`;
   default: return '';
  }
 }
@@ -344,13 +352,16 @@ function reportTurnResult({number, attacker, defender, move, dodge, damage, rema
  const name = fighterNames[attacker], target = fighterNames[defender];
  if (events) {
   for (const event of events) {
-   const action = `${name}的【${event.source_name}·${event.move_name}】`;
+   const label = event.source_type === 'skill' && event.source_id !== 'combo'
+    ? event.source_name : `${event.source_name}·${event.move_name}`;
+   const action = `${name}的【${label}】`;
    if (event.kind === 'knockout') reportTurnEvent(number, target + '倒下了！');
    if (event.kind === 'dodge') reportTurnEvent(number, action + '被' + target + '闪避。');
    if (event.kind === 'hit') {
     const hit = event.critical ? '暴击' : '命中';
     reportTurnEvent(number, `${action}${hit}，对${target}造成 ${event.damage} 点伤害，实际扣血 ${event.applied_damage}，剩余 ${event.remaining_hp} 血。`);
    }
+   if (event.kind === 'support') reportTurnEvent(number, `${name}施展【${label}】。`);
    for (const effect of event.effects ?? []) {
     const text = effectText(effect, fighterNames);
     if (text) reportTurnEvent(number, text);
@@ -444,12 +455,17 @@ async function playTurns(turns) {
   const returningHit = hits?.some(event => event.effects?.some(effect => effect.id === 'return_hit'));
   if (finishFlight && !returningHit) await finishFlight();
   if (skipping) return;
-  for (const event of hits?.slice(1) ?? []) {
-   if (event.kind === 'hit') {
-    await wait(260);
+ for (const event of hits?.slice(1) ?? []) {
+   const technique = event.source_type === 'skill' && event.source_id !== 'combo';
+   if (technique || event.kind === 'hit') {
+    await wait(technique ? 340 : 260);
     if (skipping) return;
+   }
+   if (event.kind === 'hit') {
     defenderEl.classList.remove('dodge');
-    showHit(event.applied_damage, event.remaining_hp, returningHit ? move : punch);
+    const impactMove = technique ? {color:techniqueColors[event.source_id]}
+     : event.effects?.some(effect => effect.id === 'return_hit') ? move : punch;
+    showHit(event.applied_damage, event.remaining_hp, impactMove);
    }
    showBattleEffects([event]);
   }

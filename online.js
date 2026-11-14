@@ -70,6 +70,7 @@ if (onlineMode) {
  const openCharacterDetails = $('open-character-details');
  const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
+ const skillList = $('town-skill-list');
  const opponentPanel = $('town-opponent-panel');
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
@@ -261,9 +262,7 @@ if (onlineMode) {
    $(`town-${id}`).textContent = total;
    $(`town-${id}-breakdown`).textContent = `基础${label} ${total - growth} · 升级成长 +${growth}`;
   }
-  const hasCombo = player.skill_id === 'combo';
-  $('town-combo-skill').hidden = !hasCombo;
-  $('town-skill-empty').hidden = hasCombo;
+  if (!skillPanel.hidden) renderTechniques(skillList, progression.techniques);
   $('town-level').textContent = `Lv. ${progression.level}`;
   $('town-xp').max = progression.next_level_xp;
   $('town-xp').value = progression.xp;
@@ -274,6 +273,31 @@ if (onlineMode) {
   $('town-coins').textContent = `${data.inventory.coins} 金币`;
   if (!shopPanel.hidden) renderShop();
   if (!inventoryPanel.hidden) renderInventory();
+ }
+
+ function renderTechniques(container, techniques = []) {
+  container.replaceChildren(...techniques.map(technique => {
+   const card = document.createElement('article');
+   const icon = document.createElement('span');
+   const details = document.createElement('div');
+   const heading = document.createElement('h3');
+   const source = document.createElement('small');
+   const effect = document.createElement('p');
+   card.className = 'town-skill-card';
+   card.toggleAttribute('data-locked', !technique.unlocked);
+   icon.className = 'town-item-icon';
+   icon.setAttribute('aria-hidden', 'true');
+   icon.textContent = technique.category.slice(0, 1);
+   heading.textContent = technique.name;
+   source.textContent = [
+    technique.book && `《${technique.book}》 · ${technique.style}`,
+    technique.unlocked ? '已学会' : `Lv. ${technique.level} 解锁`,
+   ].filter(Boolean).join(' · ');
+   effect.textContent = technique.description;
+   details.append(heading, source, effect);
+   card.append(icon, details);
+   return card;
+  }));
  }
 
  function renderStamina(stamina) {
@@ -997,6 +1021,7 @@ if (onlineMode) {
   showSquarePanel(weaponPanel, $('open-weapon-collection'), true);
  }));
  openSkillCollection.addEventListener('click', () => {
+  renderTechniques(skillList, session.progression.techniques);
   showSquarePanel(skillPanel, openSkillCollection, true);
  });
  function lock(value) {
@@ -1135,11 +1160,14 @@ if (onlineMode) {
    for (const event of turn.events) {
     const item = document.createElement('li');
     const defender = names[event.target];
-    const move = `${event.source_name} · ${event.move_name}`;
+    const move = event.source_type === 'skill' && event.source_id !== 'combo'
+     ? event.source_name : `${event.source_name} · ${event.move_name}`;
     if (event.kind === 'dodge') {
      item.textContent = `使用「${move}」，被 ${defender} 闪避。`;
     } else if (event.kind === 'knockout') {
      item.textContent = `${defender} 倒下了。`;
+    } else if (event.kind === 'support') {
+     item.textContent = `施展「${move}」。`;
     } else {
      const calculated = event.damage !== event.applied_damage ? `（计算伤害 ${event.damage}）` : '';
      const critical = event.critical ? '（暴击）' : '';
@@ -1298,6 +1326,7 @@ if (onlineMode) {
   if (kind === 'daily_task') return '领取每日乐斗奖励';
   if (kind === 'initial_weapon') return `获得初始武器 ${weaponMoves[data.weapon_id]?.label ?? data.weapon_id}`;
   if (kind === 'starter_weapon') return `获得新手武器 ${weaponMoves[data.weapon_id]?.label ?? data.weapon_id}`;
+  if (kind === 'learn_technique') return `学会招式 ${data.name}`;
   if (kind === 'purchase') return `花费 ${data.coins} 金币购买 ${itemDetails[data.item_id]?.name ?? data.item_id}`;
   if (kind === 'rename') return `将角色名从 ${data.old_name} 改为 ${data.name}`;
   if (kind === 'grant') {
@@ -1487,15 +1516,8 @@ if (onlineMode) {
   $('town-opponent-weapons').replaceChildren(...progression.weapons.filter(id => weaponMoves[id])
    .map(id => weaponCard(id, weaponMoves[id])));
   $('town-opponent-weapons-empty').hidden = progression.weapons.length > 0;
-  const skills = $('town-opponent-skills');
-  skills.replaceChildren();
-  if (player.skill_id === 'combo') {
-   const combo = $('town-combo-skill').cloneNode(true);
-   combo.removeAttribute('id');
-   combo.hidden = false;
-   skills.append(combo);
-  }
-  $('town-opponent-skills-empty').hidden = skills.childElementCount > 0;
+  renderTechniques($('town-opponent-skills'), progression.techniques);
+  $('town-opponent-skills-empty').hidden = Boolean(progression.techniques?.length);
   showSquarePanel(opponentPanel, null, true);
  }
 
@@ -1713,6 +1735,7 @@ if (onlineMode) {
    reward.level_up && `升至 Lv. ${reward.level}`,
    statGrowthText(reward.stat_growth),
    reward.level_up && (weapon ? `获得${weapon.label}` : '武器已集齐'),
+   ...((reward.techniques ?? []).map(technique => `学会${technique.name}`)),
   ].filter(Boolean).join(' · ') : '';
   await playback(report, rewardText, reward?.starter_ready);
   const state = await api('game', '/session');

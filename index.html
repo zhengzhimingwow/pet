@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=combat-power">
+  <link rel="stylesheet" href="lobby.css?v=techniques">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -144,7 +144,7 @@
           <button id="open-chat" type="button" aria-controls="town-chat-panel" aria-pressed="false">聊天</button>
           <button id="open-character-details" type="button" aria-controls="town-character-details-panel" aria-pressed="false">角色详情</button>
           <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
-          <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
+          <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">招式库</button>
           <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
           <button id="open-shop" type="button" aria-controls="town-shop-panel" aria-pressed="false">商店</button>
           <button id="open-rankings" type="button" aria-controls="town-rankings-panel" aria-pressed="false">排行榜</button>
@@ -209,7 +209,7 @@
                   <div><dt>攻击</dt><dd id="town-power-attack"></dd></div>
                   <div><dt>防御</dt><dd id="town-power-defense"></dd></div>
                   <div><dt>武器</dt><dd id="town-power-weapons"></dd></div>
-                  <div><dt>功法</dt><dd id="town-power-skills"></dd></div>
+                  <div><dt>招式</dt><dd id="town-power-skills"></dd></div>
                 </dl>
               </section>
               <div class="town-character-actions">
@@ -255,25 +255,19 @@
                   <p id="town-opponent-weapons-empty" class="town-empty" hidden>尚未获得武器</p>
                 </div>
                 <div>
-                  <h3>功法库</h3>
-                  <div id="town-opponent-skills"></div>
-                  <p id="town-opponent-skills-empty" class="town-empty">尚未获得功法</p>
+                  <h3>已学招式</h3>
+                  <div id="town-opponent-skills" class="town-skill-list"></div>
+                  <p id="town-opponent-skills-empty" class="town-empty">尚未学会招式</p>
                 </div>
               </div>
             </section>
             <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
               <div class="town-panel-header">
-                <h2 id="town-skill-title" tabindex="-1">功法库</h2>
+                <h2 id="town-skill-title" tabindex="-1">招式库</h2>
               </div>
               <div class="town-damage-content">
-                <article class="town-skill-card" id="town-combo-skill">
-                  <span class="town-item-icon" aria-hidden="true">✷</span>
-                  <div>
-                    <h3>连击</h3>
-                    <p>攻击命中且对手仍站立时，有 20% 概率追加一击，造成 6 点伤害。</p>
-                  </div>
-                </article>
-                <p id="town-skill-empty" class="town-empty" hidden>尚未获得功法</p>
+                <p class="town-skill-rule">已学招式符合条件时自动触发。每个武侠招式每场最多触发一次，每次出手最多追加一个招式。</p>
+                <div id="town-skill-list" class="town-skill-list"></div>
               </div>
             </section>
             <section id="town-inventory-panel" class="town-inline-panel" aria-labelledby="town-inventory-title" hidden>
@@ -479,8 +473,8 @@
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
-  <script src="game.js?v=toy-hammer-grip"></script>
+  <script src="game.js?v=techniques"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=combat-power"></script>
+  <script src="online.js?v=techniques"></script>
 </body>
 </html>
