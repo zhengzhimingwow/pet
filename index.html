@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f1e6">
   <title>企鹅大乐斗</title>
   <script>
@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=starter-guide">
+  <link rel="stylesheet" href="lobby.css?v=landscape-plaza">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -59,6 +59,7 @@
   <main id="account-lobby" class="town-game" hidden>
     <header class="town-game-header">
       <div class="town-game-account">
+        <span id="town-coins" class="town-coins"></span>
         <button id="online-logout" type="button">退出登录</button>
       </div>
     </header>
@@ -136,7 +137,7 @@
           </div>
         </section>
         <nav class="town-collection-actions" aria-label="广场功能">
-          <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="true">乐斗记录</button>
+          <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="false">乐斗记录</button>
           <button id="open-player-log" type="button" aria-controls="town-player-log-panel" aria-pressed="false">玩家日志</button>
           <button id="open-mail" type="button" aria-controls="town-mail-panel" aria-pressed="false">邮件 <span id="town-mail-count" hidden></span></button>
           <button id="open-chat" type="button" aria-controls="town-chat-panel" aria-pressed="false">聊天</button>
@@ -148,201 +149,205 @@
           <button id="open-rankings" type="button" aria-controls="town-social-panel" aria-pressed="false">等级榜</button>
           <button id="open-guilds" type="button" aria-controls="town-social-panel" aria-pressed="false">帮派</button>
           <button id="open-friends" type="button" aria-controls="town-social-panel" aria-pressed="false">好友</button>
-          <span id="town-coins" class="town-coins"></span>
         </nav>
         <section id="town-battle-view" class="town-battle-view" aria-labelledby="arena-title" hidden></section>
-        <section id="town-history-panel" class="town-history" aria-labelledby="town-history-title">
-          <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
-          <ul id="town-battle-history"></ul>
-          <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
-        </section>
-        <section id="town-player-log-panel" class="town-inline-panel" aria-labelledby="town-player-log-title" hidden>
-          <h2 id="town-player-log-title" tabindex="-1">玩家日志</h2>
-          <ul id="town-player-log"></ul>
-          <p id="town-player-log-empty" class="town-empty" hidden>还没有玩家日志</p>
-          <div class="town-log-pagination town-history-actions">
-            <button id="town-player-log-more" type="button" hidden>加载更早的日志</button>
-          </div>
-        </section>
-        <section id="town-mail-panel" class="town-inline-panel" aria-labelledby="town-mail-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-mail-title" tabindex="-1">收件箱</h2>
-            <div class="town-history-actions">
-              <button id="town-mail-refresh" type="button">刷新</button>
-              <button id="town-mail-read-all" type="button" disabled>全部已读</button>
-            </div>
-          </div>
-          <ul id="town-mail-list"></ul>
-          <p id="town-mail-empty" class="town-empty" hidden>还没有收到邮件</p>
-          <div class="town-mail-pagination town-history-actions">
-            <button id="town-mail-more" type="button" hidden>加载更早的邮件</button>
-          </div>
-        </section>
-        <section id="town-chat-panel" class="town-inline-panel" aria-labelledby="town-chat-title" hidden>
-          <h2 id="town-chat-title" tabindex="-1">世界聊天</h2>
-          <div id="town-chat-feed" class="town-chat-feed" tabindex="0" aria-label="聊天消息">
-            <p id="town-chat-empty" class="town-empty" hidden>还没有消息</p>
-            <ol id="town-chat-messages" role="log" aria-label="世界聊天记录"></ol>
-          </div>
-          <form id="town-chat-form" class="town-chat-form">
-            <input id="town-chat-text" type="text" placeholder="说点什么…" aria-label="聊天消息" autocomplete="off" maxlength="400" required>
-            <button id="town-chat-send" class="town-item-action" type="submit">发送</button>
-          </form>
-          <p id="town-chat-feedback" class="town-feedback" role="status"></p>
-        </section>
-        <section id="town-character-details-panel" class="town-inline-panel" aria-labelledby="town-character-details-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-character-details-title" tabindex="-1">角色详情</h2>
-          </div>
-          <dl class="town-character-details">
-            <div><dt>角色名</dt><dd id="town-detail-name"></dd></div>
-            <div><dt>UID</dt><dd id="town-detail-uid"></dd></div>
-          </dl>
-          <div class="town-character-actions">
-            <button id="open-rename" class="town-item-action" type="button" aria-controls="town-rename-form">改名</button>
-            <form id="town-rename-form" class="town-rename-form" hidden>
-              <label for="town-rename-name">新角色名</label>
-              <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
-                     autocomplete="off" aria-describedby="town-rename-hint">
-              <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
-              <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
-            </form>
-            <p id="town-rename-feedback" class="town-item-feedback" role="status"></p>
-          </div>
-        </section>
-        <section id="town-opponent-panel" class="town-inline-panel" aria-labelledby="town-opponent-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-opponent-title" tabindex="-1">对手详情</h2>
-            <button id="close-opponent-profile" class="town-opponent-close" type="button" aria-label="关闭对手详情">×</button>
-          </div>
-          <div class="town-damage-content town-opponent-profile">
-            <div class="town-opponent-profile-header">
-              <img id="town-opponent-portrait" class="town-opponent-avatar" alt="">
-              <div>
-                <h3 id="town-opponent-name"></h3>
-                <p id="town-opponent-uid"></p>
+        <div id="town-panel-layer" class="town-panel-layer" hidden>
+          <div class="town-panel-frame">
+            <button id="close-town-panel" class="town-panel-close" type="button" aria-label="关闭当前面板">×</button>
+            <section id="town-history-panel" class="town-history" aria-labelledby="town-history-title" hidden>
+              <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
+              <ul id="town-battle-history"></ul>
+              <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
+            </section>
+            <section id="town-player-log-panel" class="town-inline-panel" aria-labelledby="town-player-log-title" hidden>
+              <h2 id="town-player-log-title" tabindex="-1">玩家日志</h2>
+              <ul id="town-player-log"></ul>
+              <p id="town-player-log-empty" class="town-empty" hidden>还没有玩家日志</p>
+              <div class="town-log-pagination town-history-actions">
+                <button id="town-player-log-more" type="button" hidden>加载更早的日志</button>
               </div>
-              <button id="challenge-opponent-profile" class="town-item-action" type="button">挑战</button>
-            </div>
-            <div class="town-opponent-growth">
-              <strong id="town-opponent-level"></strong>
-              <progress id="town-opponent-xp" aria-label="对手升级经验"></progress>
-              <span id="town-opponent-xp-text"></span>
-            </div>
-            <dl class="town-attributes">
-              <div class="town-stat town-stat-hp"><dt>生命</dt><dd id="town-opponent-hp"></dd></div>
-              <div class="town-stat town-stat-attack"><dt>攻击</dt><dd id="town-opponent-attack"></dd></div>
-              <div class="town-stat town-stat-defense"><dt>防御</dt><dd id="town-opponent-defense"></dd></div>
-            </dl>
-            <div>
-              <h3>武器库 <small id="town-opponent-weapon-count"></small></h3>
-              <ul id="town-opponent-weapons" class="town-weapon-list"></ul>
-              <p id="town-opponent-weapons-empty" class="town-empty" hidden>尚未获得武器</p>
-            </div>
-            <div>
-              <h3>功法库</h3>
-              <div id="town-opponent-skills"></div>
-              <p id="town-opponent-skills-empty" class="town-empty">尚未获得功法</p>
-            </div>
-          </div>
-        </section>
-        <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-skill-title" tabindex="-1">功法库</h2>
-          </div>
-          <div class="town-damage-content">
-            <article class="town-skill-card" id="town-combo-skill">
-              <span class="town-item-icon" aria-hidden="true">✷</span>
-              <div>
-                <h3>连击</h3>
-                <p>攻击命中且对手仍站立时，有 20% 概率追加一击，造成 6 点伤害。</p>
+            </section>
+            <section id="town-mail-panel" class="town-inline-panel" aria-labelledby="town-mail-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-mail-title" tabindex="-1">收件箱</h2>
+                <div class="town-history-actions">
+                  <button id="town-mail-refresh" type="button">刷新</button>
+                  <button id="town-mail-read-all" type="button" disabled>全部已读</button>
+                </div>
               </div>
-            </article>
-            <p id="town-skill-empty" class="town-empty" hidden>尚未获得功法</p>
-          </div>
-        </section>
-        <section id="town-inventory-panel" class="town-inline-panel" aria-labelledby="town-inventory-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-inventory-title" tabindex="-1">背包</h2>
-          </div>
-          <div class="town-damage-content">
-            <div id="town-inventory-empty" hidden>
-              <p>背包里还没有道具。</p>
-              <button id="inventory-open-shop" class="town-item-action" type="button">去商店</button>
-            </div>
-            <ul id="town-inventory-items" class="town-item-list"></ul>
-          </div>
-        </section>
-        <section id="town-social-panel" class="town-inline-panel" aria-labelledby="town-social-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-social-title" tabindex="-1"></h2>
-          </div>
-          <div class="town-damage-content town-social-content">
-            <form id="town-social-form" hidden>
-              <label id="town-social-label" for="town-social-input"></label>
-              <div class="town-social-form-row">
-                <input id="town-social-input" required autocomplete="off">
-                <button id="town-social-submit" class="town-item-action" type="submit"></button>
+              <ul id="town-mail-list"></ul>
+              <p id="town-mail-empty" class="town-empty" hidden>还没有收到邮件</p>
+              <div class="town-mail-pagination town-history-actions">
+                <button id="town-mail-more" type="button" hidden>加载更早的邮件</button>
               </div>
-            </form>
-            <div id="town-social-summary" hidden>
-              <h3 id="town-social-group"></h3>
-              <button id="town-social-leave" class="town-item-action" type="button"></button>
-              <p id="town-social-confirm" hidden>确认解散后，所有成员都将退出帮派。</p>
-            </div>
-            <ul id="town-social-list" class="town-item-list"></ul>
-            <p id="town-social-empty" class="town-empty" hidden></p>
-            <p id="town-social-feedback" class="town-item-feedback" role="status"></p>
+            </section>
+            <section id="town-chat-panel" class="town-inline-panel" aria-labelledby="town-chat-title" hidden>
+              <h2 id="town-chat-title" tabindex="-1">世界聊天</h2>
+              <div id="town-chat-feed" class="town-chat-feed" tabindex="0" aria-label="聊天消息">
+                <p id="town-chat-empty" class="town-empty" hidden>还没有消息</p>
+                <ol id="town-chat-messages" role="log" aria-label="世界聊天记录"></ol>
+              </div>
+              <form id="town-chat-form" class="town-chat-form">
+                <input id="town-chat-text" type="text" placeholder="说点什么…" aria-label="聊天消息" autocomplete="off" maxlength="400" required>
+                <button id="town-chat-send" class="town-item-action" type="submit">发送</button>
+              </form>
+              <p id="town-chat-feedback" class="town-feedback" role="status"></p>
+            </section>
+            <section id="town-character-details-panel" class="town-inline-panel" aria-labelledby="town-character-details-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-character-details-title" tabindex="-1">角色详情</h2>
+              </div>
+              <dl class="town-character-details">
+                <div><dt>角色名</dt><dd id="town-detail-name"></dd></div>
+                <div><dt>UID</dt><dd id="town-detail-uid"></dd></div>
+              </dl>
+              <div class="town-character-actions">
+                <button id="open-rename" class="town-item-action" type="button" aria-controls="town-rename-form">改名</button>
+                <form id="town-rename-form" class="town-rename-form" hidden>
+                  <label for="town-rename-name">新角色名</label>
+                  <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
+                         autocomplete="off" aria-describedby="town-rename-hint">
+                  <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
+                  <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
+                </form>
+                <p id="town-rename-feedback" class="town-item-feedback" role="status"></p>
+              </div>
+            </section>
+            <section id="town-opponent-panel" class="town-inline-panel" aria-labelledby="town-opponent-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-opponent-title" tabindex="-1">对手详情</h2>
+                <button id="close-opponent-profile" class="town-opponent-close" type="button" aria-label="关闭对手详情">×</button>
+              </div>
+              <div class="town-damage-content town-opponent-profile">
+                <div class="town-opponent-profile-header">
+                  <img id="town-opponent-portrait" class="town-opponent-avatar" alt="">
+                  <div>
+                    <h3 id="town-opponent-name"></h3>
+                    <p id="town-opponent-uid"></p>
+                  </div>
+                  <button id="challenge-opponent-profile" class="town-item-action" type="button">挑战</button>
+                </div>
+                <div class="town-opponent-growth">
+                  <strong id="town-opponent-level"></strong>
+                  <progress id="town-opponent-xp" aria-label="对手升级经验"></progress>
+                  <span id="town-opponent-xp-text"></span>
+                </div>
+                <dl class="town-attributes">
+                  <div class="town-stat town-stat-hp"><dt>生命</dt><dd id="town-opponent-hp"></dd></div>
+                  <div class="town-stat town-stat-attack"><dt>攻击</dt><dd id="town-opponent-attack"></dd></div>
+                  <div class="town-stat town-stat-defense"><dt>防御</dt><dd id="town-opponent-defense"></dd></div>
+                </dl>
+                <div>
+                  <h3>武器库 <small id="town-opponent-weapon-count"></small></h3>
+                  <ul id="town-opponent-weapons" class="town-weapon-list"></ul>
+                  <p id="town-opponent-weapons-empty" class="town-empty" hidden>尚未获得武器</p>
+                </div>
+                <div>
+                  <h3>功法库</h3>
+                  <div id="town-opponent-skills"></div>
+                  <p id="town-opponent-skills-empty" class="town-empty">尚未获得功法</p>
+                </div>
+              </div>
+            </section>
+            <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-skill-title" tabindex="-1">功法库</h2>
+              </div>
+              <div class="town-damage-content">
+                <article class="town-skill-card" id="town-combo-skill">
+                  <span class="town-item-icon" aria-hidden="true">✷</span>
+                  <div>
+                    <h3>连击</h3>
+                    <p>攻击命中且对手仍站立时，有 20% 概率追加一击，造成 6 点伤害。</p>
+                  </div>
+                </article>
+                <p id="town-skill-empty" class="town-empty" hidden>尚未获得功法</p>
+              </div>
+            </section>
+            <section id="town-inventory-panel" class="town-inline-panel" aria-labelledby="town-inventory-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-inventory-title" tabindex="-1">背包</h2>
+              </div>
+              <div class="town-damage-content">
+                <div id="town-inventory-empty" hidden>
+                  <p>背包里还没有道具。</p>
+                  <button id="inventory-open-shop" class="town-item-action" type="button">去商店</button>
+                </div>
+                <ul id="town-inventory-items" class="town-item-list"></ul>
+              </div>
+            </section>
+            <section id="town-social-panel" class="town-inline-panel" aria-labelledby="town-social-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-social-title" tabindex="-1"></h2>
+              </div>
+              <div class="town-damage-content town-social-content">
+                <form id="town-social-form" hidden>
+                  <label id="town-social-label" for="town-social-input"></label>
+                  <div class="town-social-form-row">
+                    <input id="town-social-input" required autocomplete="off">
+                    <button id="town-social-submit" class="town-item-action" type="submit"></button>
+                  </div>
+                </form>
+                <div id="town-social-summary" hidden>
+                  <h3 id="town-social-group"></h3>
+                  <button id="town-social-leave" class="town-item-action" type="button"></button>
+                  <p id="town-social-confirm" hidden>确认解散后，所有成员都将退出帮派。</p>
+                </div>
+                <ul id="town-social-list" class="town-item-list"></ul>
+                <p id="town-social-empty" class="town-empty" hidden></p>
+                <p id="town-social-feedback" class="town-item-feedback" role="status"></p>
+              </div>
+            </section>
+            <section id="town-shop-panel" class="town-inline-panel" aria-labelledby="town-shop-title" hidden>
+              <div class="town-panel-header">
+                <div><h2 id="town-shop-title" tabindex="-1">商店</h2><p id="town-shop-coins"></p></div>
+              </div>
+              <div class="town-damage-content">
+                <ul id="town-shop-items" class="town-item-list"></ul>
+                <p id="town-shop-feedback" class="town-item-feedback" role="status"></p>
+              </div>
+            </section>
+            <section id="town-avatar-panel" class="town-inline-panel" aria-labelledby="town-avatar-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-avatar-title" tabindex="-1">更换头像</h2>
+              </div>
+              <div class="town-damage-content">
+                <ul id="town-avatar-options" class="town-avatar-options"></ul>
+                <p id="town-avatar-feedback" class="town-feedback" role="status"></p>
+              </div>
+            </section>
+            <section id="town-weapon-panel" class="town-inline-panel" aria-labelledby="town-weapon-title" hidden>
+              <div class="town-panel-header">
+                <div>
+                  <h2 id="town-weapon-title" tabindex="-1">武器库</h2>
+                  <p id="town-weapon-count"></p>
+                </div>
+              </div>
+              <div class="town-damage-content">
+                <div id="town-starter-weapon-guide" class="town-starter-weapon-guide" hidden>
+                  <p id="town-starter-weapon-copy"></p>
+                  <button id="town-starter-next" class="town-item-action" type="button">再打一场</button>
+                </div>
+                <ul id="town-weapon-list" class="town-weapon-board"></ul>
+                <div id="town-weapon-tip" class="town-weapon-tip" role="tooltip" popover="manual"></div>
+              </div>
+            </section>
+            <section id="town-damage-panel" class="town-inline-panel" aria-labelledby="town-damage-title" hidden>
+              <div class="town-panel-header">
+                <div>
+                  <h2 id="town-damage-title" tabindex="-1">文字战报</h2>
+                  <p id="town-damage-match"></p>
+                </div>
+              </div>
+              <div class="town-damage-content">
+                <h3>伤害汇总</h3>
+                <div id="town-damage-summary" class="town-damage-summary"></div>
+                <h3>逐回合明细</h3>
+                <ol id="town-damage-rounds" class="town-damage-rounds"></ol>
+              </div>
+            </section>
           </div>
-        </section>
-        <section id="town-shop-panel" class="town-inline-panel" aria-labelledby="town-shop-title" hidden>
-          <div class="town-panel-header">
-            <div><h2 id="town-shop-title" tabindex="-1">商店</h2><p id="town-shop-coins"></p></div>
-          </div>
-          <div class="town-damage-content">
-            <ul id="town-shop-items" class="town-item-list"></ul>
-            <p id="town-shop-feedback" class="town-item-feedback" role="status"></p>
-          </div>
-        </section>
-        <section id="town-avatar-panel" class="town-inline-panel" aria-labelledby="town-avatar-title" hidden>
-          <div class="town-panel-header">
-            <h2 id="town-avatar-title" tabindex="-1">更换头像</h2>
-          </div>
-          <div class="town-damage-content">
-            <ul id="town-avatar-options" class="town-avatar-options"></ul>
-            <p id="town-avatar-feedback" class="town-feedback" role="status"></p>
-          </div>
-        </section>
-        <section id="town-weapon-panel" class="town-inline-panel" aria-labelledby="town-weapon-title" hidden>
-          <div class="town-panel-header">
-            <div>
-              <h2 id="town-weapon-title" tabindex="-1">武器库</h2>
-              <p id="town-weapon-count"></p>
-            </div>
-          </div>
-          <div class="town-damage-content">
-            <div id="town-starter-weapon-guide" class="town-starter-weapon-guide" hidden>
-              <p id="town-starter-weapon-copy"></p>
-              <button id="town-starter-next" class="town-item-action" type="button">再打一场</button>
-            </div>
-            <ul id="town-weapon-list" class="town-weapon-board"></ul>
-            <div id="town-weapon-tip" class="town-weapon-tip" role="tooltip" popover="manual"></div>
-          </div>
-        </section>
-        <section id="town-damage-panel" class="town-inline-panel" aria-labelledby="town-damage-title" hidden>
-          <div class="town-panel-header">
-            <div>
-              <h2 id="town-damage-title" tabindex="-1">文字战报</h2>
-              <p id="town-damage-match"></p>
-            </div>
-          </div>
-          <div class="town-damage-content">
-            <h3>伤害汇总</h3>
-            <div id="town-damage-summary" class="town-damage-summary"></div>
-            <h3>逐回合明细</h3>
-            <ol id="town-damage-rounds" class="town-damage-rounds"></ol>
-          </div>
-        </section>
+        </div>
       </div>
       <aside class="town-sidebar" aria-labelledby="town-opponents-title">
         <section class="town-activity">
@@ -352,9 +357,9 @@
           </div>
           <ul id="town-opponents"></ul>
           <p id="town-opponents-empty" class="town-empty" hidden>暂时没有可挑战的玩家</p>
-          <p id="town-feedback" class="town-feedback" role="status"></p>
         </section>
       </aside>
+      <p id="town-feedback" class="town-feedback" role="status"></p>
     </div>
   </main>
   <main id="game-shell" class="shell">
@@ -442,6 +447,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=starter-guide"></script>
+  <script src="online.js?v=landscape-plaza"></script>
 </body>
 </html>

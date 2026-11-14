@@ -26,6 +26,8 @@ if (onlineMode) {
  const avatarFeedback = $('town-avatar-feedback');
  const avatarChoices = {blue:'蓝围巾', red:'红围巾', green:'薄荷帽', gold:'星星领结'};
  const battleView = $('town-battle-view');
+ const panelLayer = $('town-panel-layer');
+ const closeTownPanel = $('close-town-panel');
  const townFeedback = $('town-feedback');
  const closeBattleResult = $('close-battle-result');
  const accountFeedback = $('account-feedback');
@@ -170,7 +172,7 @@ if (onlineMode) {
    resetChat();
   }
   battleView.hidden = true;
-  if (!session) showSquarePanel(historyPanel);
+  if (!session) showSquarePanel(null);
   townStage.hidden = false;
   entry.hidden = Boolean(session);
   lobby.hidden = !session;
@@ -196,7 +198,7 @@ if (onlineMode) {
   renameForm.reset();
   renameForm.hidden = true;
   $('town-rename-feedback').textContent = '';
-  showSquarePanel(historyPanel);
+  showSquarePanel(null);
   renderPlayer(data);
   townFeedback.textContent = '';
   $('town-history-empty').hidden = true;
@@ -393,19 +395,35 @@ if (onlineMode) {
  }));
 
  function showSquarePanel(panel, button = null, moveFocus = false) {
+  if (panel) showDailyDetails(false);
   if (panel !== opponentPanel) {
    viewedOpponent = opponentReturn = null;
   }
   for (const section of squarePanels) section.hidden = section !== panel;
+  panelLayer.hidden = !panel;
   if (panel !== weaponPanel) closeWeaponTip();
   if (panel === historyPanel) button = openHistory;
   for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
-  if (moveFocus) {
+  if (panel && moveFocus) {
    const heading = panel.querySelector('h2');
+   panel.scrollTop = 0;
    heading.focus({preventScroll:true});
-   heading.scrollIntoView({block:'nearest'});
   }
  }
+
+ function closeSquarePanel() {
+  const trigger = [...squarePanelButtons].find(button => button.getAttribute('aria-pressed') === 'true')
+   ?? opponentReturn?.trigger;
+  showSquarePanel(null);
+  (trigger?.isConnected ? trigger : townStage).focus({preventScroll:true});
+ }
+ closeTownPanel.addEventListener('click', closeSquarePanel);
+ panelLayer.addEventListener('click', event => {
+  if (event.target === panelLayer) closeSquarePanel();
+ });
+ lobby.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !panelLayer.hidden && !event.defaultPrevented) closeSquarePanel();
+ });
 
  openHistory.addEventListener('click', () => run(async () => {
   showSquarePanel(historyPanel, openHistory, true);
@@ -911,12 +929,11 @@ if (onlineMode) {
  async function playback(report, rewardText, holdResult = false) {
   clearTimeout(returnToSquareTimer);
   starterResultChoice.replaceChildren();
-  showSquarePanel(historyPanel);
+  showSquarePanel(null);
   showDailyDetails(false);
   townStage.hidden = true;
   battleView.hidden = false;
   $('arena-title').focus({preventScroll:true});
-  battleView.scrollIntoView({block:'nearest'});
   lastReport = report;
   await playBattle({
    turns:battleTurns(report), hp:{left:report.left_hp, right:report.right_hp}, winner:report.winner,
@@ -1298,7 +1315,7 @@ if (onlineMode) {
   const {player, progression} = await api('game', `/players/${opponent.player_id}`);
   if (opponentPanel.hidden) {
    opponentReturn = {
-    panel:squarePanels.find(panel => !panel.hidden) ?? historyPanel,
+    panel:squarePanels.find(panel => !panel.hidden) ?? null,
     button:lobby.querySelector('button[aria-pressed="true"][aria-controls]'),
     trigger,
    };
