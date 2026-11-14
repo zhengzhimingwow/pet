@@ -72,7 +72,10 @@ if (onlineMode) {
  const openSkillCollection = $('open-skill-collection');
  const skillList = $('town-skill-list');
  const trialPanel = $('town-trial-panel');
- const openTrials = $('open-trials');
+ const dungeonPanel = $('town-dungeon-panel');
+ const openDungeons = $('open-dungeons');
+ const enterTrialDungeon = $('enter-trial-dungeon');
+ const backToDungeons = $('back-to-dungeons');
  const trialList = $('town-trial-list');
  const pinnedTrials = $('town-pinned-trials');
  const pinnedTrialList = $('town-pinned-trial-list');
@@ -89,7 +92,7 @@ if (onlineMode) {
  const rankingFeedback = $('town-ranking-feedback');
  let rankingRequest;
  const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, rankingsPanel,
-  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel, trialPanel];
+  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel, dungeonPanel, trialPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -241,6 +244,9 @@ if (onlineMode) {
   opponentsList.replaceChildren();
   pinnedTrials.hidden = true;
   pinnedTrialList.replaceChildren();
+  trialList.replaceChildren();
+  $('town-dungeon-progress').textContent = '';
+  $('town-dungeon-next').textContent = '';
   showEntry();
  }
 
@@ -548,7 +554,12 @@ if (onlineMode) {
 
  async function refreshTrials() {
   const {stages} = await api('game', '/trials');
-  $('town-trial-progress').textContent = `已通关 ${stages.filter(stage => stage.state === 'cleared').length} / ${stages.length}`;
+  const completed = stages.filter(stage => stage.state === 'cleared').length;
+  const progress = `已通关 ${completed} / ${stages.length} 关`;
+  const next = stages.find(stage => stage.state === 'ready');
+  $('town-trial-progress').textContent = progress;
+  $('town-dungeon-progress').textContent = progress;
+  $('town-dungeon-next').textContent = next ? `下一关 · ${next.name}` : '可重打已通关关卡';
   trialList.replaceChildren(...stages.map(stage => trialRow(stage, false)));
   const pinned = stages.filter(stage => pinnedTrialIds.has(stage.player_id));
   pinnedTrialList.replaceChildren(...pinned.map(stage => trialRow(stage, true)));
@@ -584,12 +595,19 @@ if (onlineMode) {
    return row;
  }
 
- for (const trigger of [openTrials, openPinnedTrials]) {
-  trigger.addEventListener('click', () => run(async () => {
-   await refreshTrials();
-   showSquarePanel(trialPanel, trigger, true);
-  }));
- }
+ openDungeons.addEventListener('click', () => run(async () => {
+  await refreshTrials();
+  showSquarePanel(dungeonPanel, openDungeons, true);
+ }));
+ enterTrialDungeon.addEventListener('click', () => showSquarePanel(trialPanel, openDungeons, true));
+ backToDungeons.addEventListener('click', () => {
+  showSquarePanel(dungeonPanel, openDungeons, true);
+  enterTrialDungeon.focus({preventScroll:true});
+ });
+ openPinnedTrials.addEventListener('click', () => run(async () => {
+  await refreshTrials();
+  showSquarePanel(trialPanel, openPinnedTrials, true);
+ }));
 
  openHistory.addEventListener('click', () => run(async () => {
   showSquarePanel(historyPanel, openHistory, true);
@@ -1104,7 +1122,7 @@ if (onlineMode) {
  });
  function lock(value) {
   busy = value;
-  openTrials.disabled = openPinnedTrials.disabled = value;
+  openDungeons.disabled = enterTrialDungeon.disabled = backToDungeons.disabled = openPinnedTrials.disabled = value;
   for (const list of [trialList, pinnedTrialList]) {
    for (const button of list.querySelectorAll('button')) button.disabled = value;
   }

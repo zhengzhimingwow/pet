@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=jianghu-trials">
+  <link rel="stylesheet" href="lobby.css?v=dungeon-entrance">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -75,7 +75,7 @@
               <span class="town-pet-art" aria-hidden="true"></span>
             </div>
           </div>
-          <button id="open-trials" class="town-task-toggle town-trial-toggle" type="button" aria-controls="town-trial-panel" aria-pressed="false">江湖试炼</button>
+          <button id="open-dungeons" class="town-task-toggle town-dungeon-toggle" type="button" aria-controls="town-dungeon-panel" aria-pressed="false">副本</button>
           <div id="town-tasks" class="town-tasks" hidden>
             <button id="town-daily-toggle" class="town-task-toggle" type="button" aria-controls="town-daily" aria-expanded="false">任务</button>
             <div id="town-daily-layer" class="town-daily-layer" hidden>
@@ -156,12 +156,29 @@
         <div id="town-panel-layer" class="town-panel-layer" hidden>
           <div class="town-panel-frame">
             <button id="close-town-panel" class="town-panel-close" type="button" aria-label="关闭当前面板">×</button>
+            <section id="town-dungeon-panel" class="town-inline-panel" aria-labelledby="town-dungeon-title" hidden>
+              <div class="town-panel-header">
+                <h2 id="town-dungeon-title" tabindex="-1">副本</h2>
+              </div>
+              <div class="town-dungeon-content">
+                <button id="enter-trial-dungeon" class="town-dungeon-card" type="button" aria-controls="town-trial-panel">
+                  <img src="assets/dungeon-jianghu.webp" alt="" decoding="async" loading="lazy">
+                  <span class="town-dungeon-card-info">
+                    <strong>江湖试炼</strong>
+                    <span id="town-dungeon-progress"></span>
+                    <span id="town-dungeon-next"></span>
+                  </span>
+                  <span class="town-dungeon-card-action">进入副本 <span aria-hidden="true">›</span></span>
+                </button>
+              </div>
+            </section>
             <section id="town-trial-panel" class="town-inline-panel" aria-labelledby="town-trial-title" hidden>
               <div class="town-panel-header">
                 <div>
                   <h2 id="town-trial-title" tabindex="-1">江湖试炼</h2>
                   <p id="town-trial-progress" role="status"></p>
                 </div>
+                <button id="back-to-dungeons" class="town-dungeon-back" type="button">‹ 副本列表</button>
               </div>
               <div class="town-trial-content">
                 <p id="town-trial-cost"></p>
@@ -497,6 +514,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=techniques"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=pinned-jianghu-trials"></script>
+  <script src="online.js?v=dungeon-entrance"></script>
 </body>
 </html>

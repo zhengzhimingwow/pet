@@ -75,15 +75,15 @@
   top: calc(var(--hud-top) + 87px);
   left: var(--hud-left);
 }
-.town-stage .town-trial-toggle {
+.town-stage .town-dungeon-toggle {
   top: calc(var(--hud-top) + 87px);
   left: calc(var(--hud-left) + 74px);
   background: #4b331ce8;
   border-color: #deba79;
   color: #fff0cb;
 }
-.town-stage .town-trial-toggle:hover,
-.town-stage .town-trial-toggle[aria-pressed="true"] { background: #6c4b27; }
+.town-stage .town-dungeon-toggle:hover,
+.town-stage .town-dungeon-toggle[aria-pressed="true"] { background: #6c4b27; }
 .town-sidebar {
   position: absolute;
   top: calc(var(--hud-top) + 48px);
@@ -1010,6 +1010,64 @@
 .town-damage-content h3 { margin: 0 0 8px; font-size: 15px; }
 .town-damage-content h4 { margin: 0 0 4px; font-size: 13px; overflow-wrap: anywhere; }
 .town-trial-content { padding: 0 14px 14px; }
+.town-dungeon-content { padding: clamp(10px, 2vw, 16px); }
+.town-dungeon-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  width: 100%;
+  min-height: clamp(132px, 30dvh, 216px);
+  padding: clamp(14px, 3vw, 24px);
+  overflow: hidden;
+  border: 1px solid #9e8250;
+  border-radius: 10px;
+  background: #193e3c;
+  color: #fff7dc;
+  text-align: left;
+}
+.town-dungeon-card img, .town-dungeon-card::after {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.town-dungeon-card img { z-index: -2; object-fit: cover; object-position: 50% 53%; }
+.town-dungeon-card::after {
+  content: '';
+  z-index: -1;
+  background: linear-gradient(90deg, #142d2cec, #142d2c40 73%),
+    linear-gradient(0deg, #102626b8, transparent 65%);
+}
+.town-dungeon-card-info { display: grid; gap: 4px; }
+.town-dungeon-card-info strong { font-size: clamp(23px, 4vw, 32px); }
+.town-dungeon-card-info > span { color: #fff1cf; font-size: 13px; }
+.town-dungeon-card-action {
+  padding: 7px 11px;
+  border: 1px solid #e6c782;
+  border-radius: 7px;
+  background: #f7d580;
+  color: #422a16;
+  font-size: 13px;
+  font-weight: 800;
+}
+.town-dungeon-card:hover .town-dungeon-card-action { background: #ffe6a4; }
+.town-dungeon-card:focus-visible { outline: 2px solid #3268a6; outline-offset: 2px; }
+.town-dungeon-back {
+  flex: none;
+  margin: 0 4px 0 auto;
+  padding: 5px 7px;
+  border: 1px solid #b9cce8;
+  border-radius: 6px;
+  background: #f7fbff;
+  color: #2e5077;
+  font-size: 12px;
+}
+.town-dungeon-back:hover { background: #e3efff; }
 #town-trial-cost { margin: 10px 0; color: var(--town-muted); font-size: 12px; }
 :is(#town-trial-list, #town-pinned-trial-list) { margin: 0; padding: 0; list-style: none; }
 :is(#town-trial-list, #town-pinned-trial-list) li {
@@ -1138,7 +1196,7 @@
 @media (orientation: portrait) {
   .online-entry .entry-frame { grid-template-rows: minmax(82px, 26dvh) minmax(0, 1fr); }
   .town-sheet { top: calc(var(--hud-top) + 45px); width: min(385px, calc(100% - var(--hud-left) - var(--hud-right))); }
-  .town-tasks .town-task-toggle, .town-stage .town-trial-toggle { top: calc(var(--hud-top) + 125px); }
+  .town-tasks .town-task-toggle, .town-stage .town-dungeon-toggle { top: calc(var(--hud-top) + 125px); }
   .town-sidebar { top: calc(var(--hud-top) + 125px); bottom: auto; height: min(39%, 340px); width: min(194px, 54%); }
   .town-opponents-toggle { top: calc(var(--hud-top) + 125px); }
   .town-sidebar .town-activity h2 { font-size: 13px; padding: 8px; }
