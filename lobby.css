@@ -430,6 +430,8 @@
   font-variant-numeric: tabular-nums;
 }
 #town-xp-remaining { color: #254e84; font-size: 12px; font-weight: 800; }
+.town-power { color: #7e490e; font-size: 13px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.town-sheet #town-combat-power { font-size: 11px; }
 #town-xp {
   appearance: none;
   width: 100%;
@@ -581,6 +583,18 @@
 }
 .town-character-details dt { color: var(--town-muted); }
 .town-character-details dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.town-power-details {
+  margin: 0 14px 12px;
+  padding: 9px 12px;
+  border: 1px solid #e9cca1;
+  border-radius: 8px;
+  background: #fff5e3;
+}
+.town-power-details h3 { margin: 0 0 7px; }
+.town-power-details dl { display: flex; flex-wrap: wrap; gap: 5px 16px; margin: 0; }
+.town-power-details dl div { display: flex; gap: 4px; font-size: 12px; white-space: nowrap; }
+.town-power-details dt { color: #695139; }
+.town-power-details dd { margin: 0; font-weight: 750; font-variant-numeric: tabular-nums; }
 .town-character-actions { padding: 0 16px 12px; }
 .town-collection-actions button {
   flex: 0 0 auto;

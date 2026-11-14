@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=challenge-stamina">
+  <link rel="stylesheet" href="lobby.css?v=combat-power">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -109,7 +109,7 @@
               <h2 id="town-player-name"></h2>
             </div>
             <div class="town-growth">
-              <div><span id="town-xp-remaining"></span><span id="town-xp-text"></span></div>
+              <div><strong id="town-combat-power" class="town-power" hidden></strong><span id="town-xp-remaining"></span><span id="town-xp-text"></span></div>
               <progress id="town-xp" aria-label="升级经验" max="100" value="0"></progress>
             </div>
             <dl class="town-attributes">
@@ -202,6 +202,16 @@
                 <div><dt>角色名</dt><dd id="town-detail-name"></dd></div>
                 <div><dt>UID</dt><dd id="town-detail-uid"></dd></div>
               </dl>
+              <section id="town-power-details" class="town-power-details" aria-labelledby="town-power-total" hidden>
+                <h3 id="town-power-total" class="town-power"></h3>
+                <dl>
+                  <div><dt>生命</dt><dd id="town-power-max_hp"></dd></div>
+                  <div><dt>攻击</dt><dd id="town-power-attack"></dd></div>
+                  <div><dt>防御</dt><dd id="town-power-defense"></dd></div>
+                  <div><dt>武器</dt><dd id="town-power-weapons"></dd></div>
+                  <div><dt>功法</dt><dd id="town-power-skills"></dd></div>
+                </dl>
+              </section>
               <div class="town-character-actions">
                 <button id="open-rename" class="town-item-action" type="button" aria-controls="town-rename-form">改名</button>
                 <form id="town-rename-form" class="town-rename-form" hidden>
@@ -225,6 +235,7 @@
                   <div>
                     <h3 id="town-opponent-name"></h3>
                     <p id="town-opponent-uid"></p>
+                    <strong id="town-opponent-power" class="town-power" hidden></strong>
                   </div>
                   <button id="challenge-opponent-profile" class="town-item-action" type="button">挑战</button>
                 </div>
@@ -470,6 +481,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=challenge-stamina"></script>
+  <script src="online.js?v=combat-power"></script>
 </body>
 </html>

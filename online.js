@@ -18,6 +18,8 @@ if (onlineMode) {
  const socialConfirm = $('town-social-confirm');
  const socialTitles = {guilds:'帮派', friends:'好友'};
  const statLabels = {max_hp:'生命', attack:'攻击', defense:'防御'};
+ const powerFields = [...Object.keys(statLabels), 'weapons', 'skills'];
+ const powerNumber = new Intl.NumberFormat('zh-CN');
  const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改角色名。', image:'assets/item-rename-card.png'}};
  const pendingItemRequests = new Map();
  const avatarPanel = $('town-avatar-panel');
@@ -231,6 +233,11 @@ if (onlineMode) {
   showEntry();
  }
 
+ function renderCombatPower(element, power) {
+  element.hidden = !power;
+  if (power) element.textContent = `战斗力 ${powerNumber.format(power.total)}`;
+ }
+
  function renderPlayer(data) {
   session = data;
   const {player, progression} = data;
@@ -240,6 +247,13 @@ if (onlineMode) {
   updatePlayerAvatar(player.avatar_id);
   $('town-detail-name').textContent = player.name;
   $('town-detail-uid').textContent = player.player_id;
+  const power = progression.combat_power;
+  renderCombatPower($('town-combat-power'), power);
+  renderCombatPower($('town-power-total'), power);
+  $('town-power-details').hidden = !power;
+  if (power) {
+   for (const field of powerFields) $(`town-power-${field}`).textContent = powerNumber.format(power[field]);
+  }
   for (const [stat, label] of Object.entries(statLabels)) {
    const id = stat === 'max_hp' ? 'hp' : stat;
    const total = player[stat];
@@ -1460,6 +1474,7 @@ if (onlineMode) {
   $('town-opponent-portrait').src = avatarUrl(player.avatar_id);
   $('town-opponent-name').textContent = player.name;
   $('town-opponent-uid').textContent = player.is_ai ? 'AI 陪练' : `UID ${player.player_id}`;
+  renderCombatPower($('town-opponent-power'), progression.combat_power);
   challengeOpponentProfile.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
   $('town-opponent-level').textContent = `Lv. ${progression.level}`;
   $('town-opponent-xp').max = progression.next_level_xp;
