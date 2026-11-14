@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=weapon-collection">
-  <link rel="stylesheet" href="lobby.css?v=stat-breakdown">
+  <link rel="stylesheet" href="lobby.css?v=result-close">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -238,7 +238,6 @@
       <div class="game-head">
         <div><h1 id="arena-title" tabindex="-1">欢乐竞技场</h1><span class="demo-label" id="demo-label">随机出招</span></div>
         <div class="head-actions">
-          <button id="back-lobby" class="sound-toggle" type="button" hidden>返回广场</button>
           <button class="sound-toggle" id="music-toggle" type="button" aria-pressed="true" aria-label="背景音乐">♫ 音乐开</button>
           <button class="sound-toggle" id="sound" type="button" aria-pressed="true" aria-label="关闭音效">🔊 音效开</button>
           <button class="sound-toggle" id="speed-toggle" type="button" aria-pressed="false" aria-label="战斗倍速">倍速 1×</button>
@@ -268,6 +267,7 @@
         </div>
         <div class="result" id="result" hidden>
           <div class="result-card">
+            <button id="close-battle-result" class="result-close" type="button" aria-label="返回广场" hidden>×</button>
             <h2 id="winner"></h2>
             <p id="result-text"></p>
             <p id="battle-reward" hidden></p>
@@ -303,6 +303,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=stat-breakdown"></script>
+  <script src="online.js?v=result-close"></script>
 </body>
 </html>

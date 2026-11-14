@@ -4,7 +4,7 @@ if (onlineMode) {
  const townStage = $('town-stage');
  const battleView = $('town-battle-view');
  const townFeedback = $('town-feedback');
- const backToSquare = $('back-lobby');
+ const closeBattleResult = $('close-battle-result');
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
  const townHistory = $('town-battle-history');
@@ -268,7 +268,6 @@ if (onlineMode) {
   savedAccount.disabled = value;
   $('saved-login').disabled = value;
   $('saved-forget').disabled = value;
-  backToSquare.disabled = value;
   $('open-weapon-collection').disabled = value;
   openSkillCollection.disabled = value;
   for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
@@ -597,7 +596,7 @@ if (onlineMode) {
   $('town-title').focus();
  }
 
- backToSquare.addEventListener('click', returnToSquare);
+ closeBattleResult.addEventListener('click', returnToSquare);
 
  async function challenge(playerId) {
   prepareSound();
@@ -652,7 +651,7 @@ if (onlineMode) {
  }
  $('arena-title').textContent = '乐斗';
  $('demo-label').hidden = true;
- backToSquare.hidden = false;
+ closeBattleResult.hidden = false;
  again.textContent = '回放本场 ↗';
  showEntry();
  run(async () => {

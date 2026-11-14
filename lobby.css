@@ -406,7 +406,23 @@
 .town-battle-view .arena { height: clamp(245px, 29vw, 330px); background: #82b3cf url('assets/penguin-city.webp') center 54% / cover no-repeat; }
 .town-battle-view .arena-scenery, .town-battle-view .status-title em { display: none; }
 .town-battle-view .fighter { bottom: 12%; }
+.town-battle-view .result-card { position: relative; padding-top: 38px; }
 .town-battle-view .result-card h2 { overflow-wrap: anywhere; }
+.result-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #624c2b;
+  font-size: 24px;
+  line-height: 1;
+}
+.result-close:hover, .result-close:focus-visible { background: #f0e3c8; }
 .town-battle-view .status { display: flex; flex-direction: column; }
 .town-battle-view .status-title { flex: 1; flex-direction: column; align-items: stretch; }
 .town-battle-view .status-title > div { min-width: 0; }
