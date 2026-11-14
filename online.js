@@ -365,10 +365,11 @@ if (onlineMode) {
   renameName.focus();
  }
  $('open-rename').addEventListener('click', openRename);
- openInventory.addEventListener('click', () => {
+ openInventory.addEventListener('click', () => run(async () => {
+  renderPlayer(await api(session.zone, '/session'));
   renderInventory();
   showSquarePanel(inventoryPanel, openInventory, true);
- });
+ }));
  renameForm.addEventListener('submit', event => {
   event.preventDefault();
   const name = renameName.value.trim();
@@ -591,10 +592,11 @@ if (onlineMode) {
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
   weaponList.replaceChildren(...catalog.map(([id, move]) => weaponCard(move, owned.has(id))));
  }
- $('open-weapon-collection').addEventListener('click', () => {
+ $('open-weapon-collection').addEventListener('click', () => run(async () => {
+  renderPlayer(await api(session.zone, '/session'));
   renderWeaponCollection();
   showSquarePanel(weaponPanel, $('open-weapon-collection'), true);
- });
+ }));
  openSkillCollection.addEventListener('click', () => {
   showSquarePanel(skillPanel, openSkillCollection, true);
  });

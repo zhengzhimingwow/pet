@@ -1,0 +1,45 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #17293d;
+  background: #eef3f9;
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+main { width: min(880px, 100% - 32px); margin: 36px auto; }
+.page-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.page-header p { margin: 0 0 3px; color: #496785; font-weight: 650; }
+h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); }
+h2 { margin: 0 0 14px; font-size: 19px; }
+.card, dialog { padding: clamp(14px, 4vw, 24px); border: 1px solid #d3ddeb; border-radius: 13px; background: #fff; }
+.card { margin-bottom: 14px; }
+form { display: grid; align-items: end; gap: 8px; }
+form > button { justify-self: start; margin-top: 6px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 10px; align-items: end; }
+label { display: block; margin-bottom: 4px; font-size: 14px; font-weight: 650; }
+input, select, button { min-height: 42px; font: inherit; border-radius: 7px; }
+input, select { width: 100%; padding: 7px 10px; border: 1px solid #a8bcd4; color: inherit; background: #fff; }
+button { border: 1px solid transparent; padding: 7px 15px; color: #fff; background: #235997; font-weight: 650; cursor: pointer; }
+button:hover { background: #184779; }
+button.secondary { background: #edf4ff; border-color: #b6c7dd; color: #20456f; }
+button.secondary:hover { background: #dfebfa; }
+button:disabled { opacity: .58; cursor: default; }
+:focus-visible { outline: 3px solid #4281cb; outline-offset: 2px; }
+#gm-feedback { padding: 10px 14px; border-radius: 8px; color: #145333; background: #e1f1e8; overflow-wrap: anywhere; }
+#gm-feedback[data-error] { color: #8f3038; background: #fae9eb; }
+#gm-feedback:empty { display: none; }
+.muted { color: #52677c; }
+.assets { display: grid; gap: 8px; margin: 0; }
+.assets > div { display: grid; grid-template-columns: 4em 1fr; gap: 8px; padding: 9px; border-radius: 8px; background: #f3f7fc; }
+.assets dt { font-weight: 650; }
+.assets dd { margin: 0; overflow-wrap: anywhere; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px; text-align: left; border-bottom: 1px solid #dce5f0; overflow-wrap: anywhere; }
+th:first-child, td:first-child { min-width: 140px; }
+th { color: #496785; font-size: 13px; }
+dialog { max-width: min(440px, 100% - 32px); color: inherit; }
+dialog::backdrop { background: #122b4c66; }
+#gm-confirm-text { overflow-wrap: anywhere; }
+.dialog-actions { display: flex; gap: 8px; justify-content: end; }

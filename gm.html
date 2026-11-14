@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GM 后台 · 企鹅大乐斗</title>
+  <link rel="stylesheet" href="gm.css?v=1">
+  <script src="gm.js?v=1" defer></script>
+</head>
+<body>
+  <main>
+    <header class="page-header">
+      <div><p>企鹅大乐斗</p><h1>GM 后台</h1></div>
+      <button id="gm-logout" type="button" class="secondary" hidden>退出后台</button>
+    </header>
+    <section id="gm-login-panel" class="card" aria-labelledby="login-title">
+      <h2 id="login-title">管理员登录</h2>
+      <form id="gm-login">
+        <label for="gm-key">GM 口令</label>
+        <input id="gm-key" type="password" required minlength="64" maxlength="64" autocomplete="off">
+        <button type="submit">进入后台</button>
+      </form>
+    </section>
+    <p id="gm-feedback" role="status"></p>
+    <section id="gm-workspace" hidden>
+      <section class="card" aria-labelledby="find-title">
+        <h2 id="find-title">查找角色</h2>
+        <form id="gm-lookup" class="fields">
+          <div><label for="gm-zone">区服</label><select id="gm-zone" required></select></div>
+          <div><label for="gm-uid">UID</label><input id="gm-uid" required inputmode="numeric" pattern="[1-9][0-9]{0,19}" placeholder="输入角色 UID"></div>
+          <button type="submit">查找</button>
+        </form>
+      </section>
+      <div id="gm-player" hidden>
+        <section class="card" aria-labelledby="gm-player-name">
+          <h2 id="gm-player-name" tabindex="-1"></h2>
+          <p id="gm-player-meta" class="muted"></p>
+          <dl class="assets">
+            <div><dt>背包</dt><dd id="gm-items"></dd></div>
+            <div><dt>武器库</dt><dd id="gm-weapons"></dd></div>
+          </dl>
+        </section>
+        <section class="card" aria-labelledby="grant-title">
+          <h2 id="grant-title">发放</h2>
+          <form id="gm-grant">
+            <div class="fields">
+              <div><label for="gm-kind">类别</label><select id="gm-kind"><option value="item">道具</option><option value="weapon">武器</option></select></div>
+              <div><label for="gm-asset">选择道具</label><select id="gm-asset" required></select></div>
+              <div><label for="gm-quantity">数量</label><input id="gm-quantity" type="number" min="1" max="999" step="1" value="1" required></div>
+            </div>
+            <label for="gm-reason">发放原因</label>
+            <input id="gm-reason" maxlength="120" placeholder="例如：测试青龙偃月刀动画" required>
+            <button type="submit">核对发放</button>
+          </form>
+        </section>
+        <section class="card" aria-labelledby="history-title">
+          <h2 id="history-title">最近 20 条发放记录</h2>
+          <p id="gm-history-empty" class="muted">该角色还没有发放记录。</p>
+          <div class="table-scroll" id="gm-history-table" hidden>
+            <table>
+              <thead><tr><th scope="col">时间</th><th scope="col">内容</th><th scope="col">原因</th></tr></thead>
+              <tbody id="gm-history"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <dialog id="gm-confirm" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">确认发放</h2>
+    <p id="gm-confirm-text"></p>
+    <div class="dialog-actions">
+      <button id="gm-cancel" type="button" class="secondary" autofocus>取消</button>
+      <button id="gm-send" type="button">确认发放</button>
+    </div>
+  </dialog>
+</body>
+</html>
