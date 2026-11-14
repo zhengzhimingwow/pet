@@ -144,6 +144,7 @@ if (onlineMode) {
   insufficient_coins: '金币不足。',
   missing_item: '背包里没有改名卡。',
   same_name: '请输入和当前角色名不同的名字。',
+  name_taken: '这个角色名已被使用，请换一个。',
   friend_self: '不能添加自己为好友。',
   friend_request_missing: '这条好友申请已失效。',
   invalid_guild_name: '帮派名须为 2–16 个汉字、字母、数字或下划线。',
