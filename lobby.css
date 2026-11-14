@@ -752,7 +752,14 @@
   line-height: 1.1;
   filter: drop-shadow(0 3px 2px #55391e54);
 }
-.town-weapon-tip {
+.town-collection-art {
+  display: block;
+  width: 1.1em;
+  height: 1.1em;
+  object-fit: contain;
+}
+.town-item-icon .town-collection-art { width: 32px; height: 32px; }
+.town-collection-tip {
   position: fixed;
   inset: auto;
   margin: 0;
@@ -765,8 +772,8 @@
   box-shadow: 0 5px 15px #16274655;
   pointer-events: none;
 }
-.town-weapon-tip small { display: block; margin-top: 4px; color: #d4e7fd; line-height: 1.4; }
-.town-weapon-tip > small { color: #ffdc95; }
+.town-collection-tip small { display: block; margin-top: 4px; color: #d4e7fd; line-height: 1.4; }
+.town-collection-tip > small { color: #ffdc95; }
 .town-damage-rounds .town-battle-effect { color: #4d468a; font-weight: 650; }
 #town-opponent-weapons li { grid-template-columns: auto minmax(0, 1fr); }
 .town-opponent-profile { display: grid; gap: 14px; }
@@ -799,22 +806,7 @@
   font-size: 19px;
 }
 .town-opponent-close:hover { background: #e2ecfb; }
-.town-skill-list { display: grid; gap: 8px; }
-.town-skill-rule { margin: 0 0 10px; color: var(--town-muted); font-size: 13px; }
-.town-skill-card {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--town-line);
-  border-radius: 8px;
-  background: #fff;
-}
-.town-skill-card .town-item-icon { background: #eaf0ff; border-color: #bdcdf4; color: #4a5ab8; }
-.town-skill-card h3 { margin: 0 0 4px; }
-.town-skill-card small { display: block; margin-bottom: 4px; color: #495c91; font-size: 11px; }
-.town-skill-card[data-locked] { background: #f4f7fc; }
-.town-skill-card[data-locked] .town-item-icon { background: #edf1f7; border-color: #d2dbeb; color: #56647d; }
-.town-skill-card p { margin: 0; color: var(--town-muted); font-size: 13px; line-height: 1.55; }
+.town-skill-rule { margin: 10px 0 0; color: var(--town-muted); font-size: 13px; }
 .town-item-icon {
   display: grid;
   place-items: center;

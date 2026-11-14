@@ -39,7 +39,7 @@ if (onlineMode) {
  const damagePanel = $('town-damage-panel');
  const weaponPanel = $('town-weapon-panel');
  const weaponList = $('town-weapon-list');
- const weaponTip = $('town-weapon-tip');
+ const collectionTip = $('town-collection-tip');
  const starterGuide = $('town-starter');
  const starterFight = $('town-starter-fight');
  const starterNext = $('town-starter-next');
@@ -114,7 +114,7 @@ if (onlineMode) {
  let pendingChat;
  let chatGeneration = 0;
  let nextPlayerLog;
- let weaponTipTrigger;
+ let collectionTipTrigger;
  let dailyTask;
  let dailyResetTimer;
  let staminaTimer;
@@ -275,29 +275,31 @@ if (onlineMode) {
   if (!inventoryPanel.hidden) renderInventory();
  }
 
+ function techniqueInfo(technique) {
+  const info = document.createElement('span');
+  const name = document.createElement('strong');
+  const source = document.createElement('small');
+  const effect = document.createElement('small');
+  name.textContent = technique.name;
+  source.textContent = technique.book ? `《${technique.book}》 · ${technique.style}` : '基础招式';
+  effect.textContent = technique.description;
+  info.append(name, source, effect);
+  return info;
+ }
+
  function renderTechniques(container, techniques = []) {
-  container.replaceChildren(...techniques.map(technique => {
-   const card = document.createElement('article');
-   const icon = document.createElement('span');
-   const details = document.createElement('div');
-   const heading = document.createElement('h3');
-   const source = document.createElement('small');
-   const effect = document.createElement('p');
-   card.className = 'town-skill-card';
-   card.toggleAttribute('data-locked', !technique.unlocked);
-   icon.className = 'town-item-icon';
-   icon.setAttribute('aria-hidden', 'true');
-   icon.textContent = technique.category.slice(0, 1);
-   heading.textContent = technique.name;
-   source.textContent = [
-    technique.book && `《${technique.book}》 · ${technique.style}`,
-    technique.unlocked ? '已学会' : `Lv. ${technique.level} 解锁`,
-   ].filter(Boolean).join(' · ');
-   effect.textContent = technique.description;
-   details.append(heading, source, effect);
-   card.append(icon, details);
-   return card;
-  }));
+  if (container.contains(collectionTipTrigger)) closeCollectionTip();
+  container.replaceChildren(...techniques.map(technique => boardItem({
+   label:technique.name,
+   icon:collectionArt(`assets/techniques/${encodeURIComponent(technique.id)}.svg`),
+   owned:technique.unlocked,
+   info:() => techniqueInfo(technique),
+   state:technique.unlocked ? '已学会' : '升级随机获得',
+  })));
+  if (container === skillList) {
+   const learned = techniques.filter(technique => technique.unlocked).length;
+   $('town-skill-count').textContent = `已学会 ${learned} / ${techniques.length}`;
+  }
  }
 
  function renderStamina(stamina) {
@@ -504,7 +506,7 @@ if (onlineMode) {
   }
   for (const section of squarePanels) section.hidden = section !== panel;
   panelLayer.hidden = !panel;
-  if (panel !== weaponPanel) closeWeaponTip();
+  if (!panel?.contains(collectionTipTrigger)) closeCollectionTip();
   if (panel === historyPanel) button = openHistory;
   for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
   if (panel && moveFocus) {
@@ -525,7 +527,12 @@ if (onlineMode) {
   if (event.target === panelLayer) closeSquarePanel();
  });
  lobby.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && !panelLayer.hidden && !event.defaultPrevented) closeSquarePanel();
+  if (event.key !== 'Escape' || event.defaultPrevented) return;
+  if (collectionTipTrigger) {
+   closeCollectionTip();
+  } else if (!panelLayer.hidden) {
+   closeSquarePanel();
+  }
  });
 
  openHistory.addEventListener('click', () => run(async () => {
@@ -938,82 +945,97 @@ if (onlineMode) {
   const item = document.createElement('li');
   const icon = document.createElement('span');
   icon.className = 'town-item-icon';
-  icon.textContent = move.icon || '⚔';
+  if (id === 'blade') icon.append(collectionArt('assets/weapon-guandao.svg'));
+  else icon.textContent = move.icon || '⚔';
   icon.setAttribute('aria-hidden', 'true');
   item.append(icon, weaponInfo(id, move));
   return item;
  }
 
- function closeWeaponTip() {
-  if (!weaponTipTrigger) return;
-  weaponTipTrigger.removeAttribute('aria-describedby');
-  weaponTip.hidePopover();
-  weaponTipTrigger = undefined;
+ function closeCollectionTip() {
+  if (!collectionTipTrigger) return;
+  collectionTipTrigger.removeAttribute('aria-describedby');
+  collectionTip.hidePopover();
+  collectionTipTrigger = undefined;
  }
 
- function showWeaponTip(trigger, id, move, owned) {
-  if (weaponTipTrigger === trigger) return;
-  closeWeaponTip();
+ function showCollectionTip(trigger, info, label) {
+  if (collectionTipTrigger === trigger) return;
+  closeCollectionTip();
   const state = document.createElement('small');
-  state.textContent = owned ? '已拥有' : '未获得';
-  weaponTip.replaceChildren(weaponInfo(id, move), state);
-  weaponTip.showPopover();
-  weaponTipTrigger = trigger;
-  trigger.setAttribute('aria-describedby', weaponTip.id);
-  positionWeaponTip();
+  state.textContent = label;
+  collectionTip.replaceChildren(info(), state);
+  collectionTip.showPopover();
+  collectionTipTrigger = trigger;
+  trigger.setAttribute('aria-describedby', collectionTip.id);
+  positionCollectionTip();
  }
 
- function positionWeaponTip() {
-  if (!weaponTipTrigger) return;
-  const rect = weaponTipTrigger.getBoundingClientRect();
+ function positionCollectionTip() {
+  if (!collectionTipTrigger) return;
+  const rect = collectionTipTrigger.getBoundingClientRect();
   if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
-   closeWeaponTip();
+   closeCollectionTip();
    return;
   }
-  const top = rect.top > weaponTip.offsetHeight + 12 ? rect.top - weaponTip.offsetHeight - 6 : rect.bottom + 6;
-  const x = rect.left + (rect.width - weaponTip.offsetWidth) / 2;
-  weaponTip.style.left = `${Math.max(8, Math.min(x, document.documentElement.clientWidth - weaponTip.offsetWidth - 8))}px`;
-  weaponTip.style.top = `${Math.max(8, Math.min(top, window.innerHeight - weaponTip.offsetHeight - 8))}px`;
+  const top = rect.top > collectionTip.offsetHeight + 12 ? rect.top - collectionTip.offsetHeight - 6 : rect.bottom + 6;
+  const x = rect.left + (rect.width - collectionTip.offsetWidth) / 2;
+  collectionTip.style.left = `${Math.max(8, Math.min(x, document.documentElement.clientWidth - collectionTip.offsetWidth - 8))}px`;
+  collectionTip.style.top = `${Math.max(8, Math.min(top, window.innerHeight - collectionTip.offsetHeight - 8))}px`;
  }
 
- function boardWeapon(id, move, owned) {
+ function collectionArt(path) {
+  const image = document.createElement('img');
+  image.className = 'town-collection-art';
+  image.src = path;
+  image.alt = '';
+  return image;
+ }
+
+ function boardItem({label, icon, owned, starter, info, state}) {
   const item = document.createElement('li');
   const trigger = document.createElement('button');
-  const icon = document.createElement('span');
+  const badge = document.createElement('span');
   const name = document.createElement('span');
   trigger.type = 'button';
-  trigger.toggleAttribute('data-starter', session.starter?.weapon_id === id);
+  trigger.toggleAttribute('data-starter', Boolean(starter));
   trigger.toggleAttribute('data-unowned', !owned);
-  icon.className = 'town-board-icon';
-  icon.textContent = {blade:'🗡️', sword:'⚔️'}[id] ?? (move.icon || '⚔️');
-  icon.setAttribute('aria-hidden', 'true');
-  name.textContent = move.label;
-  trigger.append(icon, name);
+  badge.className = 'town-board-icon';
+  badge.setAttribute('aria-hidden', 'true');
+  badge.append(icon);
+  name.textContent = label;
+  trigger.append(badge, name);
   item.append(trigger);
-  const show = () => showWeaponTip(trigger, id, move, owned);
+  const show = () => showCollectionTip(trigger, info, state);
   trigger.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') show(); });
   trigger.addEventListener('pointerleave', event => {
-   if (event.pointerType === 'mouse' && !trigger.matches(':focus-visible')) closeWeaponTip();
+   if (event.pointerType === 'mouse' && !trigger.matches(':focus-visible')) closeCollectionTip();
   });
   trigger.addEventListener('focus', () => { if (trigger.matches(':focus-visible')) show(); });
-  trigger.addEventListener('blur', closeWeaponTip);
+  trigger.addEventListener('blur', closeCollectionTip);
   trigger.addEventListener('click', show);
   return item;
  }
 
  document.addEventListener('pointerdown', event => {
-  if (!weaponTipTrigger?.contains(event.target)) closeWeaponTip();
+  if (!collectionTipTrigger?.contains(event.target)) closeCollectionTip();
  });
- document.addEventListener('keydown', event => { if (event.key === 'Escape') closeWeaponTip(); });
- window.addEventListener('resize', positionWeaponTip);
- window.addEventListener('scroll', positionWeaponTip, {passive:true});
+ window.addEventListener('resize', positionCollectionTip);
+ window.addEventListener('scroll', positionCollectionTip, {capture:true, passive:true});
 
  function renderWeaponCollection() {
-  closeWeaponTip();
+  closeCollectionTip();
   const owned = new Set(session.progression.weapons);
   const catalog = Object.entries(weaponMoves).sort(([a], [b]) => Number(owned.has(b)) - Number(owned.has(a)));
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
-  weaponList.replaceChildren(...catalog.map(([id, move]) => boardWeapon(id, move, owned.has(id))));
+  weaponList.replaceChildren(...catalog.map(([id, move]) => boardItem({
+   label:move.label,
+   icon:id === 'blade' ? collectionArt('assets/weapon-guandao.svg') : move.icon || '⚔️',
+   owned:owned.has(id),
+   starter:session.starter?.weapon_id === id,
+   info:() => weaponInfo(id, move),
+   state:owned.has(id) ? '已拥有' : '未获得',
+  })));
  }
  $('open-weapon-collection').addEventListener('click', () => run(async () => {
   renderPlayer(await api('game', '/session'));
@@ -1516,8 +1538,10 @@ if (onlineMode) {
   $('town-opponent-weapons').replaceChildren(...progression.weapons.filter(id => weaponMoves[id])
    .map(id => weaponCard(id, weaponMoves[id])));
   $('town-opponent-weapons-empty').hidden = progression.weapons.length > 0;
-  renderTechniques($('town-opponent-skills'), progression.techniques);
-  $('town-opponent-skills-empty').hidden = Boolean(progression.techniques?.length);
+  const skills = $('town-opponent-skills');
+  renderTechniques(skills, progression.techniques);
+  skills.hidden = !skills.childElementCount;
+  $('town-opponent-skills-empty').hidden = !skills.hidden;
   showSquarePanel(opponentPanel, null, true);
  }
 
