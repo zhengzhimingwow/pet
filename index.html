@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=single-world">
-  <link rel="stylesheet" href="lobby.css?v=single-world">
+  <link rel="stylesheet" href="lobby.css?v=center-task-panel">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -75,13 +75,18 @@
           </div>
           <div id="town-tasks" class="town-tasks" hidden>
             <button id="town-daily-toggle" class="town-task-toggle" type="button" aria-controls="town-daily" aria-expanded="false">任务</button>
-            <section id="town-daily" class="town-daily" aria-labelledby="town-daily-title" hidden>
-              <h3 id="town-daily-title">每日乐斗</h3>
-              <p id="town-daily-rule"></p>
-              <p id="town-daily-progress" role="status"></p>
-              <button id="town-daily-claim" class="town-item-action" type="button" disabled>领取</button>
-              <p id="town-daily-result" role="status" hidden></p>
-            </section>
+            <div id="town-daily-layer" class="town-daily-layer" hidden>
+              <section id="town-daily" class="town-daily" role="dialog" aria-labelledby="town-daily-title">
+                <header class="town-daily-header">
+                  <h3 id="town-daily-title">每日乐斗</h3>
+                  <button id="town-daily-close" class="town-daily-close" type="button" aria-label="关闭任务">×</button>
+                </header>
+                <p id="town-daily-rule"></p>
+                <p id="town-daily-progress" role="status"></p>
+                <button id="town-daily-claim" class="town-item-action" type="button" disabled>领取</button>
+                <p id="town-daily-result" role="status" hidden></p>
+              </section>
+            </div>
           </div>
         </section>
         <section class="town-sheet" aria-labelledby="town-player-name">
@@ -411,6 +416,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=history-isolation"></script>
+  <script src="online.js?v=center-task-panel"></script>
 </body>
 </html>

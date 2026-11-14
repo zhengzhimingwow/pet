@@ -85,7 +85,8 @@ if (onlineMode) {
  let dailyResetTimer;
  const dailyTasks = $('town-tasks');
  const dailyToggle = $('town-daily-toggle');
- const dailyDetails = $('town-daily');
+ const dailyLayer = $('town-daily-layer');
+ const dailyClose = $('town-daily-close');
  const dailyClaim = $('town-daily-claim');
  const opponentFriendStates = new Map();
 
@@ -139,7 +140,10 @@ if (onlineMode) {
 
  function showEntry() {
   clearTimeout(returnToSquareTimer);
-  if (!session) clearTimeout(dailyResetTimer);
+  if (!session) {
+   clearTimeout(dailyResetTimer);
+   showDailyDetails(false);
+  }
   battleView.hidden = true;
   if (!session) showSquarePanel(historyPanel);
   townStage.hidden = false;
@@ -210,15 +214,25 @@ if (onlineMode) {
  }
 
  function showDailyDetails(open) {
-  dailyDetails.hidden = !open;
+  dailyLayer.hidden = !open;
   dailyToggle.setAttribute('aria-expanded', String(open));
  }
 
- dailyToggle.addEventListener('click', () => showDailyDetails(dailyDetails.hidden));
- dailyTasks.addEventListener('keydown', event => {
-  if (event.key !== 'Escape' || dailyDetails.hidden) return;
+ function closeDailyDetails() {
   showDailyDetails(false);
-  dailyToggle.focus();
+  dailyToggle.focus({preventScroll:true});
+ }
+
+ dailyToggle.addEventListener('click', () => {
+  showDailyDetails(true);
+  dailyClose.focus({preventScroll:true});
+ });
+ dailyClose.addEventListener('click', closeDailyDetails);
+ dailyLayer.addEventListener('click', event => {
+  if (event.target === dailyLayer) closeDailyDetails();
+ });
+ dailyTasks.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !dailyLayer.hidden) closeDailyDetails();
  });
 
  function renderDailyTask(task) {
@@ -247,6 +261,7 @@ if (onlineMode) {
  }
 
  dailyClaim.addEventListener('click', () => run(async () => {
+  if (document.activeElement === document.body && !dailyLayer.hidden) dailyClose.focus({preventScroll:true});
   try {
    const data = await api('game', '/daily-task/claim', {day:dailyTask.day});
    renderPlayer(data);
@@ -775,6 +790,7 @@ if (onlineMode) {
  async function playback(report, rewardText) {
   clearTimeout(returnToSquareTimer);
   showSquarePanel(historyPanel);
+  showDailyDetails(false);
   townStage.hidden = true;
   battleView.hidden = false;
   $('arena-title').focus({preventScroll:true});

@@ -213,13 +213,14 @@
 .town-stat:first-child .town-stat-breakdown { left: 0; translate: none; }
 .town-tasks {
   position: absolute;
-  inset: 12px auto auto 12px;
+  inset: 0;
   z-index: 1;
-  width: min(290px, calc(100% - 24px));
   pointer-events: none;
 }
-.town-task-toggle, .town-daily { pointer-events: auto; }
 .town-task-toggle {
+  position: absolute;
+  inset: 12px auto auto 12px;
+  pointer-events: auto;
   min-height: 36px;
   padding: 5px 14px;
   border: 1px solid #9cc9f3;
@@ -230,18 +231,41 @@
   box-shadow: 0 3px 10px #0d203c55;
 }
 .town-task-toggle:hover, .town-task-toggle[aria-expanded="true"] { background: #28548d; }
-.town-daily {
-  margin-top: 6px;
-  padding: 9px 11px;
-  border: 1px solid #c1daf5;
-  border-radius: 10px;
-  background: #f7fbfff5;
-  box-shadow: 0 4px 14px #0d203c55;
+.town-daily-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #12284f4d;
+  pointer-events: auto;
 }
-.town-daily h3 { margin: 0; color: #254e84; font-size: 14px; }
-.town-daily p { margin: 4px 0 0; color: var(--town-muted); font-size: 12px; line-height: 1.4; }
-.town-daily button { margin-top: 7px; }
-.town-daily button:disabled { opacity: .68; }
+.town-daily {
+  width: min(100%, 340px);
+  max-height: 100%;
+  overflow: auto;
+  padding: clamp(10px, 2vw, 18px);
+  border: 1px solid #c1daf5;
+  border-radius: 12px;
+  background: #f7fbff;
+  box-shadow: 0 8px 26px #0d203c66;
+}
+.town-daily-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.town-daily h3 { margin: 0; color: #254e84; font-size: 16px; }
+.town-daily-close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #365785;
+  font-size: 22px;
+}
+.town-daily-close:hover { background: #e6effc; }
+.town-daily p { margin: 6px 0 0; color: var(--town-muted); font-size: 13px; line-height: 1.4; }
+.town-daily .town-item-action { margin-top: 10px; }
+.town-daily .town-item-action:disabled { opacity: .68; }
 #town-daily-progress { color: #254e84; font-weight: 800; }
 #town-daily-result { color: #1e6050; font-weight: 700; }
 .town-opponent-details .town-ai-label { color: #4752a0; font-weight: 650; }
