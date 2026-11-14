@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=landscape-plaza">
+  <link rel="stylesheet" href="lobby.css?v=rankings-sidebar">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -146,7 +146,7 @@
           <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
           <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
           <button id="open-shop" type="button" aria-controls="town-shop-panel" aria-pressed="false">商店</button>
-          <button id="open-rankings" type="button" aria-controls="town-social-panel" aria-pressed="false">等级榜</button>
+          <button id="open-rankings" type="button" aria-controls="town-rankings-panel" aria-pressed="false">等级榜</button>
           <button id="open-guilds" type="button" aria-controls="town-social-panel" aria-pressed="false">帮派</button>
           <button id="open-friends" type="button" aria-controls="town-social-panel" aria-pressed="false">好友</button>
         </nav>
@@ -276,6 +276,17 @@
                 <ul id="town-inventory-items" class="town-item-list"></ul>
               </div>
             </section>
+            <section id="town-rankings-panel" class="town-inline-panel town-rankings" aria-labelledby="town-rankings-title" hidden>
+              <h2 id="town-rankings-title" tabindex="-1">等级榜 · 前 100 名</h2>
+              <div id="town-rankings-scroll" class="town-rankings-scroll" role="region" tabindex="0" aria-label="前一百名">
+                <ol id="town-rankings-list" class="town-item-list"></ol>
+              </div>
+              <footer class="town-rankings-footer">
+                <strong>我的排名</strong>
+                <ul id="town-ranking-self" class="town-item-list"></ul>
+                <p id="town-ranking-missing" hidden>暂无排名</p>
+              </footer>
+            </section>
             <section id="town-social-panel" class="town-inline-panel" aria-labelledby="town-social-title" hidden>
               <div class="town-panel-header">
                 <h2 id="town-social-title" tabindex="-1"></h2>
@@ -349,11 +360,15 @@
           </div>
         </div>
       </div>
-      <aside class="town-sidebar" aria-labelledby="town-opponents-title">
+      <button id="open-opponents" class="town-opponents-toggle" type="button" aria-controls="town-opponents-sidebar" aria-expanded="true" hidden>挑战 <span aria-hidden="true">‹</span></button>
+      <aside id="town-opponents-sidebar" class="town-sidebar" aria-labelledby="town-opponents-title">
         <section class="town-activity">
           <div class="town-panel-header">
             <h2 id="town-opponents-title">可挑战玩家</h2>
-            <button id="refresh-opponents" type="button">换一批</button>
+            <div class="town-opponents-controls">
+              <button id="refresh-opponents" type="button">换一批</button>
+              <button id="close-opponents" type="button" aria-label="收起挑战列表" aria-controls="town-opponents-sidebar" title="收起挑战列表">›</button>
+            </div>
           </div>
           <ul id="town-opponents"></ul>
           <p id="town-opponents-empty" class="town-empty" hidden>暂时没有可挑战的玩家</p>
@@ -447,6 +462,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=landscape-plaza"></script>
+  <script src="online.js?v=rankings-sidebar"></script>
 </body>
 </html>

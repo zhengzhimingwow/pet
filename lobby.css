@@ -96,6 +96,26 @@
 }
 .town-sidebar #town-opponents { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .town-sidebar .town-panel-header { flex: none; }
+.town-opponents-controls { display: flex; align-items: center; gap: 4px; }
+#close-opponents, .town-opponents-toggle {
+  min-height: 32px;
+  border: 1px solid #a7bfdf;
+  border-radius: 7px;
+  font-weight: 800;
+}
+#close-opponents { width: 26px; padding: 0; background: #edf4ff; color: #274d7b; font-size: 20px; }
+.town-opponents-toggle {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--hud-top) + 48px);
+  right: var(--hud-right);
+  padding: 5px 11px;
+  background: #142d52ed;
+  color: #f3f8ff;
+}
+.town-game:has(.town-battle-view:not([hidden])) .town-opponents-toggle { display: none; }
+#close-opponents:hover { background: #dceaff; }
+.town-opponents-toggle:hover { background: #28548d; }
 .town-sheet {
   position: absolute;
   top: var(--hud-top);
@@ -169,6 +189,32 @@
   top: 0;
   z-index: 1;
 }
+.town-panel-frame > .town-rankings:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.town-rankings > h2, .town-rankings-footer { flex: none; }
+.town-rankings-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.town-rankings-footer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 12px;
+  padding: 6px 12px;
+  border-top: 1px solid #aac1e0;
+  background: #e8f2ff;
+}
+.town-rankings-footer > strong { color: #244874; font-size: 13px; }
+.town-rankings-footer > p { margin: 0; color: var(--town-muted); font-size: 13px; }
+.town-rankings .town-item-list li { min-width: 0; overflow-wrap: anywhere; }
+.town-rankings #town-rankings-list li[data-self] { border-color: #9dbbe6; background: #edf4ff; }
 .town-panel-close {
   position: absolute;
   z-index: 2;
@@ -1010,6 +1056,7 @@
   .town-sheet { top: calc(var(--hud-top) + 45px); width: min(385px, calc(100% - var(--hud-left) - var(--hud-right))); }
   .town-tasks .town-task-toggle { top: calc(var(--hud-top) + 125px); }
   .town-sidebar { top: calc(var(--hud-top) + 125px); bottom: auto; height: min(39%, 340px); width: min(194px, 54%); }
+  .town-opponents-toggle { top: calc(var(--hud-top) + 125px); }
   .town-sidebar .town-activity h2 { font-size: 13px; padding: 8px; }
   .town-sidebar .town-opponent-avatar { width: 24px; }
   .town-sidebar #town-opponents { padding-inline: 6px; }

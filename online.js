@@ -16,7 +16,7 @@ if (onlineMode) {
  const socialFeedback = $('town-social-feedback');
  const socialLeave = $('town-social-leave');
  const socialConfirm = $('town-social-confirm');
- const socialTitles = {rankings:'等级榜', guilds:'帮派', friends:'好友'};
+ const socialTitles = {guilds:'帮派', friends:'好友'};
  const statLabels = {max_hp:'生命', attack:'攻击', defense:'防御'};
  const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改角色名。'}};
  const pendingItemRequests = new Map();
@@ -70,12 +70,17 @@ if (onlineMode) {
  const opponentPanel = $('town-opponent-panel');
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
- const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
+ const rankingsPanel = $('town-rankings-panel');
+ const openRankings = $('open-rankings');
+ const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, rankingsPanel,
   avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
+ const opponentsSidebar = $('town-opponents-sidebar');
+ const openOpponents = $('open-opponents');
+ const closeOpponents = $('close-opponents');
  const savedAccount = $('saved-account');
  const historyTimeFormat = new Intl.DateTimeFormat('zh-CN', {
   timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit',
@@ -621,7 +626,7 @@ if (onlineMode) {
      guild.member_count >= data.capacity);
     return row;
    });
-  } else if (friendView) {
+  } else {
    empty = '暂无好友或申请。';
    rows = data.players.map(player => {
     const status = {friend:'好友', incoming:'收到申请', outgoing:'等待同意'}[player.status];
@@ -632,15 +637,22 @@ if (onlineMode) {
     addSocialButton(row, remove, 'remove', target, '已处理。');
     return row;
    });
-  } else {
-   empty = '暂无排名。';
-   rows = data.players.map(player => socialPlayerRow(player,
-    `Lv. ${player.level} · ${player.xp}/100 经验`, `${player.rank}. ${player.name}`));
   }
   socialList.replaceChildren(...rows);
   $('town-social-empty').hidden = rows.length > 0;
   $('town-social-empty').textContent = empty ?? '';
  }
+
+ openRankings.addEventListener('click', () => run(async () => {
+  const {players, self} = await api('game', '/rankings');
+  const rankRow = player => socialPlayerRow(player, `Lv. ${player.level} · ${player.xp}/100 经验`,
+   `第 ${player.rank} 名 · ${player.name}`);
+  $('town-rankings-list').replaceChildren(...players.map(rankRow));
+  $('town-ranking-self').replaceChildren(...(self ? [rankRow(self)] : []));
+  $('town-ranking-missing').hidden = Boolean(self);
+  showSquarePanel(rankingsPanel, openRankings, true);
+  $('town-rankings-scroll').scrollTop = 0;
+ }));
 
  function socialAction(action, data, success) {
   return run(async () => {
@@ -1151,6 +1163,7 @@ if (onlineMode) {
    return (kind === 'challenge' ? `挑战 ${data.opponent}` : `${data.opponent} 挑战了你`) + ` · ${outcome}`;
   }
   if (kind === 'daily_task') return '领取每日乐斗奖励';
+  if (kind === 'initial_weapon') return `获得初始武器 ${weaponMoves[data.weapon_id]?.label ?? data.weapon_id}`;
   if (kind === 'starter_weapon') return `获得新手武器 ${weaponMoves[data.weapon_id]?.label ?? data.weapon_id}`;
   if (kind === 'purchase') return `花费 ${data.coins} 金币购买 ${itemDetails[data.item_id]?.name ?? data.item_id}`;
   if (kind === 'rename') return `将角色名从 ${data.old_name} 改为 ${data.name}`;
@@ -1177,7 +1190,6 @@ if (onlineMode) {
    const time = document.createElement('time');
    details.className = 'town-history-details';
    label.textContent = playerLogText(entry);
-   time.textContent = battleDate(entry, time);
    details.append(label);
    const reward = entry.data.reward;
    if (reward) {
@@ -1191,7 +1203,10 @@ if (onlineMode) {
     ].filter(Boolean).join(' · ');
     details.append(summary);
    }
-   details.append(time);
+   if (!entry.data.backfilled) {
+    time.textContent = battleDate(entry, time);
+    details.append(time);
+   }
    row.append(details);
    playerLogList.append(row);
   }
@@ -1583,6 +1598,15 @@ if (onlineMode) {
    opponentsList.removeAttribute('aria-busy');
   }
  });
+
+ function setOpponentsExpanded(expanded) {
+  opponentsSidebar.hidden = !expanded;
+  openOpponents.hidden = expanded;
+  openOpponents.setAttribute('aria-expanded', String(expanded));
+  (expanded ? closeOpponents : openOpponents).focus({preventScroll:true});
+ }
+ openOpponents.addEventListener('click', () => setOpponentsExpanded(true));
+ closeOpponents.addEventListener('click', () => setOpponentsExpanded(false));
 
  function logout() {
   return run(async () => {
