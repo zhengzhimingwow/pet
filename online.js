@@ -33,8 +33,13 @@ if (onlineMode) {
  const damagePanel = $('town-damage-panel');
  const weaponPanel = $('town-weapon-panel');
  const weaponList = $('town-weapon-list');
+ const weaponTip = $('town-weapon-tip');
  const historyPanel = $('town-history-panel');
  const openHistory = $('open-history');
+ const playerLogPanel = $('town-player-log-panel');
+ const openPlayerLog = $('open-player-log');
+ const playerLogList = $('town-player-log');
+ const playerLogMore = $('town-player-log-more');
  const mailPanel = $('town-mail-panel');
  const openMail = $('open-mail');
  const mailList = $('town-mail-list');
@@ -49,7 +54,7 @@ if (onlineMode) {
  const opponentPanel = $('town-opponent-panel');
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
- const squarePanels = [historyPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
+ const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
   avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
@@ -80,6 +85,8 @@ if (onlineMode) {
  let recentOpponentIds = [];
  let nextMail;
  let unreadMail = 0;
+ let nextPlayerLog;
+ let weaponTipTrigger;
  let dailyTask;
  let dailyResetTimer;
  const dailyTasks = $('town-tasks');
@@ -320,11 +327,9 @@ if (onlineMode) {
    const data = await api(session.zone, '/daily-task/claim', {day:dailyTask.day});
    renderPlayer(data);
    const result = $('town-daily-result');
-   const weapon = weaponMoves[data.reward.weapon_id]?.label;
-   result.textContent = `已领取 ${data.reward.xp} 经验`
-    + (data.reward.level_up ? `，升至 Lv. ${data.reward.level}` : '')
-    + (weapon ? `，获得 ${weapon}` : '');
+   result.textContent = `已领取 ${data.reward.xp} 经验`;
    result.hidden = false;
+   if (!playerLogPanel.hidden) await refreshPlayerLog();
   } catch (error) {
    if (['task_reset', 'task_claimed', 'task_incomplete'].includes(error.code)) {
     renderDailyTask(await api(session.zone, '/daily-task'));
@@ -338,6 +343,7 @@ if (onlineMode) {
    viewedOpponent = opponentReturn = null;
   }
   for (const section of squarePanels) section.hidden = section !== panel;
+  if (panel !== weaponPanel) closeWeaponTip();
   if (panel === historyPanel) button = openHistory;
   for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
   if (moveFocus) {
@@ -351,6 +357,11 @@ if (onlineMode) {
   showSquarePanel(historyPanel, openHistory, true);
   await refreshHistory();
  }));
+ openPlayerLog.addEventListener('click', () => run(async () => {
+  await refreshPlayerLog();
+  showSquarePanel(playerLogPanel, openPlayerLog, true);
+ }));
+ playerLogMore.addEventListener('click', () => run(() => refreshPlayerLog(nextPlayerLog)));
  openCharacterDetails.addEventListener('click', () => showSquarePanel(characterDetailsPanel, openCharacterDetails, true));
  openMail.addEventListener('click', () => run(async () => {
   await refreshMail();
@@ -666,12 +677,7 @@ if (onlineMode) {
  function weaponMoveLabel(move) {
   return `${move.name} · ${move.range === 'ranged' ? '远程' : '近战'}`;
  }
- function weaponCard(id, move, owned) {
-  const item = document.createElement('li');
-  const icon = document.createElement('span');
-  icon.className = 'town-item-icon';
-  icon.textContent = move.icon || '⚔';
-  icon.setAttribute('aria-hidden', 'true');
+ function weaponInfo(id, move) {
   const info = document.createElement('span');
   const label = document.createElement('strong');
   label.textContent = move.label;
@@ -684,21 +690,88 @@ if (onlineMode) {
    effect.textContent = weaponEffects[id];
    info.append(effect);
   }
-  item.append(icon, info);
-  if (owned !== undefined) {
-   const state = document.createElement('span');
-   state.className = owned ? 'weapon-owned' : 'weapon-state';
-   state.textContent = owned ? '已拥有' : '未获得';
-   item.append(state);
-  }
+  return info;
+ }
+
+ function weaponCard(id, move) {
+  const item = document.createElement('li');
+  const icon = document.createElement('span');
+  icon.className = 'town-item-icon';
+  icon.textContent = move.icon || '⚔';
+  icon.setAttribute('aria-hidden', 'true');
+  item.append(icon, weaponInfo(id, move));
   return item;
  }
 
+ function closeWeaponTip() {
+  if (!weaponTipTrigger) return;
+  weaponTipTrigger.removeAttribute('aria-describedby');
+  weaponTip.hidePopover();
+  weaponTipTrigger = undefined;
+ }
+
+ function showWeaponTip(trigger, id, move, owned) {
+  if (weaponTipTrigger === trigger) return;
+  closeWeaponTip();
+  const state = document.createElement('small');
+  state.textContent = owned ? '已拥有' : '未获得';
+  weaponTip.replaceChildren(weaponInfo(id, move), state);
+  weaponTip.showPopover();
+  weaponTipTrigger = trigger;
+  trigger.setAttribute('aria-describedby', weaponTip.id);
+  positionWeaponTip();
+ }
+
+ function positionWeaponTip() {
+  if (!weaponTipTrigger) return;
+  const rect = weaponTipTrigger.getBoundingClientRect();
+  if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+   closeWeaponTip();
+   return;
+  }
+  const top = rect.top > weaponTip.offsetHeight + 12 ? rect.top - weaponTip.offsetHeight - 6 : rect.bottom + 6;
+  const x = rect.left + (rect.width - weaponTip.offsetWidth) / 2;
+  weaponTip.style.left = `${Math.max(8, Math.min(x, document.documentElement.clientWidth - weaponTip.offsetWidth - 8))}px`;
+  weaponTip.style.top = `${Math.max(8, Math.min(top, window.innerHeight - weaponTip.offsetHeight - 8))}px`;
+ }
+
+ function boardWeapon(id, move, owned) {
+  const item = document.createElement('li');
+  const trigger = document.createElement('button');
+  const icon = document.createElement('span');
+  const name = document.createElement('span');
+  trigger.type = 'button';
+  trigger.toggleAttribute('data-unowned', !owned);
+  icon.className = 'town-board-icon';
+  icon.textContent = {blade:'🗡️', sword:'⚔️'}[id] ?? (move.icon || '⚔️');
+  icon.setAttribute('aria-hidden', 'true');
+  name.textContent = move.label;
+  trigger.append(icon, name);
+  item.append(trigger);
+  const show = () => showWeaponTip(trigger, id, move, owned);
+  trigger.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') show(); });
+  trigger.addEventListener('pointerleave', event => {
+   if (event.pointerType === 'mouse' && !trigger.matches(':focus-visible')) closeWeaponTip();
+  });
+  trigger.addEventListener('focus', () => { if (trigger.matches(':focus-visible')) show(); });
+  trigger.addEventListener('blur', closeWeaponTip);
+  trigger.addEventListener('click', show);
+  return item;
+ }
+
+ document.addEventListener('pointerdown', event => {
+  if (!weaponTipTrigger?.contains(event.target)) closeWeaponTip();
+ });
+ document.addEventListener('keydown', event => { if (event.key === 'Escape') closeWeaponTip(); });
+ window.addEventListener('resize', positionWeaponTip);
+ window.addEventListener('scroll', positionWeaponTip, {passive:true});
+
  function renderWeaponCollection() {
+  closeWeaponTip();
   const owned = new Set(session.progression.weapons);
   const catalog = Object.entries(weaponMoves).sort(([a], [b]) => Number(owned.has(b)) - Number(owned.has(a)));
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
-  weaponList.replaceChildren(...catalog.map(([id, move]) => weaponCard(id, move, owned.has(id))));
+  weaponList.replaceChildren(...catalog.map(([id, move]) => boardWeapon(id, move, owned.has(id))));
  }
  $('open-weapon-collection').addEventListener('click', () => run(async () => {
   renderPlayer(await api(session.zone, '/session'));
@@ -722,6 +795,7 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
   openHistory.disabled = value;
+  openPlayerLog.disabled = playerLogMore.disabled = value;
   openMail.disabled = mailRefresh.disabled = mailMore.disabled = value;
   mailReadAll.disabled = value || !unreadMail;
   openCharacterDetails.disabled = value;
@@ -918,6 +992,55 @@ if (onlineMode) {
   button.setAttribute('aria-label', `回敬，${matchLabel}`);
   button.addEventListener('click', () => run(() => challenge(null, report.battle_id)));
   return button;
+ }
+
+ function playerLogText({kind, data}) {
+  if (kind === 'challenge' || kind === 'defense') {
+   const side = kind === 'challenge' ? 'left' : 'right';
+   const outcome = data.winner === 'draw' ? '平局' : data.winner === side ? '获胜' : '落败';
+   return (kind === 'challenge' ? `挑战 ${data.opponent}` : `${data.opponent} 挑战了你`) + ` · ${outcome}`;
+  }
+  if (kind === 'daily_task') return '领取每日乐斗奖励';
+  if (kind === 'purchase') return `花费 ${data.coins} 金币购买 ${itemDetails[data.item_id]?.name ?? data.item_id}`;
+  if (kind === 'rename') return `将角色名从 ${data.old_name} 改为 ${data.name}`;
+  if (kind === 'grant') {
+   const catalog = data.kind === 'weapon' ? weaponMoves : itemDetails;
+   const name = catalog[data.asset_id]?.label ?? catalog[data.asset_id]?.name ?? data.asset_id;
+   return `收到 ${name}${data.quantity > 1 ? ` × ${data.quantity}` : ''}`;
+  }
+  return '玩家活动';
+ }
+
+ async function refreshPlayerLog(before) {
+  const {entries, next_before} = await api(session.zone, before ? `/player-log/before/${before}` : '/player-log');
+  if (!before) playerLogList.replaceChildren();
+  for (const entry of entries) {
+   const row = document.createElement('li');
+   const details = document.createElement('div');
+   const label = document.createElement('strong');
+   const time = document.createElement('time');
+   details.className = 'town-history-details';
+   label.textContent = playerLogText(entry);
+   time.textContent = battleDate(entry, time);
+   details.append(label);
+   const reward = entry.data.reward;
+   if (reward) {
+    const summary = document.createElement('span');
+    const weapon = weaponMoves[reward.weapon_id]?.label ?? reward.weapon_id;
+    summary.textContent = [
+     `+${reward.xp} 经验`,
+     reward.level_up && `升至 Lv. ${reward.level}`,
+     weapon && `获得武器 ${weapon}`,
+    ].filter(Boolean).join(' · ');
+    details.append(summary);
+   }
+   details.append(time);
+   row.append(details);
+   playerLogList.append(row);
+  }
+  $('town-player-log-empty').hidden = Boolean(playerLogList.children.length);
+  nextPlayerLog = next_before;
+  playerLogMore.hidden = !nextPlayerLog;
  }
 
  async function refreshMail(before) {

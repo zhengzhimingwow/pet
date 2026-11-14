@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=toy-hammer-grip">
-  <link rel="stylesheet" href="lobby.css?v=plaza-activity">
+  <link rel="stylesheet" href="lobby.css?v=player-log">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -93,7 +93,11 @@
         <section id="town-stage" class="town-stage" aria-label="广场场景" tabindex="-1">
           <div class="town-pet">
             <div class="town-pet-shadow" aria-hidden="true"></div>
-            <div class="fighter-art town-pet-art" role="img" aria-label="蓝围巾企鹅"></div>
+            <div class="town-pet-pose" role="img" aria-label="蓝围巾企鹅">
+              <span class="town-pet-foot town-pet-foot-back" aria-hidden="true"></span>
+              <span class="town-pet-foot town-pet-foot-front" aria-hidden="true"></span>
+              <span class="town-pet-art" aria-hidden="true"></span>
+            </div>
           </div>
           <div id="town-tasks" class="town-tasks" hidden>
             <button id="town-daily-toggle" class="town-task-toggle" type="button" aria-controls="town-daily" aria-expanded="false">任务</button>
@@ -146,6 +150,7 @@
         </section>
         <nav class="town-collection-actions" aria-label="广场功能">
           <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="true">乐斗记录</button>
+          <button id="open-player-log" type="button" aria-controls="town-player-log-panel" aria-pressed="false">玩家日志</button>
           <button id="open-mail" type="button" aria-controls="town-mail-panel" aria-pressed="false">邮件 <span id="town-mail-count" hidden></span></button>
           <button id="open-character-details" type="button" aria-controls="town-character-details-panel" aria-pressed="false">角色详情</button>
           <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
@@ -162,6 +167,14 @@
           <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
           <ul id="town-battle-history"></ul>
           <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
+        </section>
+        <section id="town-player-log-panel" class="town-inline-panel" aria-labelledby="town-player-log-title" hidden>
+          <h2 id="town-player-log-title" tabindex="-1">玩家日志</h2>
+          <ul id="town-player-log"></ul>
+          <p id="town-player-log-empty" class="town-empty" hidden>还没有玩家日志</p>
+          <div class="town-log-pagination town-history-actions">
+            <button id="town-player-log-more" type="button" hidden>加载更早的日志</button>
+          </div>
         </section>
         <section id="town-mail-panel" class="town-inline-panel" aria-labelledby="town-mail-title" hidden>
           <div class="town-panel-header">
@@ -308,7 +321,8 @@
             </div>
           </div>
           <div class="town-damage-content">
-            <ul id="town-weapon-list" class="town-weapon-list"></ul>
+            <ul id="town-weapon-list" class="town-weapon-board"></ul>
+            <div id="town-weapon-tip" class="town-weapon-tip" role="tooltip" popover="manual"></div>
           </div>
         </section>
         <section id="town-damage-panel" class="town-inline-panel" aria-labelledby="town-damage-title" hidden>
@@ -422,6 +436,7 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
-  <script src="online.js?v=plaza-activity"></script>
+  <script src="town-pet.js?v=1" defer></script>
+  <script src="online.js?v=player-log"></script>
 </body>
 </html>
