@@ -848,37 +848,39 @@ if (onlineMode) {
    const details = document.createElement('span');
    const subject = document.createElement('span');
    const time = document.createElement('time');
-   const result = document.createElement('span');
+   const content = document.createElement('div');
+   const body = document.createElement('p');
    const actions = document.createElement('div');
    const read = document.createElement('button');
    item.toggleAttribute('data-unread', letter.unread);
    info.className = 'town-history-info';
    details.className = 'town-history-details';
-   subject.textContent = `${letter.opponent} 挑战了你`;
+   subject.textContent = letter.subject;
    time.textContent = battleDate(letter, time);
    details.append(subject, time);
-   const outcome = letter.winner === 'draw' ? 'draw' : letter.winner === 'right' ? 'left' : 'right';
-   result.className = `town-outcome town-outcome-${outcome}`;
-   result.textContent = {left:'胜', right:'负', draw:'平'}[outcome];
-   info.append(details, result);
-   const matchLabel = `${letter.opponent}，${time.textContent}`;
+   info.append(details);
+   content.className = 'town-mail-body';
+   content.hidden = true;
+   body.textContent = letter.body;
+   content.append(body);
    actions.className = 'town-history-actions';
    read.type = 'button';
    read.disabled = busy;
-   read.textContent = '查看战报';
-   read.setAttribute('aria-label', `${letter.unread ? '未读，' : ''}查看战报，${matchLabel}`);
+   read.textContent = '查看邮件';
+   read.setAttribute('aria-expanded', 'false');
+   read.setAttribute('aria-label', `${letter.unread ? '未读，' : ''}查看邮件，${letter.subject}`);
    read.addEventListener('click', () => run(async () => {
-    const report = await api(session.zone, `/battles/${letter.battle_id}`);
     if (item.hasAttribute('data-unread')) {
      const {unread} = await api(session.zone, `/mail/${letter.mail_id}/read`, {});
      setMailCount(unread);
      item.removeAttribute('data-unread');
-     read.setAttribute('aria-label', `查看战报，${matchLabel}`);
+     read.setAttribute('aria-label', `查看邮件，${letter.subject}`);
     }
-    showDamageReport(report, time.textContent);
+    content.hidden = !content.hidden;
+    read.setAttribute('aria-expanded', String(!content.hidden));
    }));
-   actions.append(read, makeRematchButton(letter, matchLabel));
-   item.append(info, actions);
+   actions.append(read);
+   item.append(info, actions, content);
    mailList.append(item);
   }
   nextMail = next_before;

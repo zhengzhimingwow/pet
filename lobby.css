@@ -471,6 +471,8 @@
 #town-mail-list { margin: 0; padding: 0 12px; list-style: none; }
 #town-mail-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 0; }
 #town-mail-list li + li { border-top: 1px solid var(--town-line); }
+.town-mail-body { flex: 1 0 100%; margin: 0; padding: 8px 10px; background: #edf4ff; border-radius: 7px; }
+.town-mail-body p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 #town-mail-list [data-unread] .town-history-details > span { font-weight: 750; }
 #town-mail-list [data-unread] .town-history-details > span::before {
   content: "";
