@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=single-world">
-  <link rel="stylesheet" href="lobby.css?v=center-task-panel">
+  <link rel="stylesheet" href="lobby.css?v=world-chat">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -131,6 +131,7 @@
           <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="true">乐斗记录</button>
           <button id="open-player-log" type="button" aria-controls="town-player-log-panel" aria-pressed="false">玩家日志</button>
           <button id="open-mail" type="button" aria-controls="town-mail-panel" aria-pressed="false">邮件 <span id="town-mail-count" hidden></span></button>
+          <button id="open-chat" type="button" aria-controls="town-chat-panel" aria-pressed="false">聊天</button>
           <button id="open-character-details" type="button" aria-controls="town-character-details-panel" aria-pressed="false">角色详情</button>
           <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
           <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
@@ -168,6 +169,18 @@
           <div class="town-mail-pagination town-history-actions">
             <button id="town-mail-more" type="button" hidden>加载更早的邮件</button>
           </div>
+        </section>
+        <section id="town-chat-panel" class="town-inline-panel" aria-labelledby="town-chat-title" hidden>
+          <h2 id="town-chat-title" tabindex="-1">世界聊天</h2>
+          <div id="town-chat-feed" class="town-chat-feed" tabindex="0" aria-label="聊天消息">
+            <p id="town-chat-empty" class="town-empty" hidden>还没有消息</p>
+            <ol id="town-chat-messages" role="log" aria-label="世界聊天记录"></ol>
+          </div>
+          <form id="town-chat-form" class="town-chat-form">
+            <input id="town-chat-text" type="text" placeholder="说点什么…" aria-label="聊天消息" autocomplete="off" maxlength="400" required>
+            <button id="town-chat-send" class="town-item-action" type="submit">发送</button>
+          </form>
+          <p id="town-chat-feedback" class="town-feedback" role="status"></p>
         </section>
         <section id="town-character-details-panel" class="town-inline-panel" aria-labelledby="town-character-details-title" hidden>
           <div class="town-panel-header">
@@ -416,6 +429,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=level-stat-growth"></script>
+  <script src="online.js?v=world-chat"></script>
 </body>
 </html>

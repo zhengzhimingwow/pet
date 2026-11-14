@@ -48,6 +48,14 @@ if (onlineMode) {
  const mailReadAll = $('town-mail-read-all');
  const mailRefresh = $('town-mail-refresh');
  const mailMore = $('town-mail-more');
+ const chatPanel = $('town-chat-panel');
+ const openChat = $('open-chat');
+ const chatFeed = $('town-chat-feed');
+ const chatMessages = $('town-chat-messages');
+ const chatForm = $('town-chat-form');
+ const chatText = $('town-chat-text');
+ const chatSend = $('town-chat-send');
+ const chatFeedback = $('town-chat-feedback');
  const characterDetailsPanel = $('town-character-details-panel');
  const openCharacterDetails = $('open-character-details');
  const skillPanel = $('town-skill-panel');
@@ -56,7 +64,7 @@ if (onlineMode) {
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
  const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
-  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel];
+  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -80,6 +88,10 @@ if (onlineMode) {
  let recentOpponentIds = [];
  let nextMail;
  let unreadMail = 0;
+ let chatCursor;
+ let chatLoading = false;
+ let pendingChat;
+ let chatGeneration = 0;
  let nextPlayerLog;
  let weaponTipTrigger;
  let dailyTask;
@@ -99,6 +111,8 @@ if (onlineMode) {
   remember_expired: '这个账号的免密登录已过期，请输入密码重新登录。',
   player_not_entered: '请重新进入游戏。',
   rate_limited: '登录尝试较多，请稍后重试。',
+  chat_rate_limited: '发得太快，请稍等再试。',
+  chat_invalid_text: '请输入 1–200 个字，消息须为单行。',
   not_found: '没有找到该角色或战报。',
   same_player: '请选择其他玩家。',
   invalid_request: '请检查角色 UID。',
@@ -129,7 +143,7 @@ if (onlineMode) {
    headers: body ? {'Content-Type': 'application/json'} : {},
    body: body ? JSON.stringify(body) : undefined,
   });
-  if (response.status === 429) throw new Error(messages.rate_limited);
+  if (response.status === 429 && path !== '/chat') throw new Error(messages.rate_limited);
   const data = await response.json();
   if (!response.ok) {
    const error = new Error(messages[data.error] ?? messages.unavailable);
@@ -144,6 +158,7 @@ if (onlineMode) {
   if (!session) {
    clearTimeout(dailyResetTimer);
    showDailyDetails(false);
+   resetChat();
   }
   battleView.hidden = true;
   if (!session) showSquarePanel(historyPanel);
@@ -736,6 +751,7 @@ if (onlineMode) {
   openHistory.disabled = value;
   openPlayerLog.disabled = playerLogMore.disabled = value;
   openMail.disabled = mailRefresh.disabled = mailMore.disabled = value;
+  openChat.disabled = chatSend.disabled = value;
   mailReadAll.disabled = value || !unreadMail;
   openCharacterDetails.disabled = value;
   openSkillCollection.disabled = value;
@@ -919,6 +935,82 @@ if (onlineMode) {
   }
   return report.created_at?.slice(0, 19) ?? '';
  }
+
+ function resetChat() {
+  chatGeneration++;
+  chatCursor = pendingChat = undefined;
+  chatLoading = false;
+  chatMessages.replaceChildren();
+  chatForm.reset();
+  chatFeedback.textContent = '';
+  $('town-chat-empty').hidden = true;
+ }
+
+ async function refreshChat() {
+  if (chatLoading) return;
+  const generation = chatGeneration;
+  chatLoading = true;
+  try {
+   const {messages: incoming} = await api('game', chatCursor ? `/chat/after/${chatCursor}` : '/chat');
+   if (generation !== chatGeneration) return;
+   const follow = chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight < 36;
+   for (const message of incoming) {
+    const row = document.createElement('li');
+    const meta = document.createElement('div');
+    const name = document.createElement('strong');
+    const time = document.createElement('time');
+    const text = document.createElement('p');
+    row.toggleAttribute('data-self', message.player_id === session.player.player_id);
+    meta.className = 'town-chat-meta';
+    name.textContent = message.name;
+    time.textContent = battleDate(message, time);
+    text.textContent = message.text;
+    meta.append(name, time);
+    row.append(meta, text);
+    chatMessages.append(row);
+   }
+   if (incoming.length) chatCursor = incoming.at(-1).message_id;
+   while (chatMessages.childElementCount > 200) chatMessages.firstElementChild.remove();
+   $('town-chat-empty').hidden = Boolean(chatMessages.childElementCount);
+   if (follow) chatFeed.scrollTop = chatFeed.scrollHeight;
+  } finally {
+   if (generation === chatGeneration) chatLoading = false;
+  }
+ }
+
+ openChat.addEventListener('click', () => run(async () => {
+  showSquarePanel(chatPanel, openChat, true);
+  await refreshChat();
+ }));
+ window.setInterval(() => {
+  if (!session || busy || document.hidden || chatPanel.hidden) return;
+  refreshChat().catch(() => {});
+ }, 3000);
+
+ chatForm.addEventListener('submit', event => {
+  event.preventDefault();
+  run(async () => {
+   const text = chatText.value.trim();
+   if (!text || [...text].length > 200) {
+    chatFeedback.textContent = messages.chat_invalid_text;
+    return;
+   }
+   chatFeedback.textContent = '';
+   if (pendingChat?.text !== text) pendingChat = {text, request_id:newRequestId()};
+   try {
+    await api('game', '/chat', pendingChat);
+   } catch (error) {
+    if (error.code === 'unauthorized') throw error;
+    if (error.code && error.code !== 'unavailable') pendingChat = undefined;
+    chatFeedback.textContent = messages[error.code] ?? '发送结果暂未确认，可以重试。';
+    return;
+   }
+   pendingChat = undefined;
+   if (chatText.value.trim() === text) chatText.value = '';
+   await refreshChat();
+   if (!chatPanel.hidden) chatText.focus({preventScroll:true});
+  });
+ });
 
  function makeRematchButton(report, matchLabel) {
   const button = document.createElement('button');
