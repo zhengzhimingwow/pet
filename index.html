@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=technique-board">
+  <link rel="stylesheet" href="lobby.css?v=jianghu-trials">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -75,6 +75,7 @@
               <span class="town-pet-art" aria-hidden="true"></span>
             </div>
           </div>
+          <button id="open-trials" class="town-task-toggle town-trial-toggle" type="button" aria-controls="town-trial-panel" aria-pressed="false">江湖试炼</button>
           <div id="town-tasks" class="town-tasks" hidden>
             <button id="town-daily-toggle" class="town-task-toggle" type="button" aria-controls="town-daily" aria-expanded="false">任务</button>
             <div id="town-daily-layer" class="town-daily-layer" hidden>
@@ -155,6 +156,18 @@
         <div id="town-panel-layer" class="town-panel-layer" hidden>
           <div class="town-panel-frame">
             <button id="close-town-panel" class="town-panel-close" type="button" aria-label="关闭当前面板">×</button>
+            <section id="town-trial-panel" class="town-inline-panel" aria-labelledby="town-trial-title" hidden>
+              <div class="town-panel-header">
+                <div>
+                  <h2 id="town-trial-title" tabindex="-1">江湖试炼</h2>
+                  <p id="town-trial-progress" role="status"></p>
+                </div>
+              </div>
+              <div class="town-trial-content">
+                <p id="town-trial-cost"></p>
+                <ol id="town-trial-list"></ol>
+              </div>
+            </section>
             <section id="town-history-panel" class="town-history" aria-labelledby="town-history-title" hidden>
               <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
               <ul id="town-battle-history"></ul>
@@ -380,14 +393,20 @@
       <aside id="town-opponents-sidebar" class="town-sidebar" aria-labelledby="town-opponents-title">
         <section class="town-activity">
           <div class="town-panel-header">
-            <h2 id="town-opponents-title">可挑战玩家</h2>
+            <h2 id="town-opponents-title">挑战列表</h2>
             <div class="town-opponents-controls">
               <button id="refresh-opponents" type="button">换一批</button>
               <button id="close-opponents" type="button" aria-label="收起挑战列表" aria-controls="town-opponents-sidebar" title="收起挑战列表">›</button>
             </div>
           </div>
-          <ul id="town-opponents"></ul>
-          <p id="town-opponents-empty" class="town-empty" hidden>暂时没有可挑战的玩家</p>
+          <div class="town-opponent-scroll">
+            <section id="town-pinned-trials" aria-labelledby="town-pinned-title" hidden>
+              <button id="town-pinned-title" type="button" aria-controls="town-trial-panel" aria-pressed="false">江湖试炼 ›</button>
+              <ul id="town-pinned-trial-list"></ul>
+            </section>
+            <ul id="town-opponents" aria-label="可挑战玩家"></ul>
+            <p id="town-opponents-empty" class="town-empty" hidden>暂时没有可挑战的玩家</p>
+          </div>
         </section>
       </aside>
       <p id="town-feedback" class="town-feedback" role="status"></p>
@@ -478,6 +497,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=techniques"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=technique-board-draw"></script>
+  <script src="online.js?v=pinned-jianghu-trials"></script>
 </body>
 </html>

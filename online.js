@@ -71,6 +71,13 @@ if (onlineMode) {
  const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
  const skillList = $('town-skill-list');
+ const trialPanel = $('town-trial-panel');
+ const openTrials = $('open-trials');
+ const trialList = $('town-trial-list');
+ const pinnedTrials = $('town-pinned-trials');
+ const pinnedTrialList = $('town-pinned-trial-list');
+ const openPinnedTrials = $('town-pinned-title');
+ const pinnedTrialIds = new Set(['9000000000000001001', '9000000000000001002', '9000000000000001004']);
  const opponentPanel = $('town-opponent-panel');
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
@@ -82,7 +89,7 @@ if (onlineMode) {
  const rankingFeedback = $('town-ranking-feedback');
  let rankingRequest;
  const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, rankingsPanel,
-  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel];
+  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel, trialPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -136,6 +143,7 @@ if (onlineMode) {
   starter_not_ready: '完成第一场乐斗后即可领取。',
   starter_already_chosen: '你已选过新手武器。',
   starter_battle_unavailable: '该场新手引导已更新，请刷新广场再试。',
+  trial_locked: '先战胜上一关，才能挑战这位对手。',
   rate_limited: '登录尝试较多，请稍后重试。',
   chat_rate_limited: '发得太快，请稍等再试。',
   chat_invalid_text: '请输入 1–200 个字，消息须为单行。',
@@ -204,7 +212,7 @@ if (onlineMode) {
  async function enterGame() {
   acceptSession(await api('game', '/enter', {}));
   townStage.focus();
-  await Promise.all([refreshOpponents(), refreshHistory(), refreshMailCount()]);
+  await Promise.all([refreshOpponents(), refreshHistory(), refreshMailCount(), refreshTrials()]);
  }
 
  function acceptSession(data) {
@@ -231,6 +239,8 @@ if (onlineMode) {
   $('town-history-empty').hidden = true;
   opponentsEmpty.hidden = true;
   opponentsList.replaceChildren();
+  pinnedTrials.hidden = true;
+  pinnedTrialList.replaceChildren();
   showEntry();
  }
 
@@ -308,6 +318,7 @@ if (onlineMode) {
   staminaDisplay.hidden = !stamina;
   if (!stamina) return;
   const {current, max, challenge_cost, recovery_per_hour, next_recovery_in} = stamina;
+  $('town-trial-cost').textContent = `每场消耗 ${challenge_cost} 点体力。击败当前对手后开放下一关，已通关的对手可再次挑战。`;
   const label = `体力 ${current}/${max}`;
   if (staminaDisplay.textContent !== label) staminaDisplay.textContent = label;
   staminaDisplay.toggleAttribute('data-low', current < challenge_cost);
@@ -534,6 +545,51 @@ if (onlineMode) {
    closeSquarePanel();
   }
  });
+
+ async function refreshTrials() {
+  const {stages} = await api('game', '/trials');
+  $('town-trial-progress').textContent = `已通关 ${stages.filter(stage => stage.state === 'cleared').length} / ${stages.length}`;
+  trialList.replaceChildren(...stages.map(stage => trialRow(stage, false)));
+  const pinned = stages.filter(stage => pinnedTrialIds.has(stage.player_id));
+  pinnedTrialList.replaceChildren(...pinned.map(stage => trialRow(stage, true)));
+  pinnedTrials.hidden = !pinned.length;
+ }
+
+ function trialRow(stage, compact) {
+   const row = document.createElement('li');
+   const portrait = document.createElement('img');
+   const info = document.createElement('div');
+   const name = document.createElement('strong');
+   const stats = document.createElement('small');
+   const action = document.createElement(stage.state === 'locked' ? 'span' : 'button');
+   row.dataset.state = stage.state;
+   portrait.src = avatarUrl(stage.avatar_id);
+   portrait.alt = '';
+   name.textContent = compact ? stage.name : `${stage.name} · ${stage.title}`;
+   stats.textContent = compact ? `推荐 Lv. ${stage.recommended_level}`
+    : `推荐 Lv. ${stage.recommended_level} · 战斗力 ${powerNumber.format(stage.combat_power)}`;
+   info.append(name, stats);
+   if (stage.state === 'locked') {
+    action.textContent = '未开放';
+   } else {
+    action.type = 'button';
+    action.className = 'town-item-action';
+    action.disabled = busy;
+    const label = stage.state === 'cleared' ? '再次挑战' : '挑战';
+    action.textContent = compact && stage.state === 'cleared' ? '重打' : label;
+    action.setAttribute('aria-label', `${label}${stage.name}`);
+    action.addEventListener('click', () => run(() => challenge(stage)));
+   }
+   row.append(portrait, info, action);
+   return row;
+ }
+
+ for (const trigger of [openTrials, openPinnedTrials]) {
+  trigger.addEventListener('click', () => run(async () => {
+   await refreshTrials();
+   showSquarePanel(trialPanel, trigger, true);
+  }));
+ }
 
  openHistory.addEventListener('click', () => run(async () => {
   showSquarePanel(historyPanel, openHistory, true);
@@ -1048,6 +1104,10 @@ if (onlineMode) {
  });
  function lock(value) {
   busy = value;
+  openTrials.disabled = openPinnedTrials.disabled = value;
+  for (const list of [trialList, pinnedTrialList]) {
+   for (const button of list.querySelectorAll('button')) button.disabled = value;
+  }
   updateDailyClaim();
   $('login-submit').disabled = value;
   refreshOpponentsButton.disabled = value;
@@ -1340,6 +1400,10 @@ if (onlineMode) {
  }
 
  function playerLogText({kind, data}) {
+  if (kind === 'trial') {
+   const outcome = data.trial?.first_clear ? '首次通关' : data.winner === 'left' ? '获胜' : data.winner === 'draw' ? '平局' : '落败';
+   return `江湖试炼 · ${data.opponent} · ${outcome}`;
+  }
   if (kind === 'challenge' || kind === 'defense') {
    const side = kind === 'challenge' ? 'left' : 'right';
    const outcome = data.winner === 'draw' ? '平局' : data.winner === side ? '获胜' : '落败';
@@ -1760,7 +1824,7 @@ if (onlineMode) {
    statGrowthText(reward.stat_growth),
    reward.level_up && (weapon ? `获得${weapon.label}` : '武器已集齐'),
    ...((reward.techniques ?? []).map(technique => `学会${technique.name}`)),
-  ].filter(Boolean).join(' · ') : '';
+  ].filter(Boolean).join(' · ') : report.trial?.first_clear ? `首次通关 · ${report.defender.name}` : '';
   await playback(report, rewardText, reward?.starter_ready);
   const state = await api('game', '/session');
   renderPlayer(state);
@@ -1770,6 +1834,7 @@ if (onlineMode) {
   await Promise.all([
    refreshHistory(),
    refreshMailCount(),
+   report.trial?.first_clear && refreshTrials(),
   ]);
  }
 
