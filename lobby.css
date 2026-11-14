@@ -118,41 +118,69 @@
 #town-xp::-webkit-progress-value { border-radius: 99px; background: #3878cf; }
 #town-xp::-moz-progress-bar { border-radius: 99px; background: #3878cf; }
 .town-attributes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
-.town-attributes div {
+.town-stat {
+  position: relative;
   display: grid;
   gap: 3px;
-  padding: 7px 5px;
-  border: 1px solid var(--town-line);
+  padding: 7px 5px 4px;
+  border: 1px solid var(--stat-border);
   border-radius: 7px;
-  background: #fbfdff;
+  background: var(--stat-bg);
+  color: var(--stat-ink);
   text-align: center;
 }
-.town-attributes dt { color: var(--town-muted); font-size: 11px; }
-.town-attributes dd { margin: 0; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.town-loadout {
+.town-stat-hp { --stat-bg: #fce9ed; --stat-border: #edc3cd; --stat-ink: #942c49; }
+.town-stat-attack { --stat-bg: #fff0dc; --stat-border: #edcea2; --stat-ink: #8d4614; }
+.town-stat-defense { --stat-bg: #e3efff; --stat-border: #b6d1f3; --stat-ink: #264f8a; }
+.town-stat dt { font-size: 12px; font-weight: 700; }
+.town-stat dd {
+  margin: 0;
+  border-radius: 4px;
+  cursor: help;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.town-stat dd:focus-visible { outline: 2px solid currentColor; }
+.town-stat-breakdown {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 1px);
+  left: 50%;
+  width: max-content;
+  max-width: min(180px, 75vw);
+  padding: 7px 10px;
+  translate: -50% 0;
+  border-radius: 6px;
+  background: #192c4e;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+}
+.town-stat:first-child .town-stat-breakdown { left: 0; translate: none; }
+.town-stat:last-child .town-stat-breakdown { right: 0; left: auto; translate: none; }
+.town-stat:is(:hover, :focus-within) .town-stat-breakdown { opacity: 1; }
+.town-collection-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   padding: 10px 16px;
   border-top: 1px solid var(--town-line);
 }
-.town-loadout small { display: block; margin-top: 2px; color: var(--town-muted); font-size: 11px; font-weight: 500; }
 .town-profile-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 8px;
   padding: 8px 16px;
   border-top: 1px solid var(--town-line);
   color: var(--town-muted);
   font-size: 11px;
 }
-.town-profile-footer strong { color: var(--town-ink); }
 .town-profile-footer details { text-align: right; }
 .town-profile-footer summary { cursor: pointer; }
 #online-player { margin: 4px 0 0; font-variant-numeric: tabular-nums; }
-#open-weapon-collection {
+.town-collection-actions button {
   flex: none;
   min-height: 34px;
   padding: 4px 10px;
@@ -163,7 +191,7 @@
   font-size: 12px;
   font-weight: 800;
 }
-#open-weapon-collection:hover { background: #ffde8a; }
+.town-collection-actions button:hover { background: #ffde8a; }
 .town-weapon-compare { padding: 12px 16px 0; border-bottom: 1px solid var(--town-line); }
 .weapon-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .weapon-comparison-item {
@@ -235,7 +263,17 @@
 #town-weapon-list small { display: block; color: var(--town-muted); }
 .weapon-owned, .weapon-state { font-size: 12px; color: var(--town-muted); }
 .weapon-owned { color: #226342; font-weight: 700; }
-.town-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+.town-skill-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--town-line);
+  border-radius: 8px;
+  background: #fff;
+}
+.town-skill-card .town-item-icon { background: #eaf0ff; border-color: #bdcdf4; color: #4a5ab8; }
+.town-skill-card h3 { margin: 0 0 4px; }
+.town-skill-card p { margin: 0; color: var(--town-muted); font-size: 13px; line-height: 1.55; }
 .town-item-icon {
   display: grid;
   place-items: center;

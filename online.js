@@ -12,6 +12,8 @@ if (onlineMode) {
  const weaponDialog = $('town-weapon-dialog');
  const weaponList = $('town-weapon-list');
  const weaponReference = $('weapon-reference');
+ const skillDialog = $('town-skill-dialog');
+ const openSkillCollection = $('open-skill-collection');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
@@ -169,8 +171,12 @@ if (onlineMode) {
   $('town-hp').textContent = player.max_hp;
   $('town-attack').textContent = player.attack;
   $('town-defense').textContent = player.defense;
-  $('town-weapon').textContent = `本场可抽取 ${progression.weapons.length} 把武器`;
-  $('town-skill').textContent = player.skill_id === 'combo' ? '连击' : '未装备';
+  $('town-hp-breakdown').textContent = `生命上限 ${player.max_hp} · 基础生命 ${player.max_hp}`;
+  $('town-attack-breakdown').textContent = `总攻击 ${player.attack} · 基础攻击 ${player.attack}`;
+  $('town-defense-breakdown').textContent = `总防御 ${player.defense} · 基础防御 ${player.defense}`;
+  const hasCombo = player.skill_id === 'combo';
+  $('town-combo-skill').hidden = !hasCombo;
+  $('town-skill-empty').hidden = hasCombo;
   $('town-level').textContent = `Lv. ${progression.level}`;
   $('town-xp').max = progression.next_level_xp;
   $('town-xp').value = progression.xp;
@@ -250,6 +256,7 @@ if (onlineMode) {
   weaponDialog.showModal();
   weaponList.parentElement.scrollTop = 0;
  });
+ openSkillCollection.addEventListener('click', () => skillDialog.showModal());
  function lock(value) {
   busy = value;
   $('login-submit').disabled = value;
@@ -263,6 +270,7 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   backToSquare.disabled = value;
   $('open-weapon-collection').disabled = value;
+  openSkillCollection.disabled = value;
   for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
   for (const button of opponentsList.querySelectorAll('button')) button.disabled = value;

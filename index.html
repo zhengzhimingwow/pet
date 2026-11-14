@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=weapon-collection">
-  <link rel="stylesheet" href="lobby.css?v=weapon-draw">
+  <link rel="stylesheet" href="lobby.css?v=stat-breakdown">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -110,20 +110,34 @@
               <progress id="town-xp" aria-label="升级经验" max="100" value="0"></progress>
             </div>
             <dl class="town-attributes">
-              <div><dt>最大生命</dt><dd id="town-hp"></dd></div>
-              <div><dt>基础攻击</dt><dd id="town-attack"></dd></div>
-              <div><dt>基础防御</dt><dd id="town-defense"></dd></div>
+              <div class="town-stat town-stat-hp">
+                <dt>生命</dt>
+                <dd tabindex="0" aria-describedby="town-hp-breakdown">
+                  <strong id="town-hp"></strong>
+                  <span class="town-stat-breakdown" role="tooltip" id="town-hp-breakdown"></span>
+                </dd>
+              </div>
+              <div class="town-stat town-stat-attack">
+                <dt>攻击</dt>
+                <dd tabindex="0" aria-describedby="town-attack-breakdown">
+                  <strong id="town-attack"></strong>
+                  <span class="town-stat-breakdown" role="tooltip" id="town-attack-breakdown"></span>
+                </dd>
+              </div>
+              <div class="town-stat town-stat-defense">
+                <dt>防御</dt>
+                <dd tabindex="0" aria-describedby="town-defense-breakdown">
+                  <strong id="town-defense"></strong>
+                  <span class="town-stat-breakdown" role="tooltip" id="town-defense-breakdown"></span>
+                </dd>
+              </div>
             </dl>
           </div>
-          <div class="town-loadout">
-            <div class="town-item">
-              <span class="town-item-icon" aria-hidden="true">⚔</span>
-              <div><strong id="town-weapon"></strong><small>每次出手随机抽一把，每场各用一次</small></div>
-            </div>
+          <div class="town-collection-actions">
             <button id="open-weapon-collection" type="button">武器库</button>
+            <button id="open-skill-collection" type="button">功法库</button>
           </div>
           <div class="town-profile-footer">
-            <span>技能 <strong id="town-skill"></strong></span>
             <details><summary>角色详情</summary><p id="online-player"></p></details>
           </div>
         </section>
@@ -175,6 +189,22 @@
       </section>
       <div class="town-damage-content">
         <ul id="town-weapon-list"></ul>
+      </div>
+    </dialog>
+    <dialog id="town-skill-dialog" class="town-damage-dialog" aria-labelledby="town-skill-title">
+      <div class="town-damage-header">
+        <h2 id="town-skill-title">功法库</h2>
+        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
+      </div>
+      <div class="town-damage-content">
+        <article class="town-skill-card" id="town-combo-skill">
+          <span class="town-item-icon" aria-hidden="true">✷</span>
+          <div>
+            <h3>连击</h3>
+            <p>攻击命中且对手仍站立时，有 20% 概率追加一击，造成 6 点伤害。</p>
+          </div>
+        </article>
+        <p id="town-skill-empty" class="town-empty" hidden>尚未获得功法</p>
       </div>
     </dialog>
     <dialog id="town-damage-dialog" class="town-damage-dialog" aria-labelledby="town-damage-title">
@@ -273,6 +303,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=weapon-draw"></script>
+  <script src="online.js?v=stat-breakdown"></script>
 </body>
 </html>
