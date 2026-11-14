@@ -159,6 +159,7 @@ if (onlineMode) {
   recentOpponentIds = [];
   showDailyDetails(false);
   $('town-daily-result').hidden = true;
+  townHistory.replaceChildren();
   mailList.replaceChildren();
   nextMail = null;
   mailMore.hidden = true;
@@ -1012,7 +1013,9 @@ if (onlineMode) {
  }
 
  async function refreshHistory() {
+  const playerId = session.player.player_id;
   const {battles} = await api('game', '/battles');
+  if (session?.player.player_id !== playerId) return;
   townHistory.replaceChildren();
   $('town-history-empty').hidden = Boolean(battles.length);
   for (const report of battles) {
@@ -1051,7 +1054,7 @@ if (onlineMode) {
     showDamageReport(battle, time.textContent);
    }));
    actions.append(reportButton, playButton);
-   if (report.side === 'right') actions.append(makeRematchButton(report, matchLabel));
+   if (report.can_rematch) actions.append(makeRematchButton(report, matchLabel));
    item.append(info, actions);
    townHistory.append(item);
   }
