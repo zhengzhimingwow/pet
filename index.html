@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=rankings-sidebar">
+  <link rel="stylesheet" href="lobby.css?v=ranking-categories">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -146,7 +146,7 @@
           <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
           <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
           <button id="open-shop" type="button" aria-controls="town-shop-panel" aria-pressed="false">商店</button>
-          <button id="open-rankings" type="button" aria-controls="town-rankings-panel" aria-pressed="false">等级榜</button>
+          <button id="open-rankings" type="button" aria-controls="town-rankings-panel" aria-pressed="false">排行榜</button>
           <button id="open-guilds" type="button" aria-controls="town-social-panel" aria-pressed="false">帮派</button>
           <button id="open-friends" type="button" aria-controls="town-social-panel" aria-pressed="false">好友</button>
         </nav>
@@ -277,7 +277,13 @@
               </div>
             </section>
             <section id="town-rankings-panel" class="town-inline-panel town-rankings" aria-labelledby="town-rankings-title" hidden>
-              <h2 id="town-rankings-title" tabindex="-1">等级榜 · 前 100 名</h2>
+              <h2 id="town-rankings-title" tabindex="-1">排行榜</h2>
+              <div class="town-ranking-categories" role="group" aria-label="榜单类型">
+                <button type="button" data-category="level" aria-pressed="true">等级榜</button>
+                <button type="button" data-category="wins" aria-pressed="false">胜场榜</button>
+                <button type="button" data-category="weapons" aria-pressed="false">武器收藏榜</button>
+                <span aria-hidden="true">前 100 名</span>
+              </div>
               <div id="town-rankings-scroll" class="town-rankings-scroll" role="region" tabindex="0" aria-label="前一百名">
                 <ol id="town-rankings-list" class="town-item-list"></ol>
               </div>
@@ -462,6 +468,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=rankings-sidebar"></script>
+  <script src="online.js?v=ranking-categories"></script>
 </body>
 </html>

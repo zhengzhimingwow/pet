@@ -194,7 +194,27 @@
   flex-direction: column;
   overflow: hidden;
 }
-.town-rankings > h2, .town-rankings-footer { flex: none; }
+.town-rankings > h2, .town-ranking-categories, .town-rankings-footer { flex: none; }
+.town-ranking-categories {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--town-line);
+  background: #f5f9ff;
+}
+.town-ranking-categories button {
+  min-height: 30px;
+  padding: 3px 8px;
+  border: 1px solid #a7bfdf;
+  border-radius: 6px;
+  background: #e8f2ff;
+  color: #244874;
+  font-size: 12px;
+  font-weight: 700;
+}
+.town-ranking-categories button[aria-pressed="true"] { background: #244874; color: #fff; }
+.town-ranking-categories span { margin-inline-start: auto; color: var(--town-muted); font-size: 11px; }
 .town-rankings-scroll {
   flex: 1 1 auto;
   min-height: 0;

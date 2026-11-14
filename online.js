@@ -72,6 +72,7 @@ if (onlineMode) {
  const challengeOpponentProfile = $('challenge-opponent-profile');
  const rankingsPanel = $('town-rankings-panel');
  const openRankings = $('open-rankings');
+ const rankingButtons = rankingsPanel.querySelectorAll('[data-category]');
  const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, rankingsPanel,
   avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
@@ -643,16 +644,35 @@ if (onlineMode) {
   $('town-social-empty').textContent = empty ?? '';
  }
 
- openRankings.addEventListener('click', () => run(async () => {
-  const {players, self} = await api('game', '/rankings');
-  const rankRow = player => socialPlayerRow(player, `Lv. ${player.level} · ${player.xp}/100 经验`,
+ const rankingDetails = {
+  level: player => `Lv. ${player.level} · ${player.xp}/100 经验`,
+  wins: player => `主动挑战获胜 ${player.score} 场`,
+  weapons: player => `已收藏 ${player.score} 把武器`,
+ };
+
+ async function refreshRankings(category) {
+  const {players, self} = await api('game', `/rankings/${category}`);
+  const rankRow = player => socialPlayerRow(player, rankingDetails[category](player),
    `第 ${player.rank} 名 · ${player.name}`);
   $('town-rankings-list').replaceChildren(...players.map(rankRow));
   $('town-ranking-self').replaceChildren(...(self ? [rankRow(self)] : []));
   $('town-ranking-missing').hidden = Boolean(self);
-  showSquarePanel(rankingsPanel, openRankings, true);
+  for (const button of rankingButtons) button.setAttribute('aria-pressed', String(button.dataset.category === category));
   $('town-rankings-scroll').scrollTop = 0;
+ }
+
+ openRankings.addEventListener('click', () => run(async () => {
+  await refreshRankings('level');
+  showSquarePanel(rankingsPanel, openRankings, true);
  }));
+ for (const button of rankingButtons) {
+  button.addEventListener('click', () => run(async () => {
+   await refreshRankings(button.dataset.category);
+   if (!rankingsPanel.hidden) requestAnimationFrame(() => {
+    if (!rankingsPanel.hidden) button.focus({preventScroll:true});
+   });
+  }));
+ }
 
  function socialAction(action, data, success) {
   return run(async () => {
@@ -878,6 +898,7 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
   openHistory.disabled = value;
+  for (const button of rankingButtons) button.disabled = value;
   openPlayerLog.disabled = playerLogMore.disabled = value;
   openMail.disabled = mailRefresh.disabled = mailMore.disabled = value;
   openChat.disabled = chatSend.disabled = value;
