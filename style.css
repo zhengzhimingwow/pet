@@ -201,13 +201,25 @@ button { font: inherit; cursor: pointer; }
   pointer-events: none;
   z-index: 2;
 }
-.battle-status-list { display: flex; gap: 5px; flex-wrap: wrap; }
+.battle-status-list {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  height: 27px;
+  min-width: 0;
+  padding-top: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
 .battle-status {
-  margin-top: 5px;
+  flex: none;
   padding: 2px 7px;
   border-radius: 6px;
   font-size: 11px;
+  line-height: 16px;
   font-weight: 800;
+  white-space: nowrap;
   background: #eee6f8;
   color: #543273;
 }
