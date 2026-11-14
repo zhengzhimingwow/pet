@@ -223,6 +223,79 @@
   font-weight: 800;
 }
 .town-collection-actions button:hover { background: #ffde8a; }
+.town-coins { margin-inline-start: auto; color: #72521d; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.town-item-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.town-item-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px;
+  border: 1px solid var(--town-line);
+  border-radius: 8px;
+  background: #fff;
+}
+.town-item-list li > div { flex: 1 1 140px; }
+.town-item-list li p, #town-inventory-empty p, .town-rename-form p {
+  margin: 4px 0;
+  color: var(--town-muted);
+  font-size: 13px;
+}
+.town-item-action {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid #d09a35;
+  border-radius: 7px;
+  background: #ffdf89;
+  color: #4d3513;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+.town-item-action:hover { background: #ffcb61; }
+.town-item-action:disabled { cursor: default; }
+.town-rename-form {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--town-line);
+  border-radius: 8px;
+  background: #edf4ff;
+}
+.town-rename-form label { font-size: 14px; font-weight: 800; }
+.town-rename-form input {
+  width: min(100%, 16rem);
+  min-height: 38px;
+  padding: 6px 8px;
+  border: 1px solid #9dbbe6;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--town-ink);
+  font: inherit;
+}
+.town-item-feedback { margin: 9px 0 0; color: #344e75; font-size: 13px; }
+.town-item-feedback[data-error] { color: #8d3f29; }
+.town-item-feedback:empty { display: none; }
+.town-social-content { display: grid; gap: 12px; }
+#town-social-form label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 800; }
+.town-social-form-row { display: flex; gap: 8px; align-items: stretch; }
+.town-social-form-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #9dbbe6;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--town-ink);
+  font: inherit;
+}
+.town-social-form-row button { flex: none; }
+#town-social-list .town-opponent-avatar { margin: 0; }
+#town-social-list li > div { min-width: 90px; overflow-wrap: anywhere; }
+#town-social-list li[data-self] { border-color: #9dbbe6; background: #edf4ff; }
+#town-social-confirm { color: #8d3f29; font-size: 13px; }
 .town-weapon-compare { padding: 12px 16px 0; border-bottom: 1px solid var(--town-line); }
 .weapon-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .weapon-comparison-item {

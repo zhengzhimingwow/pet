@@ -2,6 +2,22 @@ if (onlineMode) {
  const entry = $('account-entry');
  const lobby = $('account-lobby');
  const townStage = $('town-stage');
+ const shopDialog = $('town-shop-dialog');
+ const inventoryDialog = $('town-inventory-dialog');
+ const shopItems = $('town-shop-items');
+ const inventoryItems = $('town-inventory-items');
+ const renameForm = $('town-rename-form');
+ const renameName = $('town-rename-name');
+ const socialDialog = $('town-social-dialog');
+ const socialForm = $('town-social-form');
+ const socialInput = $('town-social-input');
+ const socialList = $('town-social-list');
+ const socialFeedback = $('town-social-feedback');
+ const socialLeave = $('town-social-leave');
+ const socialConfirm = $('town-social-confirm');
+ const socialTitles = {rankings:'本服等级榜', guilds:'帮派', friends:'好友'};
+ const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改当前区服的角色名。'}};
+ const pendingItemRequests = new Map();
  const avatarDialog = $('town-avatar-dialog');
  const avatarPicker = $('open-avatar-picker');
  const avatarOptions = $('town-avatar-options');
@@ -41,6 +57,9 @@ if (onlineMode) {
  let returnToSquareTimer;
  let damageReportButton;
  let selectedWeaponId;
+ let shopCatalog = [];
+ let socialSection;
+ let currentGuild;
 
  const messages = {
   unauthorized: '登录已失效，请重新登录。',
@@ -54,6 +73,19 @@ if (onlineMode) {
   same_player: '请选择其他玩家。',
   invalid_request: '请检查区服和角色 UID。',
   request_conflict: '请求编号已被使用，请重新选择对手。',
+  invalid_character_name: '请使用 2–16 个汉字、字母、数字或下划线。',
+  insufficient_coins: '金币不足。',
+  missing_item: '背包里没有改名卡。',
+  same_name: '请输入和当前角色名不同的名字。',
+  friend_self: '不能添加自己为好友。',
+  friend_request_missing: '这条好友申请已失效。',
+  invalid_guild_name: '帮派名须为 2–16 个汉字、字母、数字或下划线。',
+  already_in_guild: '每个角色只能加入一个帮派。',
+  guild_name_taken: '这个帮派名已被使用。',
+  guild_full: '该帮派人数已满。',
+  not_in_guild: '你当前没有加入帮派。',
+  guild_owner_required: '只有帮主可以解散帮派。',
+  guild_owner_cannot_leave: '帮主可以在帮派面板解散帮派。',
   unavailable: '区服或战斗服暂时不可用，请稍后重试。',
  };
 
@@ -159,6 +191,7 @@ if (onlineMode) {
  }));
 
  function acceptSession(data) {
+  pendingItemRequests.clear();
   renderPlayer(data);
   townFeedback.textContent = '';
   $('town-history-empty').hidden = true;
@@ -189,7 +222,248 @@ if (onlineMode) {
   $('town-xp-text').textContent = `${progression.xp} / ${progression.next_level_xp} 经验`;
   $('town-xp-remaining').textContent = `距升级还差 ${progression.next_level_xp - progression.xp} 经验`;
   if (weaponDialog.open) renderWeaponCollection();
+  $('town-coins').textContent = `${data.inventory.coins} 金币`;
+  if (shopDialog.open) renderShop();
+  if (inventoryDialog.open) renderInventory();
  }
+
+ function itemRow(name, description, action, onClick, disabled = false) {
+  const row = document.createElement('li');
+  const info = document.createElement('div');
+  const label = document.createElement('strong');
+  const detail = document.createElement('p');
+  const button = document.createElement('button');
+  label.textContent = name;
+  detail.textContent = description;
+  button.type = 'button';
+  button.className = 'town-item-action';
+  button.textContent = action;
+  if (disabled) button.dataset.unavailable = '';
+  button.disabled = disabled || busy;
+  button.addEventListener('click', onClick);
+  info.append(label, detail);
+  row.append(info, button);
+  return row;
+ }
+
+ function renderShop() {
+  const {coins} = session.inventory;
+  $('town-shop-coins').textContent = `金币余额 ${coins}`;
+  shopItems.replaceChildren(...shopCatalog.map(item => {
+   const affordable = coins >= item.price;
+   const description = itemDetails[item.id]?.description;
+   return itemRow(item.name, description ? `${description} ${item.price} 金币` : `${item.price} 金币`,
+    affordable ? '购买' : '金币不足', () => itemAction(shopDialog, $('town-shop-feedback'), '/shop/buy',
+     {item_id:item.id}, `已购买「${item.name}」，可在背包查看。`), !affordable);
+  }));
+ }
+
+ function renderInventory() {
+  const {items} = session.inventory;
+  $('town-inventory-empty').hidden = items.length > 0;
+  inventoryItems.replaceChildren(...items.map(item => {
+   const definition = itemDetails[item.item_id];
+   if (item.item_id !== 'rename_card') return itemRow(definition?.name ?? item.item_id,
+    `数量 ${item.quantity}`, '暂不可使用', () => {}, true);
+   return itemRow(definition.name, `数量 ${item.quantity} · ${definition.description}`, '使用', () => {
+    $('town-inventory-feedback').textContent = '';
+    renameForm.hidden = false;
+    renameName.focus();
+   });
+  }));
+ }
+
+ function newRequestId() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
+ }
+
+ function itemAction(dialog, feedback, path, body, success) {
+  return run(async () => {
+   feedback.textContent = '';
+   delete feedback.dataset.error;
+   const key = JSON.stringify([session.zone, path, body]);
+   const requestId = pendingItemRequests.get(key) ?? newRequestId();
+   pendingItemRequests.set(key, requestId);
+   try {
+    const data = await api(session.zone, path, {...body, request_id:requestId});
+    pendingItemRequests.delete(key);
+    if (path === '/items/use') {
+     renameForm.reset();
+     renameForm.hidden = true;
+    }
+    renderPlayer(data);
+    feedback.textContent = success;
+    if (dialog.open) dialog.querySelector('[autofocus]').focus({preventScroll:true});
+   } catch (error) {
+    if (error.code === 'unauthorized') {
+     if (dialog.open) dialog.close();
+     throw error;
+    }
+    if (error.code && error.code !== 'unavailable') pendingItemRequests.delete(key);
+    feedback.dataset.error = '';
+    feedback.textContent = error.code ? error.message : messages.unavailable;
+   }
+  });
+ }
+
+ function openShop() {
+  return run(async () => {
+   shopCatalog = (await api(session.zone, '/shop')).items;
+   $('town-shop-feedback').textContent = '';
+   if (inventoryDialog.open) inventoryDialog.close();
+   renderShop();
+   shopDialog.showModal();
+  });
+ }
+
+ $('open-shop').addEventListener('click', openShop);
+ $('inventory-open-shop').addEventListener('click', openShop);
+ $('open-inventory').addEventListener('click', () => {
+  $('town-inventory-feedback').textContent = '';
+  renameForm.reset();
+  renameForm.hidden = true;
+  renderInventory();
+  inventoryDialog.showModal();
+ });
+ renameForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const name = renameName.value.trim();
+  itemAction(inventoryDialog, $('town-inventory-feedback'), '/items/use',
+   {item_id:'rename_card', name}, `角色名已改为「${name}」。`);
+ });
+
+ function addSocialButton(row, name, action, data, success, disabled = false) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'town-item-action';
+  button.textContent = name;
+  if (disabled) button.dataset.unavailable = '';
+  button.disabled = busy || disabled;
+  button.addEventListener('click', () => socialAction(action, data, success));
+  row.append(button);
+ }
+
+ function socialPlayerRow(player, detail, title = player.name) {
+  const row = document.createElement('li');
+  const portrait = document.createElement('img');
+  const info = document.createElement('div');
+  const name = document.createElement('strong');
+  const description = document.createElement('p');
+  portrait.src = avatarUrl(player.avatar_id);
+  portrait.alt = '';
+  portrait.className = 'town-opponent-avatar';
+  name.textContent = title;
+  description.textContent = detail;
+  if (player.player_id === session.player.player_id) row.dataset.self = '';
+  info.append(name, description);
+  row.append(portrait, info);
+  return row;
+ }
+
+ function renderSocial(data) {
+  const guildView = socialSection === 'guilds';
+  const friendView = socialSection === 'friends';
+  currentGuild = guildView ? data.current : null;
+  socialForm.hidden = !friendView && (!guildView || Boolean(currentGuild));
+  $('town-social-summary').hidden = !currentGuild;
+  socialConfirm.hidden = true;
+  if (!socialForm.hidden) {
+   $('town-social-label').textContent = friendView ? '本服玩家 UID' : '帮派名称';
+   $('town-social-submit').textContent = friendView ? '发送申请' : '创建帮派';
+   socialInput.maxLength = friendView ? 20 : 16;
+   socialInput.inputMode = friendView ? 'numeric' : 'text';
+  }
+  let rows;
+  let empty;
+  if (guildView && currentGuild) {
+   const owner = currentGuild.owner_id === session.player.player_id;
+   $('town-social-group').textContent = `${currentGuild.name} · ${currentGuild.members.length}/${data.capacity} 人`;
+   socialLeave.textContent = owner ? '解散帮派' : '退出帮派';
+   rows = currentGuild.members.map(player => socialPlayerRow(player,
+    `${player.player_id === currentGuild.owner_id ? '帮主' : '成员'} · UID ${player.player_id}`));
+  } else if (guildView) {
+   empty = '本服暂时没有帮派。';
+   rows = data.guilds.map(guild => {
+    const row = document.createElement('li');
+    const info = document.createElement('div');
+    const name = document.createElement('strong');
+    const members = document.createElement('p');
+    name.textContent = guild.name;
+    members.textContent = `${guild.member_count}/${data.capacity} 人`;
+    info.append(name, members);
+    row.append(info);
+    addSocialButton(row, '加入', 'join', {guild_id:guild.guild_id}, `已加入「${guild.name}」。`,
+     guild.member_count >= data.capacity);
+    return row;
+   });
+  } else if (friendView) {
+   empty = '暂无好友或申请。';
+   rows = data.players.map(player => {
+    const status = {friend:'好友', incoming:'收到申请', outgoing:'等待同意'}[player.status];
+    const row = socialPlayerRow(player, `${status} · UID ${player.player_id}`);
+    const target = {player_id:player.player_id};
+    if (player.status === 'incoming') addSocialButton(row, '同意', 'accept', target, '已添加好友。');
+    const remove = {friend:'移除好友', incoming:'拒绝', outgoing:'撤回'}[player.status];
+    addSocialButton(row, remove, 'remove', target, '已处理。');
+    return row;
+   });
+  } else {
+   empty = '本服暂无排名。';
+   rows = data.players.map(player => socialPlayerRow(player,
+    `Lv. ${player.level} · ${player.xp}/100 经验`, `${player.rank}. ${player.name}`));
+  }
+  socialList.replaceChildren(...rows);
+  $('town-social-empty').hidden = rows.length > 0;
+  $('town-social-empty').textContent = empty ?? '';
+ }
+
+ function socialAction(action, data, success) {
+  return run(async () => {
+   socialFeedback.textContent = '';
+   delete socialFeedback.dataset.error;
+   try {
+    renderSocial(await api(session.zone, `/${socialSection}`, {action, ...data}));
+    socialForm.reset();
+    socialFeedback.textContent = success;
+    if (socialDialog.open) socialDialog.querySelector('[autofocus]').focus({preventScroll:true});
+   } catch (error) {
+    if (error.code === 'unauthorized') {
+     if (socialDialog.open) socialDialog.close();
+     throw error;
+    }
+    socialFeedback.dataset.error = '';
+    socialFeedback.textContent = error.code ? error.message : messages.unavailable;
+   }
+  });
+ }
+
+ for (const [section, title] of Object.entries(socialTitles)) {
+  $(`open-${section}`).addEventListener('click', () => run(async () => {
+   const data = await api(session.zone, `/${section}`);
+   socialSection = section;
+   $('town-social-title').textContent = title;
+   socialFeedback.textContent = '';
+   socialForm.reset();
+   renderSocial(data);
+   socialDialog.showModal();
+  }));
+ }
+ socialForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const value = socialInput.value.trim();
+  if (socialSection === 'friends') socialAction('request', {player_id:value}, '好友申请已处理，可在列表查看状态。');
+  else socialAction('create', {name:value}, `已创建「${value}」。`);
+ });
+ socialLeave.addEventListener('click', () => {
+  if (currentGuild.owner_id !== session.player.player_id) {
+   socialAction('leave', {}, '已退出帮派。');
+  } else if (socialConfirm.hidden) {
+   socialConfirm.hidden = false;
+   socialLeave.textContent = '确认解散';
+  } else {
+   socialAction('disband', {}, '已解散帮派。');
+  }
+ });
 
  function avatarUrl(id) {
   return `assets/avatar-${Object.hasOwn(avatarChoices, id) ? id : 'blue'}.jpg`;
@@ -333,6 +607,14 @@ if (onlineMode) {
   $('open-weapon-collection').disabled = value;
   openSkillCollection.disabled = value;
   avatarPicker.disabled = value;
+  for (const id of ['open-shop', 'open-inventory', 'inventory-open-shop', 'town-rename-submit']) $(id).disabled = value;
+  for (const id of ['open-rankings', 'open-guilds', 'open-friends', 'town-social-submit']) $(id).disabled = value;
+  socialInput.disabled = value;
+  socialLeave.disabled = value;
+  renameName.disabled = value;
+  for (const list of [shopItems, inventoryItems, socialList]) {
+   for (const button of list.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
+  }
   for (const button of avatarOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
@@ -667,7 +949,7 @@ if (onlineMode) {
   prepareSound();
   playMusic();
   if (pending?.target_player_id !== playerId) {
-   const requestId = [...crypto.getRandomValues(new Uint8Array(16))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+   const requestId = newRequestId();
    pending = {target_zone:session.zone, target_player_id:playerId, request_id:requestId};
   }
   const report = await api(session.zone, '/battles', pending);

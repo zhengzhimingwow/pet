@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=profile-avatar">
-  <link rel="stylesheet" href="lobby.css?v=profile-avatar">
+  <link rel="stylesheet" href="lobby.css?v=town-social">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -136,6 +136,12 @@
           <div class="town-collection-actions">
             <button id="open-weapon-collection" type="button">武器库</button>
             <button id="open-skill-collection" type="button">功法库</button>
+            <button id="open-inventory" type="button" aria-haspopup="dialog">背包</button>
+            <button id="open-shop" type="button" aria-haspopup="dialog">商店</button>
+            <button id="open-rankings" type="button" aria-haspopup="dialog">等级榜</button>
+            <button id="open-guilds" type="button" aria-haspopup="dialog">帮派</button>
+            <button id="open-friends" type="button" aria-haspopup="dialog">好友</button>
+            <span id="town-coins" class="town-coins"></span>
           </div>
           <div class="town-profile-footer">
             <details><summary>角色详情</summary><p id="online-player"></p></details>
@@ -160,6 +166,60 @@
         </section>
       </aside>
     </div>
+    <dialog id="town-social-dialog" class="town-damage-dialog" aria-labelledby="town-social-title">
+      <div class="town-damage-header">
+        <h2 id="town-social-title"></h2>
+        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
+      </div>
+      <div class="town-damage-content town-social-content">
+        <form id="town-social-form" hidden>
+          <label id="town-social-label" for="town-social-input"></label>
+          <div class="town-social-form-row">
+            <input id="town-social-input" required autocomplete="off">
+            <button id="town-social-submit" class="town-item-action" type="submit"></button>
+          </div>
+        </form>
+        <div id="town-social-summary" hidden>
+          <h3 id="town-social-group"></h3>
+          <button id="town-social-leave" class="town-item-action" type="button"></button>
+          <p id="town-social-confirm" hidden>确认解散后，所有成员都将退出帮派。</p>
+        </div>
+        <ul id="town-social-list" class="town-item-list"></ul>
+        <p id="town-social-empty" class="town-empty" hidden></p>
+        <p id="town-social-feedback" class="town-item-feedback" role="status"></p>
+      </div>
+    </dialog>
+    <dialog id="town-shop-dialog" class="town-damage-dialog" aria-labelledby="town-shop-title">
+      <div class="town-damage-header">
+        <div><h2 id="town-shop-title">商店</h2><p id="town-shop-coins"></p></div>
+        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
+      </div>
+      <div class="town-damage-content">
+        <ul id="town-shop-items" class="town-item-list"></ul>
+        <p id="town-shop-feedback" class="town-item-feedback" role="status"></p>
+      </div>
+    </dialog>
+    <dialog id="town-inventory-dialog" class="town-damage-dialog" aria-labelledby="town-inventory-title">
+      <div class="town-damage-header">
+        <h2 id="town-inventory-title">背包</h2>
+        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
+      </div>
+      <div class="town-damage-content">
+        <div id="town-inventory-empty" hidden>
+          <p>背包里还没有道具。</p>
+          <button id="inventory-open-shop" class="town-item-action" type="button">去商店</button>
+        </div>
+        <ul id="town-inventory-items" class="town-item-list"></ul>
+        <form id="town-rename-form" class="town-rename-form" hidden>
+          <label for="town-rename-name">新角色名</label>
+          <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
+                 autocomplete="off" aria-describedby="town-rename-hint">
+          <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
+          <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
+        </form>
+        <p id="town-inventory-feedback" class="town-item-feedback" role="status"></p>
+      </div>
+    </dialog>
     <dialog id="town-avatar-dialog" class="town-damage-dialog" aria-labelledby="town-avatar-title">
       <div class="town-damage-header">
         <h2 id="town-avatar-title">更换头像</h2>
@@ -312,6 +372,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=profile-avatar"></script>
+  <script src="online.js?v=town-social"></script>
 </body>
 </html>
