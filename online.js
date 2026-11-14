@@ -35,6 +35,11 @@ if (onlineMode) {
  const weaponPanel = $('town-weapon-panel');
  const weaponList = $('town-weapon-list');
  const weaponTip = $('town-weapon-tip');
+ const starterGuide = $('town-starter');
+ const starterFight = $('town-starter-fight');
+ const starterNext = $('town-starter-next');
+ const starterPlazaChoice = $('town-starter-plaza-choice');
+ const starterResultChoice = $('town-starter-result-choice');
  const historyPanel = $('town-history-panel');
  const openHistory = $('open-history');
  const playerLogPanel = $('town-player-log-panel');
@@ -110,6 +115,9 @@ if (onlineMode) {
   account_taken: '这个账号已被注册，可以直接登录或换一个账号。',
   remember_expired: '这个账号的免密登录已过期，请输入密码重新登录。',
   player_not_entered: '请重新进入游戏。',
+  starter_not_ready: '完成第一场乐斗后即可领取。',
+  starter_already_chosen: '你已选过新手武器。',
+  starter_battle_unavailable: '该场新手引导已更新，请刷新广场再试。',
   rate_limited: '登录尝试较多，请稍后重试。',
   chat_rate_limited: '发得太快，请稍等再试。',
   chat_invalid_text: '请输入 1–200 个字，消息须为单行。',
@@ -158,6 +166,7 @@ if (onlineMode) {
   if (!session) {
    clearTimeout(dailyResetTimer);
    showDailyDetails(false);
+   starterResultChoice.replaceChildren();
    resetChat();
   }
   battleView.hidden = true;
@@ -219,11 +228,100 @@ if (onlineMode) {
   $('town-xp').value = progression.xp;
   $('town-xp-text').textContent = `${progression.xp} / ${progression.next_level_xp} 经验`;
   $('town-xp-remaining').textContent = `距升级还差 ${progression.next_level_xp - progression.xp} 经验`;
+  renderStarter();
   if (!weaponPanel.hidden) renderWeaponCollection();
   $('town-coins').textContent = `${data.inventory.coins} 金币`;
   if (!shopPanel.hidden) renderShop();
   if (!inventoryPanel.hidden) renderInventory();
  }
+
+ const starterDescriptions = {hammer:'碎盾 · 击碎护盾', sword:'破甲 · 无视一半防御', umbrella:'护盾 · 抵挡下一次命中'};
+
+ function renderStarterChoices(container, starter, showTitle) {
+  const choice = document.createElement('div');
+  const options = document.createElement('div');
+  const feedback = document.createElement('p');
+  choice.className = 'town-starter-choice';
+  options.className = 'town-starter-options';
+  feedback.className = 'town-starter-feedback';
+  feedback.role = 'status';
+  if (showTitle) {
+   const title = document.createElement('h3');
+   title.textContent = starter.already_owned ? '选一把武器继续' : '自选一把新手武器';
+   choice.append(title);
+  }
+  for (const id of starter.options) {
+   const move = weaponMoves[id];
+   const button = document.createElement('button');
+   const name = document.createElement('strong');
+   const effect = document.createElement('small');
+   button.type = 'button';
+   button.disabled = busy;
+   name.textContent = move.label;
+   effect.textContent = starterDescriptions[id];
+   button.append(name, effect);
+   button.addEventListener('click', () => run(async () => {
+    feedback.textContent = '';
+    try {
+     renderPlayer(await api('game', '/starter/claim', {weapon_id:id}));
+    } catch (error) {
+     if (error.code === 'unauthorized') throw error;
+     if (error.code === 'starter_already_chosen' || error.code === 'already_owned') {
+      renderPlayer(await api('game', '/session'));
+      if (session.starter?.step === 'next_battle') showStarterWeapon();
+      else {
+       if (container === starterResultChoice && session.starter?.step === 'choose') {
+        renderStarterChoices(container, session.starter, true);
+       }
+       const updated = container.querySelector('.town-starter-feedback');
+       if (updated) updated.textContent = '武器库已更新，请重新选择。';
+      }
+      return;
+     }
+     feedback.textContent = '暂时无法确认领取结果，请重试。';
+     return;
+    }
+    showStarterWeapon();
+   }));
+   options.append(button);
+  }
+  choice.append(options, feedback);
+  container.replaceChildren(choice);
+ }
+
+ function renderStarter() {
+  const {starter, progression} = session;
+  starterGuide.hidden = !starter;
+  const choose = starter?.step === 'choose';
+  const next = starter?.step === 'next_battle';
+  starterPlazaChoice.replaceChildren();
+  if (choose) renderStarterChoices(starterPlazaChoice, starter, false);
+  starterFight.hidden = choose;
+  starterFight.textContent = next ? '再打一场' : '开始第一场乐斗';
+  $('town-starter-title').textContent = choose ? '首战完成，选一把武器' : next ? '带上新手武器再打一场' : '开始第一场乐斗';
+  $('town-starter-copy').textContent = choose
+   ? (starter.already_owned ? '三把武器你都已有，选一把继续。' : '武器会加入武器库，下一场有机会抽到。')
+   : next ? '下一场有机会抽到刚选的武器。' : '和新手陪练打一场，胜负都能解锁自选武器。';
+  $('town-starter-weapon-guide').hidden = !next;
+  if (next) {
+   const progress = progression.level === 1
+    ? `再得 ${progression.next_level_xp - progression.xp} 经验升到 Lv.2，解锁一把武器。`
+    : `升到 Lv.${progression.level + 1} 继续解锁武器。`;
+   $('town-starter-weapon-copy').textContent = `${weaponMoves[starter.weapon_id].label}已加入武器库。 ${progress}`;
+  }
+ }
+
+ function showStarterWeapon() {
+  returnToSquare();
+  renderWeaponCollection();
+  showSquarePanel(weaponPanel, $('open-weapon-collection'), true);
+ }
+
+ function fightStarter() {
+  if (session.starter?.target) run(() => challenge(session.starter.target));
+ }
+ starterFight.addEventListener('click', fightStarter);
+ starterNext.addEventListener('click', fightStarter);
 
  function updateDailyClaim() {
   dailyClaim.disabled = busy || !dailyTask || dailyTask.claimed || dailyTask.progress < dailyTask.target;
@@ -697,6 +795,7 @@ if (onlineMode) {
   const icon = document.createElement('span');
   const name = document.createElement('span');
   trigger.type = 'button';
+  trigger.toggleAttribute('data-starter', session.starter?.weapon_id === id);
   trigger.toggleAttribute('data-unowned', !owned);
   icon.className = 'town-board-icon';
   icon.textContent = {blade:'🗡️', sword:'⚔️'}[id] ?? (move.icon || '⚔️');
@@ -752,6 +851,10 @@ if (onlineMode) {
   openPlayerLog.disabled = playerLogMore.disabled = value;
   openMail.disabled = mailRefresh.disabled = mailMore.disabled = value;
   openChat.disabled = chatSend.disabled = value;
+  starterFight.disabled = starterNext.disabled = value;
+  for (const container of [starterPlazaChoice, starterResultChoice]) {
+   for (const button of container.querySelectorAll('button')) button.disabled = value;
+  }
   mailReadAll.disabled = value || !unreadMail;
   openCharacterDetails.disabled = value;
   openSkillCollection.disabled = value;
@@ -805,8 +908,9 @@ if (onlineMode) {
   return turns;
  }
 
- async function playback(report, rewardText) {
+ async function playback(report, rewardText, holdResult = false) {
   clearTimeout(returnToSquareTimer);
+  starterResultChoice.replaceChildren();
   showSquarePanel(historyPanel);
   showDailyDetails(false);
   townStage.hidden = true;
@@ -818,7 +922,7 @@ if (onlineMode) {
    turns:battleTurns(report), hp:{left:report.left_hp, right:report.right_hp}, winner:report.winner,
    players:{left:report.attacker, right:report.defender}, damageTotals:damageBySource(report.events), rewardText,
   });
-  returnToSquareTimer = setTimeout(returnToSquare, 3000);
+  if (!holdResult) returnToSquareTimer = setTimeout(returnToSquare, 3000);
  }
 
  function showDamageReport(report, time) {
@@ -1030,6 +1134,7 @@ if (onlineMode) {
    return (kind === 'challenge' ? `挑战 ${data.opponent}` : `${data.opponent} 挑战了你`) + ` · ${outcome}`;
   }
   if (kind === 'daily_task') return '领取每日乐斗奖励';
+  if (kind === 'starter_weapon') return `获得新手武器 ${weaponMoves[data.weapon_id]?.label ?? data.weapon_id}`;
   if (kind === 'purchase') return `花费 ${data.coins} 金币购买 ${itemDetails[data.item_id]?.name ?? data.item_id}`;
   if (kind === 'rename') return `将角色名从 ${data.old_name} 改为 ${data.name}`;
   if (kind === 'grant') {
@@ -1406,6 +1511,7 @@ if (onlineMode) {
  });
 
  function returnToSquare() {
+  starterResultChoice.replaceChildren();
   showEntry();
   townStage.focus();
  }
@@ -1437,11 +1543,15 @@ if (onlineMode) {
    statGrowthText(reward.stat_growth),
    reward.level_up && (weapon ? `获得${weapon.label}` : '武器已集齐'),
   ].filter(Boolean).join(' · ') : '';
-  await playback(report, rewardText);
+  await playback(report, rewardText, reward?.starter_ready);
+  const state = await api('game', '/session');
+  renderPlayer(state);
+  if (reward?.starter_ready && !battleView.hidden && state.starter?.step === 'choose') {
+   renderStarterChoices(starterResultChoice, state.starter, true);
+  }
   await Promise.all([
    refreshHistory(),
    refreshMailCount(),
-   api('game', '/session').then(renderPlayer),
   ]);
  }
 

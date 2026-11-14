@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=single-world">
-  <link rel="stylesheet" href="lobby.css?v=world-chat">
+  <link rel="stylesheet" href="lobby.css?v=starter-guide">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -88,6 +88,14 @@
               </section>
             </div>
           </div>
+        </section>
+        <section id="town-starter" class="town-starter" aria-labelledby="town-starter-title" hidden>
+          <div>
+            <h2 id="town-starter-title" tabindex="-1">开始第一场乐斗</h2>
+            <p id="town-starter-copy">和新手陪练打一场，打完就能自选一把武器。</p>
+          </div>
+          <button id="town-starter-fight" class="town-item-action" type="button">开始第一场乐斗</button>
+          <div id="town-starter-plaza-choice"></div>
         </section>
         <section class="town-sheet" aria-labelledby="town-player-name">
           <div class="town-profile">
@@ -313,6 +321,10 @@
             </div>
           </div>
           <div class="town-damage-content">
+            <div id="town-starter-weapon-guide" class="town-starter-weapon-guide" hidden>
+              <p id="town-starter-weapon-copy"></p>
+              <button id="town-starter-next" class="town-item-action" type="button">再打一场</button>
+            </div>
             <ul id="town-weapon-list" class="town-weapon-board"></ul>
             <div id="town-weapon-tip" class="town-weapon-tip" role="tooltip" popover="manual"></div>
           </div>
@@ -394,6 +406,7 @@
             <h2 id="winner"></h2>
             <p id="result-text"></p>
             <p id="battle-reward" hidden></p>
+            <div id="town-starter-result-choice" class="town-starter-result-choice"></div>
             <button id="again" type="button">再来一场 ↗</button>
           </div>
         </div>
@@ -429,6 +442,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=world-chat"></script>
+  <script src="online.js?v=starter-guide"></script>
 </body>
 </html>

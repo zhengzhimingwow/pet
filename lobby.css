@@ -80,7 +80,52 @@
   background: #f9fbff;
   box-shadow: 0 5px 16px #050c2342;
 }
-.town-stage[hidden] + .town-sheet { display: none; }
+.town-stage[hidden] ~ :is(.town-starter, .town-sheet) { display: none; }
+.town-starter, .town-starter-weapon-guide {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 11px 15px;
+  border: 1px solid #bdcfe8;
+  border-radius: 10px;
+  background: #edf4ff;
+}
+.town-starter h2 { margin: 0; font-size: 16px; }
+.town-starter p, .town-starter-weapon-guide p { margin: 4px 0; color: #355379; font-size: 13px; }
+.town-starter > div:first-child, .town-starter-weapon-guide p { flex: 1 1 220px; }
+#town-starter-plaza-choice { flex: 1 0 100%; min-width: 0; }
+#town-starter-plaza-choice:empty, .town-starter-result-choice:empty { display: none; }
+.result-card:has(.town-starter-result-choice:not(:empty)) {
+  width: min(510px, 95%);
+  max-height: 95%;
+  overflow: auto;
+  padding: 13px;
+}
+.result-card:has(.town-starter-result-choice:not(:empty)) #again { display: none; }
+.town-starter-result-choice { margin-top: 6px; }
+.town-starter-weapon-guide { margin-bottom: 12px; }
+.town-starter-choice { display: grid; gap: 8px; }
+.town-starter-choice h3 { margin: 0; font-size: 16px; }
+.town-starter-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 115px), 1fr));
+  gap: 6px;
+}
+.town-starter-options button {
+  min-height: 44px;
+  padding: 6px 4px;
+  border: 1px solid #c29349;
+  border-radius: 7px;
+  background: #fff1c8;
+  color: #533613;
+  font: inherit;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.town-starter-options button:hover { background: #ffdfa0; }
+.town-starter-options small { display: block; margin-top: 3px; }
+.town-weapon-board button[data-starter] { background: #fff0b1; box-shadow: inset 0 0 0 2px #955a10; }
 .town-profile {
   display: grid;
   gap: 13px;
