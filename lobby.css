@@ -193,8 +193,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: min(650px, calc(100dvh - var(--hud-top) - var(--hud-bottom) - var(--dock-height) - 5px));
 }
-.town-rankings > h2, .town-ranking-categories, .town-rankings-footer { flex: none; }
+.town-rankings > h2, .town-ranking-categories, .town-ranking-feedback, .town-rankings-footer { flex: none; }
+.town-ranking-feedback { margin: 0; padding: 5px 12px; color: #8d3f29; font-size: 12px; }
+.town-ranking-feedback:empty { display: none; }
 .town-ranking-categories {
   display: flex;
   align-items: center;
@@ -221,6 +224,7 @@
   padding: 8px 12px;
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 .town-rankings-footer {
   display: grid;
@@ -536,7 +540,6 @@
 .town-daily-close:hover { background: #e6effc; }
 .town-daily p { margin: 6px 0 0; color: var(--town-muted); font-size: 13px; line-height: 1.4; }
 .town-daily .town-item-action { margin-top: 10px; }
-.town-daily .town-item-action:disabled { opacity: .68; }
 #town-daily-progress { color: #254e84; font-weight: 800; }
 #town-daily-result { color: #1e6050; font-weight: 700; }
 .town-opponent-details .town-ai-label { color: #4752a0; font-weight: 650; }
@@ -605,6 +608,16 @@
   background: #fff;
 }
 .town-item-list li > div { flex: 1 1 140px; }
+.town-item-list .town-item-art {
+  flex: none;
+  width: clamp(44px, 10vw, 62px);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #edf4ff;
+}
+.town-item-art + div { min-width: 0; }
 .town-item-list li p, #town-inventory-empty p, .town-rename-form p {
   margin: 4px 0;
   color: var(--town-muted);
@@ -924,7 +937,6 @@
   font: inherit;
   font-size: 14px;
 }
-.town-chat-form button:disabled { opacity: .68; }
 #town-mail-list [data-unread] .town-history-details > span { font-weight: 750; }
 #town-mail-list [data-unread] .town-history-details > span::before {
   content: "";
@@ -987,9 +999,8 @@
 .town-empty { margin: 0; padding: 13px 15px; color: var(--town-muted); font-size: 13px; }
 .town-feedback { margin: 0; padding: 10px 12px; color: #8d3f29; font-size: 13px; overflow-wrap: anywhere; }
 .town-feedback:empty { display: none; }
-.town-game button:disabled { opacity: .58; cursor: wait; }
-.town-game.is-refreshing-opponents button:disabled:not([data-unavailable]) { opacity: 1; }
-.town-game #open-avatar-picker:disabled { opacity: 1; }
+/* Pending requests may block duplicate input without changing the appearance of the plaza. */
+.town-game button[data-unavailable]:disabled { opacity: .58; cursor: default; }
 .town-battle-view {
   position: absolute;
   inset: 0;

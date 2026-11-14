@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=ranking-categories">
+  <link rel="stylesheet" href="lobby.css?v=ranking-item-art">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -284,6 +284,7 @@
                 <button type="button" data-category="weapons" aria-pressed="false">武器收藏榜</button>
                 <span aria-hidden="true">前 100 名</span>
               </div>
+              <p id="town-ranking-feedback" class="town-ranking-feedback" role="status"></p>
               <div id="town-rankings-scroll" class="town-rankings-scroll" role="region" tabindex="0" aria-label="前一百名">
                 <ol id="town-rankings-list" class="town-item-list"></ol>
               </div>
@@ -468,6 +469,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=ranking-categories"></script>
+  <script src="online.js?v=ranking-item-art"></script>
 </body>
 </html>

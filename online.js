@@ -18,7 +18,7 @@ if (onlineMode) {
  const socialConfirm = $('town-social-confirm');
  const socialTitles = {guilds:'帮派', friends:'好友'};
  const statLabels = {max_hp:'生命', attack:'攻击', defense:'防御'};
- const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改角色名。'}};
+ const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改角色名。', image:'assets/item-rename-card.png'}};
  const pendingItemRequests = new Map();
  const avatarPanel = $('town-avatar-panel');
  const avatarPicker = $('open-avatar-picker');
@@ -73,6 +73,10 @@ if (onlineMode) {
  const rankingsPanel = $('town-rankings-panel');
  const openRankings = $('open-rankings');
  const rankingButtons = rankingsPanel.querySelectorAll('[data-category]');
+ const rankingList = $('town-rankings-list');
+ const rankingSelf = $('town-ranking-self');
+ const rankingFeedback = $('town-ranking-feedback');
+ let rankingRequest;
  const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, rankingsPanel,
   avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
@@ -152,12 +156,13 @@ if (onlineMode) {
   unavailable: '游戏或战斗服务暂时不可用，请稍后重试。',
  };
 
- async function api(service, path, body) {
+ async function api(service, path, body, signal) {
   const prefix = `api/${service}`;
   const response = await fetch(`${prefix}${path}`, {
    method: body ? 'POST' : 'GET',
    headers: body ? {'Content-Type': 'application/json'} : {},
    body: body ? JSON.stringify(body) : undefined,
+   signal,
   });
   if (response.status === 429 && path !== '/chat') throw new Error(messages.rate_limited);
   const data = await response.json();
@@ -197,6 +202,10 @@ if (onlineMode) {
   showDailyDetails(false);
   $('town-daily-result').hidden = true;
   townHistory.replaceChildren();
+  rankingList.replaceChildren();
+  rankingSelf.replaceChildren();
+  $('town-ranking-missing').hidden = true;
+  for (const button of rankingButtons) button.setAttribute('aria-pressed', String(button.dataset.category === 'level'));
   mailList.replaceChildren();
   nextMail = null;
   mailMore.hidden = true;
@@ -401,6 +410,7 @@ if (onlineMode) {
  }));
 
  function showSquarePanel(panel, button = null, moveFocus = false) {
+  if (panel !== rankingsPanel) rankingRequest?.abort();
   if (panel) showDailyDetails(false);
   if (panel !== opponentPanel) {
    viewedOpponent = opponentReturn = null;
@@ -452,7 +462,7 @@ if (onlineMode) {
   await refreshMail();
  }));
 
- function itemRow(name, description, action, onClick, disabled = false) {
+ function itemRow(name, description, action, onClick, disabled = false, image) {
   const row = document.createElement('li');
   const info = document.createElement('div');
   const label = document.createElement('strong');
@@ -467,6 +477,14 @@ if (onlineMode) {
   button.disabled = disabled || busy;
   button.addEventListener('click', onClick);
   info.append(label, detail);
+  if (image) {
+   const icon = document.createElement('img');
+   icon.className = 'town-item-art';
+   icon.src = image;
+   icon.alt = '';
+   icon.width = icon.height = 62;
+   row.append(icon);
+  }
   row.append(info, button);
   return row;
  }
@@ -476,10 +494,11 @@ if (onlineMode) {
   $('town-shop-coins').textContent = `金币余额 ${coins}`;
   shopItems.replaceChildren(...shopCatalog.map(item => {
    const affordable = coins >= item.price;
-   const description = itemDetails[item.id]?.description;
+   const definition = itemDetails[item.id];
+   const description = definition?.description;
    return itemRow(item.name, description ? `${description} ${item.price} 金币` : `${item.price} 金币`,
     affordable ? '购买' : '金币不足', () => itemAction(shopPanel, $('town-shop-feedback'), '/shop/buy',
-     {item_id:item.id}, `已购买「${item.name}」，可在背包查看。`), !affordable);
+     {item_id:item.id}, `已购买「${item.name}」，可在背包查看。`), !affordable, definition?.image);
   }));
  }
 
@@ -490,7 +509,7 @@ if (onlineMode) {
    const definition = itemDetails[item.item_id];
    if (item.item_id !== 'rename_card') return itemRow(definition?.name ?? item.item_id,
     `数量 ${item.quantity}`, '暂不可使用', () => {}, true);
-   return itemRow(definition.name, `数量 ${item.quantity} · ${definition.description}`, '使用', openRename);
+   return itemRow(definition.name, `数量 ${item.quantity} · ${definition.description}`, '使用', openRename, false, definition.image);
   }));
  }
 
@@ -650,28 +669,59 @@ if (onlineMode) {
   weapons: player => `已收藏 ${player.score} 把武器`,
  };
 
- async function refreshRankings(category) {
-  const {players, self} = await api('game', `/rankings/${category}`);
-  const rankRow = player => socialPlayerRow(player, rankingDetails[category](player),
-   `第 ${player.rank} 名 · ${player.name}`);
-  $('town-rankings-list').replaceChildren(...players.map(rankRow));
-  $('town-ranking-self').replaceChildren(...(self ? [rankRow(self)] : []));
-  $('town-ranking-missing').hidden = Boolean(self);
-  for (const button of rankingButtons) button.setAttribute('aria-pressed', String(button.dataset.category === category));
-  $('town-rankings-scroll').scrollTop = 0;
+ function updateRankingRows(list, players, category) {
+  players.forEach((player, index) => {
+   const title = `第 ${player.rank} 名 · ${player.name}`;
+   const detail = rankingDetails[category](player);
+   const row = list.children[index];
+   if (!row) {
+    list.append(socialPlayerRow(player, detail, title));
+    return;
+   }
+   const [portrait, info] = row.children;
+   const src = avatarUrl(player.avatar_id);
+   if (portrait.getAttribute('src') !== src) portrait.src = src;
+   if (info.firstElementChild.textContent !== title) info.firstElementChild.textContent = title;
+   if (info.lastElementChild.textContent !== detail) info.lastElementChild.textContent = detail;
+   row.toggleAttribute('data-self', player.player_id === session.player.player_id);
+  });
+  while (list.children.length > players.length) list.lastElementChild.remove();
  }
 
- openRankings.addEventListener('click', () => run(async () => {
-  await refreshRankings('level');
+ async function refreshRankings(category) {
+  rankingRequest?.abort();
+  const request = new AbortController();
+  rankingRequest = request;
+  rankingFeedback.textContent = '';
+  rankingList.setAttribute('aria-busy', 'true');
+  try {
+   const {players, self} = await api('game', `/rankings/${category}`, undefined, request.signal);
+   if (request.signal.aborted) return;
+   updateRankingRows(rankingList, players, category);
+   updateRankingRows(rankingSelf, self ? [self] : [], category);
+   $('town-ranking-missing').hidden = Boolean(self);
+   for (const button of rankingButtons) button.setAttribute('aria-pressed', String(button.dataset.category === category));
+   $('town-rankings-scroll').scrollTop = 0;
+  } catch (error) {
+   if (request.signal.aborted) return;
+   if (error.code === 'unauthorized' && !busy) {
+    await run(() => { throw error; });
+   } else {
+    rankingFeedback.textContent = error.code === 'unauthorized' ? messages.unauthorized : '排行榜暂时无法加载，请重试。';
+   }
+  } finally {
+   if (rankingRequest === request) rankingList.removeAttribute('aria-busy');
+  }
+ }
+
+ openRankings.addEventListener('click', () => {
+  if (busy) return;
   showSquarePanel(rankingsPanel, openRankings, true);
- }));
+  const selected = [...rankingButtons].find(button => button.getAttribute('aria-pressed') === 'true');
+  refreshRankings(selected.dataset.category);
+ });
  for (const button of rankingButtons) {
-  button.addEventListener('click', () => run(async () => {
-   await refreshRankings(button.dataset.category);
-   if (!rankingsPanel.hidden) requestAnimationFrame(() => {
-    if (!rankingsPanel.hidden) button.focus({preventScroll:true});
-   });
-  }));
+  button.addEventListener('click', () => refreshRankings(button.dataset.category));
  }
 
  function socialAction(action, data, success) {
@@ -898,7 +948,6 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
   openHistory.disabled = value;
-  for (const button of rankingButtons) button.disabled = value;
   openPlayerLog.disabled = playerLogMore.disabled = value;
   openMail.disabled = mailRefresh.disabled = mailMore.disabled = value;
   openChat.disabled = chatSend.disabled = value;
@@ -1610,12 +1659,10 @@ if (onlineMode) {
 
  refreshOpponentsButton.addEventListener('click', async () => {
   if (busy) return;
-  lobby.classList.add('is-refreshing-opponents');
   opponentsList.setAttribute('aria-busy', 'true');
   try {
    await run(refreshOpponents);
   } finally {
-   lobby.classList.remove('is-refreshing-opponents');
    opponentsList.removeAttribute('aria-busy');
   }
  });
