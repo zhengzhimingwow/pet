@@ -36,9 +36,12 @@ if (onlineMode) {
  const weaponReference = $('weapon-reference');
  const historyPanel = $('town-history-panel');
  const openHistory = $('open-history');
+ const characterDetailsPanel = $('town-character-details-panel');
+ const openCharacterDetails = $('open-character-details');
  const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
- const squarePanels = [historyPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, avatarPanel, damagePanel, weaponPanel];
+ const squarePanels = [historyPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
+  avatarPanel, damagePanel, weaponPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -60,7 +63,6 @@ if (onlineMode) {
  let pending;
  let lastReport;
  let returnToSquareTimer;
- let damageReportButton;
  let selectedWeaponId;
  let shopCatalog = [];
  let socialSection;
@@ -213,7 +215,8 @@ if (onlineMode) {
   $('town-zone').textContent = `${zone} 服`;
   $('town-player-name').textContent = player.name;
   $('town-player-avatar').src = avatarUrl(player.avatar_id);
-  $('online-player').textContent = `UID ${player.player_id}`;
+  $('town-detail-name').textContent = player.name;
+  $('town-detail-uid').textContent = player.player_id;
   $('town-hp').textContent = player.max_hp;
   $('town-attack').textContent = player.attack;
   $('town-defense').textContent = player.defense;
@@ -238,7 +241,6 @@ if (onlineMode) {
   for (const section of squarePanels) section.hidden = section !== panel;
   if (panel === historyPanel) button = openHistory;
   for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
-  if (panel !== damagePanel) damageReportButton = null;
   if (moveFocus) {
    const heading = panel.querySelector('h2');
    heading.focus({preventScroll:true});
@@ -247,13 +249,7 @@ if (onlineMode) {
  }
 
  openHistory.addEventListener('click', () => showSquarePanel(historyPanel, openHistory, true));
- for (const button of lobby.querySelectorAll('.town-panel-back')) {
-  button.addEventListener('click', () => {
-   const opener = damageReportButton;
-   showSquarePanel(historyPanel, null, !opener?.isConnected);
-   if (opener?.isConnected) opener.focus();
-  });
- }
+ openCharacterDetails.addEventListener('click', () => showSquarePanel(characterDetailsPanel, openCharacterDetails, true));
 
  function itemRow(name, description, action, onClick, disabled = false) {
   const row = document.createElement('li');
@@ -625,6 +621,7 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
   openHistory.disabled = value;
+  openCharacterDetails.disabled = value;
   openSkillCollection.disabled = value;
   avatarPicker.disabled = value;
   for (const id of ['open-shop', 'open-inventory', 'inventory-open-shop', 'town-rename-submit']) $(id).disabled = value;
@@ -691,7 +688,7 @@ if (onlineMode) {
   returnToSquareTimer = setTimeout(returnToSquare, 3000);
  }
 
- function showDamageReport(report, time, opener) {
+ function showDamageReport(report, time) {
   const names = {left:report.attacker.name, right:report.defender.name};
   if (names.left === names.right) {
    names.left += '（先手）';
@@ -761,7 +758,6 @@ if (onlineMode) {
    roundActions.append(note);
   }
 
-  damageReportButton = opener;
   showSquarePanel(damagePanel, null, true);
  }
 
@@ -807,7 +803,7 @@ if (onlineMode) {
    reportButton.setAttribute('aria-label', `文字战报，${matchLabel}`);
    reportButton.addEventListener('click', () => run(async () => {
     const battle = await api(session.zone, path);
-    showDamageReport(battle, time.textContent, reportButton);
+    showDamageReport(battle, time.textContent);
    }));
    actions.append(reportButton, playButton);
    item.append(info, actions);

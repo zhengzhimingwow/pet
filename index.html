@@ -11,14 +11,14 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=profile-avatar">
-  <link rel="stylesheet" href="lobby.css?v=sticky-square-nav">
+  <link rel="stylesheet" href="style.css?v=zone-art-fit">
+  <link rel="stylesheet" href="lobby.css?v=character-details">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
     <div class="entry-frame">
       <div class="town-art">
-        <img src="assets/penguin-town.webp" alt="蓝围巾和红围巾企鹅在海边小镇散步">
+        <img src="assets/penguin-town.webp" width="1536" height="1024" alt="蓝围巾和红围巾企鹅在海边小镇散步">
       </div>
       <section class="entry-panel" aria-label="游戏入口">
         <div id="account-login">
@@ -133,12 +133,10 @@
               </div>
             </dl>
           </div>
-          <div class="town-profile-footer">
-            <details><summary>角色详情</summary><p id="online-player"></p></details>
-          </div>
         </section>
         <nav class="town-collection-actions" aria-label="广场功能">
           <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="true">乐斗记录</button>
+          <button id="open-character-details" type="button" aria-controls="town-character-details-panel" aria-pressed="false">角色详情</button>
           <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
           <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
           <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
@@ -154,10 +152,18 @@
           <ul id="town-battle-history"></ul>
           <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
         </section>
+        <section id="town-character-details-panel" class="town-inline-panel" aria-labelledby="town-character-details-title" hidden>
+          <div class="town-panel-header">
+            <h2 id="town-character-details-title" tabindex="-1">角色详情</h2>
+          </div>
+          <dl class="town-character-details">
+            <div><dt>角色名</dt><dd id="town-detail-name"></dd></div>
+            <div><dt>UID</dt><dd id="town-detail-uid"></dd></div>
+          </dl>
+        </section>
         <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
           <div class="town-panel-header">
             <h2 id="town-skill-title" tabindex="-1">功法库</h2>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <div class="town-damage-content">
             <article class="town-skill-card" id="town-combo-skill">
@@ -173,7 +179,6 @@
         <section id="town-inventory-panel" class="town-inline-panel" aria-labelledby="town-inventory-title" hidden>
           <div class="town-panel-header">
             <h2 id="town-inventory-title" tabindex="-1">背包</h2>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <div class="town-damage-content">
             <div id="town-inventory-empty" hidden>
@@ -194,7 +199,6 @@
         <section id="town-social-panel" class="town-inline-panel" aria-labelledby="town-social-title" hidden>
           <div class="town-panel-header">
             <h2 id="town-social-title" tabindex="-1"></h2>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <div class="town-damage-content town-social-content">
             <form id="town-social-form" hidden>
@@ -217,7 +221,6 @@
         <section id="town-shop-panel" class="town-inline-panel" aria-labelledby="town-shop-title" hidden>
           <div class="town-panel-header">
             <div><h2 id="town-shop-title" tabindex="-1">商店</h2><p id="town-shop-coins"></p></div>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <div class="town-damage-content">
             <ul id="town-shop-items" class="town-item-list"></ul>
@@ -227,7 +230,6 @@
         <section id="town-avatar-panel" class="town-inline-panel" aria-labelledby="town-avatar-title" hidden>
           <div class="town-panel-header">
             <h2 id="town-avatar-title" tabindex="-1">更换头像</h2>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <div class="town-damage-content">
             <ul id="town-avatar-options" class="town-avatar-options"></ul>
@@ -240,7 +242,6 @@
               <h2 id="town-weapon-title" tabindex="-1">武器库</h2>
               <p id="town-weapon-count"></p>
             </div>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <section class="town-weapon-compare" aria-label="武器对比">
             <div class="weapon-comparison" aria-live="polite">
@@ -271,7 +272,6 @@
               <h2 id="town-damage-title" tabindex="-1">文字战报</h2>
               <p id="town-damage-match"></p>
             </div>
-            <button class="town-panel-back" type="button">返回乐斗记录</button>
           </div>
           <div class="town-damage-content">
             <h3>伤害汇总</h3>
@@ -373,6 +373,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=sticky-square-nav"></script>
+  <script src="online.js?v=character-details"></script>
 </body>
 </html>
