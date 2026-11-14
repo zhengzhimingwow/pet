@@ -16,8 +16,8 @@ if (onlineMode) {
  const socialFeedback = $('town-social-feedback');
  const socialLeave = $('town-social-leave');
  const socialConfirm = $('town-social-confirm');
- const socialTitles = {rankings:'本服等级榜', guilds:'帮派', friends:'好友'};
- const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改当前区服的角色名。'}};
+ const socialTitles = {rankings:'等级榜', guilds:'帮派', friends:'好友'};
+ const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改角色名。'}};
  const pendingItemRequests = new Map();
  const avatarPanel = $('town-avatar-panel');
  const avatarPicker = $('open-avatar-picker');
@@ -60,18 +60,12 @@ if (onlineMode) {
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
- const zoneGroups = $('zone-groups');
- const zoneOptions = $('zone-options');
- const zoneEnter = $('zone-enter');
  const savedAccount = $('saved-account');
- const zonesPerGroup = 10;
  const historyTimeFormat = new Intl.DateTimeFormat('zh-CN', {
   timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit',
   hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23',
  });
- let account;
  let session;
- let selectedZone;
  let registering = false;
  let busy = false;
  let pending;
@@ -101,11 +95,11 @@ if (onlineMode) {
   invalid_registration: '请使用 3–32 位字母、数字或下划线作为账号。',
   account_taken: '这个账号已被注册，可以直接登录或换一个账号。',
   remember_expired: '这个账号的免密登录已过期，请输入密码重新登录。',
-  zone_not_entered: '请先选择区服。',
+  player_not_entered: '请重新进入游戏。',
   rate_limited: '登录尝试较多，请稍后重试。',
   not_found: '没有找到该角色或战报。',
   same_player: '请选择其他玩家。',
-  invalid_request: '请检查区服和角色 UID。',
+  invalid_request: '请检查角色 UID。',
   request_conflict: '请求编号已被使用，请重新选择对手。',
   task_incomplete: '今日乐斗次数还不够。',
   task_claimed: '今日经验已领取。',
@@ -123,11 +117,11 @@ if (onlineMode) {
   not_in_guild: '你当前没有加入帮派。',
   guild_owner_required: '只有帮主可以解散帮派。',
   guild_owner_cannot_leave: '帮主可以在帮派面板解散帮派。',
-  unavailable: '区服或战斗服暂时不可用，请稍后重试。',
+  unavailable: '游戏或战斗服务暂时不可用，请稍后重试。',
  };
 
- async function api(zone, path, body) {
-  const prefix = zone ? `api/zone/${zone}` : 'api/account';
+ async function api(service, path, body) {
+  const prefix = `api/${service}`;
   const response = await fetch(`${prefix}${path}`, {
    method: body ? 'POST' : 'GET',
    headers: body ? {'Content-Type': 'application/json'} : {},
@@ -150,84 +144,14 @@ if (onlineMode) {
   if (!session) showSquarePanel(historyPanel);
   townStage.hidden = false;
   entry.hidden = Boolean(session);
-  $('account-login').hidden = Boolean(account);
-  const choosingZone = Boolean(account && !session);
-  $('account-zones').hidden = !choosingZone;
-  entry.classList.toggle('choosing-zone', choosingZone);
   lobby.hidden = !session;
  }
 
- function selectZone(zone) {
-  selectedZone = zone;
-  $('zone-selection').textContent = zone ? `已选 ${zone.name}` : '';
-  zoneEnter.disabled = busy || !zone;
-  for (const button of zoneOptions.querySelectorAll('button')) {
-   button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === zone?.id));
-  }
- }
-
- function renderZoneGroup(group, zones) {
-  for (const button of zoneGroups.querySelectorAll('button')) {
-   button.setAttribute('aria-pressed', String(Number(button.dataset.group) === group));
-  }
-  $('zone-group-title').textContent = group ? `${group}–${group + zonesPerGroup - 1} 服` : '区服列表';
-  $('zone-count').textContent = zones.length ? `${zones.length} 个区服` : '';
-  $('zone-empty').hidden = Boolean(zones.length);
-  zoneOptions.replaceChildren(...zones.map(zone => {
-   const row = document.createElement('li');
-   const button = document.createElement('button');
-   const name = document.createElement('span');
-   const indicator = document.createElement('span');
-   button.type = 'button';
-   button.className = 'zone-row';
-   button.dataset.zone = zone.id;
-   button.disabled = busy;
-   name.textContent = zone.name;
-   indicator.className = 'zone-indicator';
-   indicator.setAttribute('aria-hidden', 'true');
-   button.append(name, indicator);
-   button.addEventListener('click', () => selectZone(zone));
-   row.append(button);
-   return row;
-  }));
-  selectZone(zones.find(zone => zone.id === selectedZone?.id) ?? zones[0]);
- }
-
- async function showZones() {
-  const {zones} = await api(null, '/zones');
-  session = pending = lastReport = null;
-  townHistory.replaceChildren();
-  opponentsList.replaceChildren();
-  $('zone-account-name').textContent = account.username;
-  const groups = new Map();
-  for (const zone of [...zones].sort((a, b) => a.id - b.id)) {
-   const group = Math.floor((zone.id - 1) / zonesPerGroup) * zonesPerGroup + 1;
-   if (!groups.has(group)) groups.set(group, []);
-   groups.get(group).push(zone);
-  }
-  zoneGroups.replaceChildren(...[...groups].map(([group, members]) => {
-   const button = document.createElement('button');
-   button.type = 'button';
-   button.className = 'zone-group-button';
-   button.dataset.group = group;
-   button.disabled = busy;
-   button.textContent = `${group}–${group + zonesPerGroup - 1} 服`;
-   button.addEventListener('click', () => renderZoneGroup(group, members));
-   return button;
-  }));
-  const previousGroup = [...groups].find(([, members]) => members.some(zone => zone.id === selectedZone?.id));
-  const [group, members] = previousGroup ?? groups.entries().next().value ?? [null, []];
-  renderZoneGroup(group, members);
-  showEntry();
-  $('zone-title').focus();
- }
-
- zoneEnter.addEventListener('click', () => run(async () => {
-  if (!selectedZone) return;
-  acceptSession(await api(selectedZone.id, '/enter', {}));
+ async function enterGame() {
+  acceptSession(await api('game', '/enter', {}));
   townStage.focus();
   await Promise.all([refreshOpponents(), refreshHistory(), refreshMailCount()]);
- }));
+ }
 
  function acceptSession(data) {
   pendingItemRequests.clear();
@@ -253,9 +177,8 @@ if (onlineMode) {
 
  function renderPlayer(data) {
   session = data;
-  const {player, zone, progression} = data;
+  const {player, progression} = data;
   renderDailyTask(data.daily_task);
-  $('town-zone').textContent = `${zone} 服`;
   $('town-player-name').textContent = player.name;
   updatePlayerAvatar(player.avatar_id);
   $('town-detail-name').textContent = player.name;
@@ -317,14 +240,14 @@ if (onlineMode) {
    }
    run(async () => {
     $('town-daily-result').hidden = true;
-    renderDailyTask(await api(session.zone, '/daily-task'));
+    renderDailyTask(await api('game', '/daily-task'));
    });
   }, Math.max(1000, task.resets_at * 1000 - Date.now() + 500));
  }
 
  dailyClaim.addEventListener('click', () => run(async () => {
   try {
-   const data = await api(session.zone, '/daily-task/claim', {day:dailyTask.day});
+   const data = await api('game', '/daily-task/claim', {day:dailyTask.day});
    renderPlayer(data);
    const result = $('town-daily-result');
    result.textContent = `已领取 ${data.reward.xp} 经验`;
@@ -332,7 +255,7 @@ if (onlineMode) {
    if (!playerLogPanel.hidden) await refreshPlayerLog();
   } catch (error) {
    if (['task_reset', 'task_claimed', 'task_incomplete'].includes(error.code)) {
-    renderDailyTask(await api(session.zone, '/daily-task'));
+    renderDailyTask(await api('game', '/daily-task'));
    }
    throw error;
   }
@@ -370,7 +293,7 @@ if (onlineMode) {
  mailRefresh.addEventListener('click', () => run(() => refreshMail()));
  mailMore.addEventListener('click', () => run(() => nextMail && refreshMail(nextMail)));
  mailReadAll.addEventListener('click', () => run(async () => {
-  await api(session.zone, '/mail/read-all', {});
+  await api('game', '/mail/read-all', {});
   await refreshMail();
  }));
 
@@ -424,11 +347,11 @@ if (onlineMode) {
   return run(async () => {
    feedback.textContent = '';
    delete feedback.dataset.error;
-   const key = JSON.stringify([session.zone, path, body]);
+   const key = JSON.stringify([path, body]);
    const requestId = pendingItemRequests.get(key) ?? newRequestId();
    pendingItemRequests.set(key, requestId);
    try {
-    const data = await api(session.zone, path, {...body, request_id:requestId});
+    const data = await api('game', path, {...body, request_id:requestId});
     pendingItemRequests.delete(key);
     if (path === '/items/use') {
      renameForm.reset();
@@ -448,7 +371,7 @@ if (onlineMode) {
 
  function openShop(message = '') {
   return run(async () => {
-   shopCatalog = (await api(session.zone, '/shop')).items;
+   shopCatalog = (await api('game', '/shop')).items;
    const feedback = $('town-shop-feedback');
    delete feedback.dataset.error;
    feedback.textContent = message;
@@ -473,7 +396,7 @@ if (onlineMode) {
  }
  $('open-rename').addEventListener('click', openRename);
  openInventory.addEventListener('click', () => run(async () => {
-  renderPlayer(await api(session.zone, '/session'));
+  renderPlayer(await api('game', '/session'));
   renderInventory();
   showSquarePanel(inventoryPanel, openInventory, true);
  }));
@@ -521,7 +444,7 @@ if (onlineMode) {
   $('town-social-summary').hidden = !currentGuild;
   socialConfirm.hidden = true;
   if (!socialForm.hidden) {
-   $('town-social-label').textContent = friendView ? '本服玩家 UID' : '帮派名称';
+   $('town-social-label').textContent = friendView ? '玩家 UID' : '帮派名称';
    $('town-social-submit').textContent = friendView ? '发送申请' : '创建帮派';
    socialInput.maxLength = friendView ? 20 : 16;
    socialInput.inputMode = friendView ? 'numeric' : 'text';
@@ -535,7 +458,7 @@ if (onlineMode) {
    rows = currentGuild.members.map(player => socialPlayerRow(player,
     `${player.player_id === currentGuild.owner_id ? '帮主' : '成员'} · UID ${player.player_id}`));
   } else if (guildView) {
-   empty = '本服暂时没有帮派。';
+   empty = '暂时没有帮派。';
    rows = data.guilds.map(guild => {
     const row = document.createElement('li');
     const info = document.createElement('div');
@@ -561,7 +484,7 @@ if (onlineMode) {
     return row;
    });
   } else {
-   empty = '本服暂无排名。';
+   empty = '暂无排名。';
    rows = data.players.map(player => socialPlayerRow(player,
     `Lv. ${player.level} · ${player.xp}/100 经验`, `${player.rank}. ${player.name}`));
   }
@@ -575,7 +498,7 @@ if (onlineMode) {
    socialFeedback.textContent = '';
    delete socialFeedback.dataset.error;
    try {
-    renderSocial(await api(session.zone, `/${socialSection}`, {action, ...data}));
+    renderSocial(await api('game', `/${socialSection}`, {action, ...data}));
     socialForm.reset();
     socialFeedback.textContent = success;
     if (!socialPanel.hidden) $('town-social-title').focus({preventScroll:true});
@@ -589,7 +512,7 @@ if (onlineMode) {
 
  for (const [section, title] of Object.entries(socialTitles)) {
   $(`open-${section}`).addEventListener('click', () => run(async () => {
-   const data = await api(session.zone, `/${section}`);
+   const data = await api('game', `/${section}`);
    socialSection = section;
    $('town-social-title').textContent = title;
    socialFeedback.textContent = '';
@@ -654,7 +577,7 @@ if (onlineMode) {
    run(async () => {
     avatarFeedback.textContent = '';
     try {
-     const {avatar_id} = await api(session.zone, '/avatar', {avatar_id:id});
+     const {avatar_id} = await api('game', '/avatar', {avatar_id:id});
      session.player.avatar_id = avatar_id;
      updatePlayerAvatar(avatar_id);
      updateAvatarSelection();
@@ -774,7 +697,7 @@ if (onlineMode) {
   weaponList.replaceChildren(...catalog.map(([id, move]) => boardWeapon(id, move, owned.has(id))));
  }
  $('open-weapon-collection').addEventListener('click', () => run(async () => {
-  renderPlayer(await api(session.zone, '/session'));
+  renderPlayer(await api('game', '/session'));
   renderWeaponCollection();
   showSquarePanel(weaponPanel, $('open-weapon-collection'), true);
  }));
@@ -787,8 +710,6 @@ if (onlineMode) {
   $('login-submit').disabled = value;
   refreshOpponentsButton.disabled = value;
   $('online-logout').disabled = value;
-  $('zone-logout').disabled = value;
-  $('switch-zone').disabled = value;
   $('toggle-register').disabled = value;
   savedAccount.disabled = value;
   $('saved-login').disabled = value;
@@ -816,9 +737,6 @@ if (onlineMode) {
    for (const button of list.querySelectorAll('button')) button.disabled = value;
   }
   for (const button of opponentsList.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
-  for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
-  for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
-  zoneEnter.disabled = value || !selectedZone;
  }
 
  function damageBySource(events) {
@@ -959,7 +877,7 @@ if (onlineMode) {
  }
 
  async function refreshMailCount() {
-  const {unread} = await api(session.zone, '/mail/unread');
+  const {unread} = await api('game', '/mail/unread');
   setMailCount(unread);
  }
 
@@ -967,7 +885,7 @@ if (onlineMode) {
   if (!session || busy || document.hidden || !mailPanel.hidden) return;
   const current = session;
   try {
-   const {unread} = await api(current.zone, '/mail/unread');
+   const {unread} = await api('game', '/mail/unread');
    if (session === current && !busy && mailPanel.hidden) setMailCount(unread);
   } catch {
    // Entering or opening the inbox retries the request through the regular UI.
@@ -1012,7 +930,7 @@ if (onlineMode) {
  }
 
  async function refreshPlayerLog(before) {
-  const {entries, next_before} = await api(session.zone, before ? `/player-log/before/${before}` : '/player-log');
+  const {entries, next_before} = await api('game', before ? `/player-log/before/${before}` : '/player-log');
   if (!before) playerLogList.replaceChildren();
   for (const entry of entries) {
    const row = document.createElement('li');
@@ -1044,7 +962,7 @@ if (onlineMode) {
  }
 
  async function refreshMail(before) {
-  const {messages:letters, unread, next_before} = await api(session.zone, before ? `/mail/before/${before}` : '/mail');
+  const {messages:letters, unread, next_before} = await api('game', before ? `/mail/before/${before}` : '/mail');
   if (!before) mailList.replaceChildren();
   for (const letter of letters) {
    const item = document.createElement('li');
@@ -1075,7 +993,7 @@ if (onlineMode) {
    read.setAttribute('aria-label', `${letter.unread ? '未读，' : ''}查看邮件，${letter.subject}`);
    read.addEventListener('click', () => run(async () => {
     if (item.hasAttribute('data-unread')) {
-     const {unread} = await api(session.zone, `/mail/${letter.mail_id}/read`, {});
+     const {unread} = await api('game', `/mail/${letter.mail_id}/read`, {});
      setMailCount(unread);
      item.removeAttribute('data-unread');
      read.setAttribute('aria-label', `查看邮件，${letter.subject}`);
@@ -1094,7 +1012,7 @@ if (onlineMode) {
  }
 
  async function refreshHistory() {
-  const {battles} = await api(session.zone, '/battles');
+  const {battles} = await api('game', '/battles');
   townHistory.replaceChildren();
   $('town-history-empty').hidden = Boolean(battles.length);
   for (const report of battles) {
@@ -1123,13 +1041,13 @@ if (onlineMode) {
    playButton.disabled = busy;
    playButton.textContent = '播放';
    playButton.setAttribute('aria-label', `播放，${matchLabel}`);
-   playButton.addEventListener('click', () => run(async () => playback(await api(session.zone, path))));
+   playButton.addEventListener('click', () => run(async () => playback(await api('game', path))));
    reportButton.type = 'button';
    reportButton.disabled = busy;
    reportButton.textContent = '文字战报';
    reportButton.setAttribute('aria-label', `文字战报，${matchLabel}`);
    reportButton.addEventListener('click', () => run(async () => {
-    const battle = await api(session.zone, path);
+    const battle = await api('game', path);
     showDamageReport(battle, time.textContent);
    }));
    actions.append(reportButton, playButton);
@@ -1153,7 +1071,7 @@ if (onlineMode) {
  }
 
  async function openOpponentProfile(opponent, trigger) {
-  const {player, progression} = await api(session.zone, `/players/${opponent.zone}/${opponent.player_id}`);
+  const {player, progression} = await api('game', `/players/${opponent.player_id}`);
   if (opponentPanel.hidden) {
    opponentReturn = {
     panel:squarePanels.find(panel => !panel.hidden) ?? historyPanel,
@@ -1166,7 +1084,7 @@ if (onlineMode) {
   viewedOpponent = opponent;
   $('town-opponent-portrait').src = avatarUrl(player.avatar_id);
   $('town-opponent-name').textContent = player.name;
-  $('town-opponent-uid').textContent = player.is_ai ? 'AI 陪练' : `${opponent.zone} 服 · UID ${player.player_id}`;
+  $('town-opponent-uid').textContent = player.is_ai ? 'AI 陪练' : `UID ${player.player_id}`;
   challengeOpponentProfile.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
   $('town-opponent-level').textContent = `Lv. ${progression.level}`;
   $('town-opponent-xp').max = progression.next_level_xp;
@@ -1203,8 +1121,8 @@ if (onlineMode) {
 
  async function refreshOpponents() {
   const [{opponents}, {players}] = await Promise.all([
-   api(session.zone, '/opponents', {previous_ids:recentOpponentIds}),
-   api(session.zone, '/friends'),
+   api('game', '/opponents', {previous_ids:recentOpponentIds}),
+   api('game', '/friends'),
   ]);
   const rows = opponents.map(player => {
    const row = document.createElement('li');
@@ -1241,7 +1159,7 @@ if (onlineMode) {
    addFriend.dataset.playerName = player.name;
    addFriend.addEventListener('click', () => run(async () => {
     const action = opponentFriendStates.get(player.player_id) === 'incoming' ? 'accept' : 'request';
-    const {players: friends} = await api(session.zone, '/friends', {action, player_id:player.player_id});
+    const {players: friends} = await api('game', '/friends', {action, player_id:player.player_id});
     if (socialSection === 'friends' && !socialPanel.hidden) renderSocial({players:friends});
     else updateOpponentFriends(friends);
    }));
@@ -1250,7 +1168,7 @@ if (onlineMode) {
    button.textContent = '挑战';
    button.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
    button.addEventListener('click', () => run(() => challenge(player)));
-   if (!player.is_ai && player.zone === session.zone) actions.append(addFriend);
+   if (!player.is_ai) actions.append(addFriend);
    actions.append(button);
    profile.append(avatar, details);
    row.append(profile, actions);
@@ -1272,8 +1190,7 @@ if (onlineMode) {
    await action();
   } catch (error) {
    if (error.code === 'unauthorized') {
-    account = session = pending = lastReport = null;
-    selectedZone = null;
+    session = pending = lastReport = null;
     setRegistration(false);
     showEntry();
     accountFeedback.textContent = messages.unauthorized;
@@ -1293,7 +1210,7 @@ if (onlineMode) {
  const visibility = $('password-visibility');
 
  async function refreshSavedAccounts() {
-  const {accounts} = await api(null, '/remembered');
+  const {accounts} = await api('account', '/remembered');
   const previous = savedAccount.value;
   savedAccount.replaceChildren(...accounts.map(name => new Option(name, name)));
   if (accounts.includes(previous)) savedAccount.value = previous;
@@ -1301,22 +1218,16 @@ if (onlineMode) {
  }
 
  async function finishLogin(data) {
-  account = data;
   username.value = data.username;
   setRegistration(false);
-  try {
-   await showZones();
-  } catch (error) {
-   account = null;
-   throw error;
-  }
+  await enterGame();
   accountFeedback.textContent = '';
  }
 
  $('saved-login').addEventListener('click', () => run(async () => {
   const selected = savedAccount.value;
   try {
-   await finishLogin(await api(null, '/remembered/login', {username:selected}));
+   await finishLogin(await api('account', '/remembered/login', {username:selected}));
   } catch (error) {
    if (error.code === 'remember_expired') {
     username.value = selected;
@@ -1327,7 +1238,7 @@ if (onlineMode) {
   }
  }));
  $('saved-forget').addEventListener('click', () => run(async () => {
-  await api(null, '/remembered/forget', {username:savedAccount.value});
+  await api('account', '/remembered/forget', {username:savedAccount.value});
   await refreshSavedAccounts();
  }));
  function showPassword(visible) {
@@ -1342,7 +1253,7 @@ if (onlineMode) {
   $('login-title').textContent = value ? '注册账号' : '欢迎回家';
   $('login-copy').textContent = value
    ? '创建账号，开始你的企鹅小镇之旅。'
-   : '登录账号后，选择你要进入的区服。';
+   : '登录账号，回到你的企鹅小镇。';
   $('login-submit-label').textContent = value ? '注册并登录' : '登录游戏';
   $('toggle-register').textContent = value ? '返回登录' : '注册账号';
   $('confirm-field').hidden = !value;
@@ -1369,7 +1280,7 @@ if (onlineMode) {
    if (registering && password.value !== confirmation.value) throw new Error('两次输入的密码不一致。');
    if (new TextEncoder().encode(password.value).length > 128) throw new Error('密码过长，请缩短后重试。');
    accountFeedback.textContent = registering ? '正在注册…' : '正在登录…';
-   await finishLogin(await api(null, registering ? '/register' : '/login', {
+   await finishLogin(await api('account', registering ? '/register' : '/login', {
     username:username.value.trim(), password:password.value, remember:$('remember-account').checked,
    }));
   });
@@ -1386,14 +1297,14 @@ if (onlineMode) {
   prepareSound();
   playMusic();
   const path = originalBattleId ? `/battles/${originalBattleId}/rematch` : '/battles';
-  const key = originalBattleId ?? `${target.zone}/${target.player_id}`;
+  const key = originalBattleId ?? target.player_id;
   if (pending?.key !== key) pending = {key, request_id:newRequestId()};
   const {request_id} = pending;
   const body = originalBattleId ? {request_id}
-   : {request_id, target_zone:target.zone, target_player_id:target.player_id};
+   : {request_id, target_player_id:target.player_id};
   let report;
   try {
-   report = await api(session.zone, path, body);
+   report = await api('game', path, body);
   } catch (error) {
    if (error.code && error.code !== 'unavailable') pending = null;
    throw error;
@@ -1407,7 +1318,7 @@ if (onlineMode) {
   await Promise.all([
    refreshHistory(),
    refreshMailCount(),
-   api(session.zone, '/session').then(renderPlayer),
+   api('game', '/session').then(renderPlayer),
   ]);
  }
 
@@ -1423,19 +1334,16 @@ if (onlineMode) {
   }
  });
 
- $('switch-zone').addEventListener('click', () => run(showZones));
  function logout() {
   return run(async () => {
-   await api(null, '/logout', {});
-   account = session = pending = lastReport = null;
-   selectedZone = null;
+   await api('account', '/logout', {});
+   session = pending = lastReport = null;
    showEntry();
    await refreshSavedAccounts();
    requestAnimationFrame(() => ($('saved-account-panel').hidden ? username : savedAccount).focus());
   });
  }
  $('online-logout').addEventListener('click', logout);
- $('zone-logout').addEventListener('click', logout);
  again.addEventListener('click', () => {
   if (lastReport) run(() => playback(lastReport));
  });
@@ -1459,10 +1367,8 @@ if (onlineMode) {
  showEntry();
  run(async () => {
   try {
-   account = await api(null, '/session');
-   await showZones();
+   await enterGame();
   } catch (error) {
-   account = null;
    if (error.code !== 'unauthorized') throw error;
    await refreshSavedAccounts();
   }

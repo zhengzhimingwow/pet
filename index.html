@@ -11,8 +11,8 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=toy-hammer-grip">
-  <link rel="stylesheet" href="lobby.css?v=player-log">
+  <link rel="stylesheet" href="style.css?v=single-world">
+  <link rel="stylesheet" href="lobby.css?v=single-world">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -23,7 +23,7 @@
       <section class="entry-panel" aria-label="游戏入口">
         <div id="account-login">
           <h2 id="login-title">欢迎回家</h2>
-          <p id="login-copy" class="entry-copy">登录账号后，选择你要进入的区服。</p>
+          <p id="login-copy" class="entry-copy">登录账号，回到你的企鹅小镇。</p>
           <div id="saved-account-panel" class="login-form saved-account-panel" hidden>
             <label for="saved-account">常用账号</label>
             <select id="saved-account"></select>
@@ -52,30 +52,6 @@
             <a class="entry-demo" href="?demo=pan">试玩战斗演示 <span aria-hidden="true">↗</span></a>
           </div>
         </div>
-        <div id="account-zones" hidden>
-          <div class="zone-header">
-            <h2 id="zone-title" tabindex="-1">选择区服</h2>
-            <div class="zone-account">
-              <span id="zone-account-name"></span>
-              <button id="zone-logout" class="entry-demo" type="button">退出登录</button>
-            </div>
-          </div>
-          <div class="zone-directory">
-            <div id="zone-groups" class="zone-groups" role="group" aria-label="区服分组"></div>
-            <div class="zone-results">
-              <div class="zone-results-header">
-                <h3 id="zone-group-title">区服列表</h3>
-                <span id="zone-count"></span>
-              </div>
-              <ul id="zone-options" class="zone-options" aria-labelledby="zone-group-title"></ul>
-              <p id="zone-empty" hidden>暂无可选区服，请稍后再试。</p>
-            </div>
-          </div>
-          <div class="zone-footer">
-            <p id="zone-selection" role="status"></p>
-            <button id="zone-enter" class="entry-button" type="button" disabled>进入游戏 <span aria-hidden="true">→</span></button>
-          </div>
-        </div>
         <p id="account-feedback" role="status"></p>
       </section>
     </div>
@@ -83,8 +59,6 @@
   <main id="account-lobby" class="town-game" hidden>
     <header class="town-game-header">
       <div class="town-game-account">
-        <span id="town-zone" class="town-zone"></span>
-        <button id="switch-zone" type="button">切换区服</button>
         <button id="online-logout" type="button">退出登录</button>
       </div>
     </header>
@@ -437,6 +411,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=player-log"></script>
+  <script src="online.js?v=single-world"></script>
 </body>
 </html>

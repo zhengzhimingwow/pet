@@ -5,7 +5,6 @@ const loginPanel = byId('gm-login-panel');
 const loginForm = byId('gm-login');
 const lookupForm = byId('gm-lookup');
 const grantForm = byId('gm-grant');
-const zoneInput = byId('gm-zone');
 const uidInput = byId('gm-uid');
 const kindInput = byId('gm-kind');
 const assetInput = byId('gm-asset');
@@ -43,8 +42,8 @@ let proposed;
 let pending;
 let busy = false;
 
-async function request(zone, path, body) {
-  const prefix = zone == null ? '/api/account/gm/' : `/api/zone/${zone}/gm/`;
+async function request(service, path, body) {
+  const prefix = `/api/${service}/gm/`;
   const response = await fetch(prefix + path, {
     method:body ? 'POST' : 'GET',
     headers:body ? {'Content-Type':'application/json'} : {},
@@ -111,7 +110,7 @@ function assetName(kind, id) {
 function showPlayer(data) {
   result = data;
   byId('gm-player-name').textContent = data.player.name;
-  byId('gm-player-meta').textContent = `${target.zone} 服 · UID ${target.id} · Lv. ${data.progression.level}`;
+  byId('gm-player-meta').textContent = `UID ${target.id} · Lv. ${data.progression.level}`;
   byId('gm-items').textContent = data.inventory.items.map(item =>
     `${assetName('item', item.item_id)} × ${item.quantity}`).join('、') || '空';
   byId('gm-weapons').textContent = data.progression.weapons.map(id => assetName('weapon', id)).join('、') || '空';
@@ -148,10 +147,9 @@ function updateAssetControls() {
 }
 
 async function showWorkspace(account) {
-  catalog = await request(1, 'catalog');
+  catalog = await request('game', 'catalog');
   actor = account;
   loginForm.reset();
-  zoneInput.replaceChildren(...catalog.zones.map(zone => new Option(zone.name, zone.id)));
   byId('gm-identity').textContent = `${actor.username} · ${roleLabels[actor.role]}`;
   management.hidden = actor.role !== 'admin';
   byId('gm-grant-panel').hidden = actor.role === 'viewer';
@@ -161,18 +159,18 @@ async function showWorkspace(account) {
 
 loginForm.addEventListener('submit', event => {
   event.preventDefault();
-  run(async () => showWorkspace(await request(null, 'login', {
+  run(async () => showWorkspace(await request('account', 'login', {
     username:usernameInput.value.trim().toLowerCase(), password:byId('gm-key').value,
   })), uidInput);
 });
 logoutButton.addEventListener('click', () => run(async () => {
-  await request(null, 'logout', {});
+  await request('account', 'logout', {});
   logout();
 }, usernameInput));
 
 function accountAction(body, message) {
   return run(async () => {
-    showAccounts((await request(null, 'accounts', body)).accounts);
+    showAccounts((await request('account', 'accounts', body)).accounts);
     notify(message);
   });
 }
@@ -220,13 +218,13 @@ function showAccounts(accounts) {
 }
 
 management.addEventListener('toggle', () => {
-  if (management.open) run(async () => showAccounts((await request(null, 'accounts')).accounts));
+  if (management.open) run(async () => showAccounts((await request('account', 'accounts')).accounts));
 });
 byId('gm-create').addEventListener('submit', event => {
   event.preventDefault();
   run(async () => {
     const username = byId('gm-new-user').value.trim().toLowerCase();
-    const result = await request(null, 'accounts', {
+    const result = await request('account', 'accounts', {
       action:'create', username, role:byId('gm-new-role').value, password:byId('gm-new-key').value,
     });
     showAccounts(result.accounts);
@@ -254,11 +252,11 @@ passwordForm.addEventListener('submit', event => {
     const password = byId('gm-new-password').value;
     try {
       if (resetUser) {
-        const result = await request(null, 'accounts', {action:'reset_password', username:resetUser, password});
+        const result = await request('account', 'accounts', {action:'reset_password', username:resetUser, password});
         showAccounts(result.accounts);
         notify(`已重设 ${resetUser} 的密码。`);
       } else {
-        await request(null, 'password', {current_password:byId('gm-current-password').value, password});
+        await request('account', 'password', {current_password:byId('gm-current-password').value, password});
         logout();
         notify('密码已修改，请用新密码登录。');
       }
@@ -272,15 +270,14 @@ passwordForm.addEventListener('submit', event => {
   });
 });
 uidInput.addEventListener('input', clearPlayer);
-zoneInput.addEventListener('change', clearPlayer);
 kindInput.addEventListener('change', updateAssetControls);
 
 lookupForm.addEventListener('submit', event => {
   event.preventDefault();
   run(async () => {
     clearPlayer();
-    const query = {zone:zoneInput.value, id:uidInput.value};
-    const data = await request(query.zone, `players/${query.id}`);
+    const query = {id:uidInput.value};
+    const data = await request('game', `players/${query.id}`);
     target = query;
     showPlayer(data);
   }, byId('gm-player-name'));
@@ -298,18 +295,18 @@ grantForm.addEventListener('submit', event => {
     player_id:target.id, kind:kindInput.value, asset_id:assetInput.value,
     quantity:Number(quantityInput.value), reason:reasonInput.value.trim(),
   };
-  const key = JSON.stringify([target.zone, body]);
+  const key = JSON.stringify([target.id, body]);
   const requestId = pending?.key === key ? pending.requestId
     : Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
-  proposed = {key, requestId, zone:target.zone, body};
+  proposed = {key, requestId, body};
   const asset = assetName(body.kind, body.asset_id);
-  byId('gm-confirm-text').textContent = `向 ${target.zone} 服的「${result.player.name}」（UID ${target.id}）发放 ${asset} × ${body.quantity}？`;
+  byId('gm-confirm-text').textContent = `向 「${result.player.name}」（UID ${target.id}）发放 ${asset} × ${body.quantity}？`;
   confirmDialog.showModal();
 });
 
 run(async () => {
   try {
-    await showWorkspace(await request(null, 'session'));
+    await showWorkspace(await request('account', 'session'));
   } catch (error) {
     if (error.code !== 'unauthorized') throw error;
   }
@@ -324,7 +321,7 @@ byId('gm-send').addEventListener('click', () => {
     pending = grant;
     let data;
     try {
-      data = await request(grant.zone, 'grants', {...grant.body, request_id:grant.requestId});
+      data = await request('game', 'grants', {...grant.body, request_id:grant.requestId});
     } catch (error) {
       if (error.code && error.code !== 'unavailable' && error.code !== 'rate_limited') pending = null;
       throw error;
