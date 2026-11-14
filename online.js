@@ -17,6 +17,7 @@ if (onlineMode) {
  const socialLeave = $('town-social-leave');
  const socialConfirm = $('town-social-confirm');
  const socialTitles = {rankings:'等级榜', guilds:'帮派', friends:'好友'};
+ const statLabels = {max_hp:'生命', attack:'攻击', defense:'防御'};
  const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改角色名。'}};
  const pendingItemRequests = new Map();
  const avatarPanel = $('town-avatar-panel');
@@ -188,12 +189,13 @@ if (onlineMode) {
   updatePlayerAvatar(player.avatar_id);
   $('town-detail-name').textContent = player.name;
   $('town-detail-uid').textContent = player.player_id;
-  $('town-hp').textContent = player.max_hp;
-  $('town-attack').textContent = player.attack;
-  $('town-defense').textContent = player.defense;
-  $('town-hp-breakdown').textContent = `生命上限 ${player.max_hp} · 基础生命 ${player.max_hp}`;
-  $('town-attack-breakdown').textContent = `总攻击 ${player.attack} · 基础攻击 ${player.attack}`;
-  $('town-defense-breakdown').textContent = `总防御 ${player.defense} · 基础防御 ${player.defense}`;
+  for (const [stat, label] of Object.entries(statLabels)) {
+   const id = stat === 'max_hp' ? 'hp' : stat;
+   const total = player[stat];
+   const growth = player.stat_growth?.[stat] ?? 0;
+   $(`town-${id}`).textContent = total;
+   $(`town-${id}-breakdown`).textContent = `基础${label} ${total - growth} · 升级成长 +${growth}`;
+  }
   const hasCombo = player.skill_id === 'combo';
   $('town-combo-skill').hidden = !hasCombo;
   $('town-skill-empty').hidden = hasCombo;
@@ -946,6 +948,11 @@ if (onlineMode) {
   return '玩家活动';
  }
 
+ function statGrowthText(growth) {
+  const label = statLabels[growth?.stat];
+  return label ? `${label} +${growth.amount}` : '';
+ }
+
  async function refreshPlayerLog(before) {
   const {entries, next_before} = await api('game', before ? `/player-log/before/${before}` : '/player-log');
   if (!before) playerLogList.replaceChildren();
@@ -965,6 +972,7 @@ if (onlineMode) {
     summary.textContent = [
      `+${reward.xp} 经验`,
      reward.level_up && `升至 Lv. ${reward.level}`,
+     statGrowthText(reward.stat_growth),
      weapon && `获得武器 ${weapon}`,
     ].filter(Boolean).join(' · ');
     details.append(summary);
@@ -1331,8 +1339,12 @@ if (onlineMode) {
   pending = null;
   const reward = report.reward;
   const weapon = weaponMoves[reward?.weapon_id];
-  let rewardText = reward ? `+${reward.xp} 经验` : '';
-  if (reward?.level_up) rewardText += ` · 升至 Lv. ${reward.level} · ${weapon ? '获得' + weapon.label : '武器已集齐'}`;
+  const rewardText = reward ? [
+   `+${reward.xp} 经验`,
+   reward.level_up && `升至 Lv. ${reward.level}`,
+   statGrowthText(reward.stat_growth),
+   reward.level_up && (weapon ? `获得${weapon.label}` : '武器已集齐'),
+  ].filter(Boolean).join(' · ') : '';
   await playback(report, rewardText);
   await Promise.all([
    refreshHistory(),
