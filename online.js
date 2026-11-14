@@ -33,7 +33,6 @@ if (onlineMode) {
  const damagePanel = $('town-damage-panel');
  const weaponPanel = $('town-weapon-panel');
  const weaponList = $('town-weapon-list');
- const weaponReference = $('weapon-reference');
  const historyPanel = $('town-history-panel');
  const openHistory = $('open-history');
  const characterDetailsPanel = $('town-character-details-panel');
@@ -63,10 +62,10 @@ if (onlineMode) {
  let pending;
  let lastReport;
  let returnToSquareTimer;
- let selectedWeaponId;
  let shopCatalog = [];
  let socialSection;
  let currentGuild;
+ const opponentFriendStates = new Map();
 
  const messages = {
   unauthorized: '登录已失效，请重新登录。',
@@ -200,6 +199,10 @@ if (onlineMode) {
 
  function acceptSession(data) {
   pendingItemRequests.clear();
+  opponentFriendStates.clear();
+  renameForm.reset();
+  renameForm.hidden = true;
+  $('town-rename-feedback').textContent = '';
   showSquarePanel(historyPanel);
   renderPlayer(data);
   townFeedback.textContent = '';
@@ -289,11 +292,7 @@ if (onlineMode) {
    const definition = itemDetails[item.item_id];
    if (item.item_id !== 'rename_card') return itemRow(definition?.name ?? item.item_id,
     `数量 ${item.quantity}`, '暂不可使用', () => {}, true);
-   return itemRow(definition.name, `数量 ${item.quantity} · ${definition.description}`, '使用', () => {
-    $('town-inventory-feedback').textContent = '';
-    renameForm.hidden = false;
-    renameName.focus();
-   });
+   return itemRow(definition.name, `数量 ${item.quantity} · ${definition.description}`, '使用', openRename);
   }));
  }
 
@@ -327,28 +326,40 @@ if (onlineMode) {
   });
  }
 
- function openShop() {
+ function openShop(message = '') {
   return run(async () => {
    shopCatalog = (await api(session.zone, '/shop')).items;
-   $('town-shop-feedback').textContent = '';
+   const feedback = $('town-shop-feedback');
+   delete feedback.dataset.error;
+   feedback.textContent = message;
    renderShop();
    showSquarePanel(shopPanel, $('open-shop'), true);
   });
  }
 
- $('open-shop').addEventListener('click', openShop);
- $('inventory-open-shop').addEventListener('click', openShop);
- openInventory.addEventListener('click', () => {
-  $('town-inventory-feedback').textContent = '';
+ $('open-shop').addEventListener('click', () => openShop());
+ $('inventory-open-shop').addEventListener('click', () => openShop());
+ function openRename() {
+  if (!session.inventory.items.some(item => item.item_id === 'rename_card' && item.quantity > 0)) {
+   return openShop('改名需要 1 张改名卡。');
+  }
+  const feedback = $('town-rename-feedback');
+  feedback.textContent = '';
+  delete feedback.dataset.error;
   renameForm.reset();
-  renameForm.hidden = true;
+  renameForm.hidden = false;
+  showSquarePanel(characterDetailsPanel, openCharacterDetails);
+  renameName.focus();
+ }
+ $('open-rename').addEventListener('click', openRename);
+ openInventory.addEventListener('click', () => {
   renderInventory();
   showSquarePanel(inventoryPanel, openInventory, true);
  });
  renameForm.addEventListener('submit', event => {
   event.preventDefault();
   const name = renameName.value.trim();
-  itemAction(inventoryPanel, $('town-inventory-feedback'), '/items/use',
+  itemAction(characterDetailsPanel, $('town-rename-feedback'), '/items/use',
    {item_id:'rename_card', name}, `角色名已改为「${name}」。`);
  });
 
@@ -383,6 +394,7 @@ if (onlineMode) {
  function renderSocial(data) {
   const guildView = socialSection === 'guilds';
   const friendView = socialSection === 'friends';
+  if (friendView) updateOpponentFriends(data.players);
   currentGuild = guildView ? data.current : null;
   socialForm.hidden = !friendView && (!guildView || Boolean(currentGuild));
   $('town-social-summary').hidden = !currentGuild;
@@ -539,43 +551,13 @@ if (onlineMode) {
   return `${move.name} · ${move.range === 'ranged' ? '远程' : '近战'}`;
  }
 
- function selectWeapon(id) {
-  selectedWeaponId = id;
-  const currentId = weaponReference.value;
-  const current = weaponMoves[currentId];
-  const selected = weaponMoves[id];
-  const owned = session.progression.weapons.includes(id);
-  $('weapon-current-move').textContent = current ? weaponMoveLabel(current) : '';
-  $('weapon-current-damage').textContent = current?.damage ?? '—';
-  $('weapon-selected-name').textContent = selected?.label ?? '请选择武器';
-  $('weapon-selected-move').textContent = selected ? weaponMoveLabel(selected) : '';
-  $('weapon-selected-damage').textContent = selected?.damage ?? '—';
-  const change = $('weapon-damage-change');
-  change.hidden = !current || !selected || id === currentId;
-  if (!change.hidden) {
-   const delta = selected.damage - current.damage;
-   change.textContent = delta > 0 ? `+${delta}` : delta < 0 ? `−${Math.abs(delta)}` : '相同';
-   change.dataset.direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
-  }
-  $('weapon-selection-status').textContent = owned ? '已加入战斗抽取池' : '未获得';
-  for (const button of weaponList.querySelectorAll('button')) {
-   button.setAttribute('aria-pressed', String(button.dataset.weapon === id));
-  }
- }
 
  function renderWeaponCollection() {
   const owned = new Set(session.progression.weapons);
-  const previousReference = weaponReference.value;
-  weaponReference.replaceChildren(...[...owned].map(id => new Option(weaponMoves[id].label, id)));
-  if (owned.has(previousReference)) weaponReference.value = previousReference;
   const catalog = Object.entries(weaponMoves).sort(([a], [b]) => Number(owned.has(b)) - Number(owned.has(a)));
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
   weaponList.replaceChildren(...catalog.map(([id, move]) => {
    const item = document.createElement('li');
-   const button = document.createElement('button');
-   button.type = 'button';
-   button.dataset.weapon = id;
-   button.disabled = busy;
    const icon = document.createElement('span');
    icon.className = 'town-item-icon';
    icon.textContent = move.icon || '⚔';
@@ -584,24 +566,16 @@ if (onlineMode) {
    const label = document.createElement('strong');
    label.textContent = move.label;
    const detail = document.createElement('small');
-   detail.textContent = weaponMoveLabel(move);
+   detail.textContent = `${weaponMoveLabel(move)} · 基础伤害 ${move.damage}`;
    info.append(label, detail);
    const state = document.createElement('span');
    state.className = owned.has(id) ? 'weapon-owned' : 'weapon-state';
    state.textContent = owned.has(id) ? '已拥有' : '未获得';
-   button.append(icon, info, state);
-   button.addEventListener('click', () => selectWeapon(id));
-   item.append(button);
+   item.append(icon, info, state);
    return item;
   }));
-  selectWeapon(selectedWeaponId);
  }
- weaponReference.addEventListener('change', () => selectWeapon(selectedWeaponId));
  $('open-weapon-collection').addEventListener('click', () => {
-  const reference = session.progression.weapons.includes(weaponReference.value)
-   ? weaponReference.value : session.progression.weapons[0];
-  selectedWeaponId = session.progression.weapons.find(id => id !== reference)
-   ?? Object.keys(weaponMoves).find(id => id !== reference);
   renderWeaponCollection();
   showSquarePanel(weaponPanel, $('open-weapon-collection'), true);
  });
@@ -624,7 +598,7 @@ if (onlineMode) {
   openCharacterDetails.disabled = value;
   openSkillCollection.disabled = value;
   avatarPicker.disabled = value;
-  for (const id of ['open-shop', 'open-inventory', 'inventory-open-shop', 'town-rename-submit']) $(id).disabled = value;
+  for (const id of ['open-shop', 'open-inventory', 'inventory-open-shop', 'open-rename', 'town-rename-submit']) $(id).disabled = value;
   for (const id of ['open-rankings', 'open-guilds', 'open-friends', 'town-social-submit']) $(id).disabled = value;
   socialInput.disabled = value;
   socialLeave.disabled = value;
@@ -633,9 +607,8 @@ if (onlineMode) {
    for (const button of list.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
   }
   for (const button of avatarOptions.querySelectorAll('button')) button.disabled = value;
-  for (const button of weaponList.querySelectorAll('button')) button.disabled = value;
   for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
-  for (const button of opponentsList.querySelectorAll('button')) button.disabled = value;
+  for (const button of opponentsList.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
   for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
   zoneEnter.disabled = value || !selectedZone;
@@ -811,14 +784,32 @@ if (onlineMode) {
   }
  }
 
+ function updateOpponentFriends(players) {
+  opponentFriendStates.clear();
+  for (const player of players) opponentFriendStates.set(player.player_id, player.status);
+  for (const button of opponentsList.querySelectorAll('.town-add-friend')) {
+   const state = opponentFriendStates.get(button.dataset.playerId);
+   button.textContent = {friend:'已加', outgoing:'已申请', incoming:'同意'}[state] ?? '加';
+   const action = {friend:'已是好友', outgoing:'已发送好友申请', incoming:'同意好友申请'}[state] ?? '加好友';
+   button.setAttribute('aria-label', `${action}，${button.dataset.playerName}`);
+   button.toggleAttribute('data-unavailable', state === 'friend' || state === 'outgoing');
+   button.disabled = busy || button.hasAttribute('data-unavailable');
+  }
+ }
+
  async function refreshOpponents() {
-  const {opponents} = await api(session.zone, '/opponents');
+  const [{opponents}, {players}] = await Promise.all([
+   api(session.zone, '/opponents'),
+   api(session.zone, '/friends'),
+  ]);
   opponentsList.replaceChildren(...opponents.map(player => {
    const row = document.createElement('li');
    const avatar = document.createElement('img');
    const details = document.createElement('span');
    const name = document.createElement('strong');
    const uid = document.createElement('small');
+   const actions = document.createElement('span');
+   const addFriend = document.createElement('button');
    const button = document.createElement('button');
    avatar.className = 'town-opponent-avatar';
    avatar.src = avatarUrl(player.avatar_id);
@@ -827,14 +818,27 @@ if (onlineMode) {
    name.textContent = player.name;
    uid.textContent = `UID ${player.player_id}`;
    details.append(name, uid);
+   actions.className = 'town-opponent-actions';
+   addFriend.type = 'button';
+   addFriend.className = 'town-add-friend';
+   addFriend.dataset.playerId = player.player_id;
+   addFriend.dataset.playerName = player.name;
+   addFriend.addEventListener('click', () => run(async () => {
+    const action = opponentFriendStates.get(player.player_id) === 'incoming' ? 'accept' : 'request';
+    const {players: friends} = await api(session.zone, '/friends', {action, player_id:player.player_id});
+    if (socialSection === 'friends' && !socialPanel.hidden) renderSocial({players:friends});
+    else updateOpponentFriends(friends);
+   }));
    button.type = 'button';
    button.disabled = busy;
    button.textContent = '挑战';
    button.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
    button.addEventListener('click', () => run(() => challenge(player.player_id)));
-   row.append(avatar, details, button);
+   actions.append(addFriend, button);
+   row.append(avatar, details, actions);
    return row;
   }));
+  updateOpponentFriends(players);
   opponentsEmpty.hidden = opponents.length > 0;
  }
 

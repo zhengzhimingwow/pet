@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=zone-art-fit">
-  <link rel="stylesheet" href="lobby.css?v=character-details">
+  <link rel="stylesheet" href="lobby.css?v=weapon-list-actions">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -160,6 +160,17 @@
             <div><dt>角色名</dt><dd id="town-detail-name"></dd></div>
             <div><dt>UID</dt><dd id="town-detail-uid"></dd></div>
           </dl>
+          <div class="town-character-actions">
+            <button id="open-rename" class="town-item-action" type="button" aria-controls="town-rename-form">改名</button>
+            <form id="town-rename-form" class="town-rename-form" hidden>
+              <label for="town-rename-name">新角色名</label>
+              <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
+                     autocomplete="off" aria-describedby="town-rename-hint">
+              <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
+              <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
+            </form>
+            <p id="town-rename-feedback" class="town-item-feedback" role="status"></p>
+          </div>
         </section>
         <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
           <div class="town-panel-header">
@@ -186,14 +197,6 @@
               <button id="inventory-open-shop" class="town-item-action" type="button">去商店</button>
             </div>
             <ul id="town-inventory-items" class="town-item-list"></ul>
-            <form id="town-rename-form" class="town-rename-form" hidden>
-              <label for="town-rename-name">新角色名</label>
-              <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
-                     autocomplete="off" aria-describedby="town-rename-hint">
-              <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
-              <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
-            </form>
-            <p id="town-inventory-feedback" class="town-item-feedback" role="status"></p>
           </div>
         </section>
         <section id="town-social-panel" class="town-inline-panel" aria-labelledby="town-social-title" hidden>
@@ -243,26 +246,6 @@
               <p id="town-weapon-count"></p>
             </div>
           </div>
-          <section class="town-weapon-compare" aria-label="武器对比">
-            <div class="weapon-comparison" aria-live="polite">
-              <div class="weapon-comparison-item">
-                <label for="weapon-reference">对比基准</label>
-                <select id="weapon-reference"></select>
-                <small id="weapon-current-move"></small>
-                <p>武器基础伤害 <b id="weapon-current-damage"></b></p>
-              </div>
-              <div class="weapon-comparison-item">
-                <span>选中武器</span>
-                <strong id="weapon-selected-name"></strong>
-                <small id="weapon-selected-move"></small>
-                <p>武器基础伤害 <b id="weapon-selected-damage"></b> <span id="weapon-damage-change" hidden></span></p>
-              </div>
-            </div>
-            <div class="weapon-compare-actions">
-              <span id="weapon-selection-status"></span>
-            </div>
-          </section>
-          <div class="town-damage-content">
             <ul id="town-weapon-list"></ul>
           </div>
         </section>
@@ -373,6 +356,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=character-details"></script>
+  <script src="online.js?v=weapon-list-actions"></script>
 </body>
 </html>
