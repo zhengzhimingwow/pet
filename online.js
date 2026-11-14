@@ -70,6 +70,7 @@ if (onlineMode) {
  let currentGuild;
  let viewedOpponent;
  let opponentReturn;
+ let recentOpponentIds = [];
  const opponentFriendStates = new Map();
 
  const messages = {
@@ -205,6 +206,7 @@ if (onlineMode) {
  function acceptSession(data) {
   pendingItemRequests.clear();
   opponentFriendStates.clear();
+  recentOpponentIds = [];
   renameForm.reset();
   renameForm.hidden = true;
   $('town-rename-feedback').textContent = '';
@@ -259,7 +261,10 @@ if (onlineMode) {
   }
  }
 
- openHistory.addEventListener('click', () => showSquarePanel(historyPanel, openHistory, true));
+ openHistory.addEventListener('click', () => run(async () => {
+  showSquarePanel(historyPanel, openHistory, true);
+  await refreshHistory();
+ }));
  openCharacterDetails.addEventListener('click', () => showSquarePanel(characterDetailsPanel, openCharacterDetails, true));
 
  function itemRow(name, description, action, onClick, disabled = false) {
@@ -764,7 +769,7 @@ if (onlineMode) {
    info.className = 'town-history-info';
    actions.className = 'town-history-actions';
    details.className = 'town-history-details';
-   name.textContent = report.opponent;
+   name.textContent = report.side === 'right' ? `${report.opponent} 挑战了你` : report.opponent;
    const playedAt = new Date(Number(report.created_at_epoch) * 1000);
    if (Number.isFinite(playedAt.getTime())) {
     time.dateTime = playedAt.toISOString();
@@ -773,8 +778,9 @@ if (onlineMode) {
     time.textContent = report.created_at.slice(0, 19);
    }
    details.append(name, time);
-   result.className = `town-outcome town-outcome-${report.winner}`;
-   result.textContent = {left:'胜', right:'负', draw:'平'}[report.winner];
+   const outcome = report.winner === 'draw' ? 'draw' : report.winner === (report.side ?? 'left') ? 'left' : 'right';
+   result.className = `town-outcome town-outcome-${outcome}`;
+   result.textContent = {left:'胜', right:'负', draw:'平'}[outcome];
    info.append(details, result);
    const matchLabel = `${report.opponent}，${time.textContent}`;
    const path = `/battles/${report.battle_id}`;
@@ -810,8 +816,8 @@ if (onlineMode) {
   }
  }
 
- async function openOpponentProfile(playerId, trigger) {
-  const {player, progression} = await api(session.zone, `/players/${playerId}`);
+ async function openOpponentProfile(opponent, trigger) {
+  const {player, progression} = await api(session.zone, `/players/${opponent.zone}/${opponent.player_id}`);
   if (opponentPanel.hidden) {
    opponentReturn = {
     panel:squarePanels.find(panel => !panel.hidden) ?? historyPanel,
@@ -821,10 +827,10 @@ if (onlineMode) {
   } else {
    opponentReturn.trigger = trigger;
   }
-  viewedOpponent = player.player_id;
+  viewedOpponent = opponent;
   $('town-opponent-portrait').src = avatarUrl(player.avatar_id);
   $('town-opponent-name').textContent = player.name;
-  $('town-opponent-uid').textContent = `UID ${player.player_id}`;
+  $('town-opponent-uid').textContent = `${opponent.zone} 服 · UID ${player.player_id}`;
   challengeOpponentProfile.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
   $('town-opponent-level').textContent = `Lv. ${progression.level}`;
   $('town-opponent-xp').max = progression.next_level_xp;
@@ -861,7 +867,7 @@ if (onlineMode) {
 
  async function refreshOpponents() {
   const [{opponents}, {players}] = await Promise.all([
-   api(session.zone, '/opponents'),
+   api(session.zone, '/opponents', {previous_ids:recentOpponentIds}),
    api(session.zone, '/friends'),
   ]);
   opponentsList.replaceChildren(...opponents.map(player => {
@@ -870,7 +876,7 @@ if (onlineMode) {
    const avatar = document.createElement('img');
    const details = document.createElement('span');
    const name = document.createElement('strong');
-   const uid = document.createElement('small');
+   const level = document.createElement('small');
    const actions = document.createElement('span');
    const addFriend = document.createElement('button');
    const button = document.createElement('button');
@@ -880,14 +886,14 @@ if (onlineMode) {
    profile.setAttribute('aria-controls', 'town-opponent-panel');
    profile.setAttribute('aria-label', `查看 ${player.name} 的养成详情，UID ${player.player_id}`);
    profile.title = `查看 ${player.name} 的养成详情`;
-   profile.addEventListener('click', () => run(() => openOpponentProfile(player.player_id, profile)));
+   profile.addEventListener('click', () => run(() => openOpponentProfile(player, profile)));
    avatar.className = 'town-opponent-avatar';
    avatar.src = avatarUrl(player.avatar_id);
    avatar.alt = '';
    details.className = 'town-opponent-details';
    name.textContent = player.name;
-   uid.textContent = `UID ${player.player_id}`;
-   details.append(name, uid);
+   level.textContent = `Lv. ${player.level}`;
+   details.append(name, level);
    actions.className = 'town-opponent-actions';
    addFriend.type = 'button';
    addFriend.className = 'town-add-friend';
@@ -903,13 +909,15 @@ if (onlineMode) {
    button.disabled = busy;
    button.textContent = '挑战';
    button.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
-   button.addEventListener('click', () => run(() => challenge(player.player_id)));
-   actions.append(addFriend, button);
+   button.addEventListener('click', () => run(() => challenge(player)));
+   if (player.zone === session.zone) actions.append(addFriend);
+   actions.append(button);
    profile.append(avatar, details);
    row.append(profile, actions);
    return row;
   }));
   updateOpponentFriends(players);
+  recentOpponentIds = opponents.map(player => player.player_id);
   opponentsEmpty.hidden = opponents.length > 0;
  }
 
@@ -1032,12 +1040,12 @@ if (onlineMode) {
 
  closeBattleResult.addEventListener('click', returnToSquare);
 
- async function challenge(playerId) {
+ async function challenge({player_id, zone}) {
   prepareSound();
   playMusic();
-  if (pending?.target_player_id !== playerId) {
+  if (pending?.target_player_id !== player_id || pending.target_zone !== zone) {
    const requestId = newRequestId();
-   pending = {target_zone:session.zone, target_player_id:playerId, request_id:requestId};
+   pending = {target_zone:zone, target_player_id:player_id, request_id:requestId};
   }
   const report = await api(session.zone, '/battles', pending);
   pending = null;
