@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=full-weapon-effects">
-  <link rel="stylesheet" href="lobby.css?v=steady-opponents">
+  <link rel="stylesheet" href="lobby.css?v=daily-training">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -132,6 +132,15 @@
                 </dd>
               </div>
             </dl>
+            <section id="town-daily" class="town-daily" aria-labelledby="town-daily-title" hidden>
+              <div>
+                <h3 id="town-daily-title">每日乐斗</h3>
+                <p id="town-daily-rule"></p>
+                <p id="town-daily-progress" role="status"></p>
+              </div>
+              <button id="town-daily-claim" class="town-item-action" type="button" disabled>领取</button>
+              <p id="town-daily-result" role="status" hidden></p>
+            </section>
           </div>
         </section>
         <nav class="town-collection-actions" aria-label="广场功能">
@@ -412,6 +421,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=full-weapon-effects"></script>
-  <script src="online.js?v=steady-opponents"></script>
+  <script src="online.js?v=daily-training"></script>
 </body>
 </html>

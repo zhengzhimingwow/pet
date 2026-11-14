@@ -192,6 +192,22 @@
   pointer-events: none;
 }
 .town-stat:first-child .town-stat-breakdown { left: 0; translate: none; }
+.town-daily {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--town-line);
+  border-radius: 8px;
+  background: #f7fbff;
+}
+.town-daily > div { flex: 1 1 140px; }
+.town-daily h3 { margin: 0; color: #254e84; font-size: 14px; }
+.town-daily p { margin: 4px 0 0; color: var(--town-muted); font-size: 12px; }
+#town-daily-progress { color: #254e84; font-weight: 800; }
+#town-daily-result { flex-basis: 100%; color: #1e6050; font-weight: 700; }
+.town-opponent-details .town-ai-label { color: #4752a0; font-weight: 650; }
 .town-stat:last-child .town-stat-breakdown { right: 0; left: auto; translate: none; }
 .town-stat:is(:hover, :focus-within) .town-stat-breakdown { opacity: 1; }
 .town-collection-actions {

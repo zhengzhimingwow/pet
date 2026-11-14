@@ -80,6 +80,9 @@ if (onlineMode) {
  let recentOpponentIds = [];
  let nextMail;
  let unreadMail = 0;
+ let dailyTask;
+ let dailyResetTimer;
+ const dailyClaim = $('town-daily-claim');
  const opponentFriendStates = new Map();
 
  const messages = {
@@ -94,6 +97,9 @@ if (onlineMode) {
   same_player: '请选择其他玩家。',
   invalid_request: '请检查区服和角色 UID。',
   request_conflict: '请求编号已被使用，请重新选择对手。',
+  task_incomplete: '今日乐斗次数还不够。',
+  task_claimed: '今日经验已领取。',
+  task_reset: '每日任务已刷新。',
   invalid_character_name: '请使用 2–16 个汉字、字母、数字或下划线。',
   insufficient_coins: '金币不足。',
   missing_item: '背包里没有改名卡。',
@@ -129,6 +135,7 @@ if (onlineMode) {
 
  function showEntry() {
   clearTimeout(returnToSquareTimer);
+  if (!session) clearTimeout(dailyResetTimer);
   battleView.hidden = true;
   if (!session) showSquarePanel(historyPanel);
   townStage.hidden = false;
@@ -216,6 +223,7 @@ if (onlineMode) {
   pendingItemRequests.clear();
   opponentFriendStates.clear();
   recentOpponentIds = [];
+  $('town-daily-result').hidden = true;
   mailList.replaceChildren();
   nextMail = null;
   mailMore.hidden = true;
@@ -235,6 +243,7 @@ if (onlineMode) {
  function renderPlayer(data) {
   session = data;
   const {player, zone, progression} = data;
+  renderDailyTask(data.daily_task);
   $('town-zone').textContent = `${zone} 服`;
   $('town-player-name').textContent = player.name;
   updatePlayerAvatar(player.avatar_id);
@@ -259,6 +268,51 @@ if (onlineMode) {
   if (!shopPanel.hidden) renderShop();
   if (!inventoryPanel.hidden) renderInventory();
  }
+
+ function updateDailyClaim() {
+  dailyClaim.disabled = busy || !dailyTask || dailyTask.claimed || dailyTask.progress < dailyTask.target;
+  dailyClaim.toggleAttribute('data-unavailable', !dailyTask || dailyTask.claimed || dailyTask.progress < dailyTask.target);
+ }
+
+ function renderDailyTask(task) {
+  clearTimeout(dailyResetTimer);
+  dailyTask = task;
+  $('town-daily').hidden = !task;
+  updateDailyClaim();
+  if (!task) return;
+  $('town-daily-rule').textContent = `完成与 ${task.target} 位不同对手的挑战或回敬，AI 陪练也计入。`;
+  $('town-daily-progress').textContent = `${task.progress} / ${task.target} · 北京时间零点重置`;
+  dailyClaim.textContent = task.claimed ? '已领取' : `领 ${task.reward_xp} 经验`;
+  dailyResetTimer = setTimeout(function refreshAtMidnight() {
+   if (!session) return;
+   if (busy) {
+    dailyResetTimer = setTimeout(refreshAtMidnight, 1000);
+    return;
+   }
+   run(async () => {
+    $('town-daily-result').hidden = true;
+    renderDailyTask(await api(session.zone, '/daily-task'));
+   });
+  }, Math.max(1000, task.resets_at * 1000 - Date.now() + 500));
+ }
+
+ dailyClaim.addEventListener('click', () => run(async () => {
+  try {
+   const data = await api(session.zone, '/daily-task/claim', {day:dailyTask.day});
+   renderPlayer(data);
+   const result = $('town-daily-result');
+   const weapon = weaponMoves[data.reward.weapon_id]?.label;
+   result.textContent = `已领取 ${data.reward.xp} 经验`
+    + (data.reward.level_up ? `，升至 Lv. ${data.reward.level}` : '')
+    + (weapon ? `，获得 ${weapon}` : '');
+   result.hidden = false;
+  } catch (error) {
+   if (['task_reset', 'task_claimed', 'task_incomplete'].includes(error.code)) {
+    renderDailyTask(await api(session.zone, '/daily-task'));
+   }
+   throw error;
+  }
+ }));
 
  function showSquarePanel(panel, button = null, moveFocus = false) {
   if (panel !== opponentPanel) {
@@ -637,6 +691,7 @@ if (onlineMode) {
  });
  function lock(value) {
   busy = value;
+  updateDailyClaim();
   $('login-submit').disabled = value;
   refreshOpponentsButton.disabled = value;
   $('online-logout').disabled = value;
@@ -969,7 +1024,7 @@ if (onlineMode) {
   viewedOpponent = opponent;
   $('town-opponent-portrait').src = avatarUrl(player.avatar_id);
   $('town-opponent-name').textContent = player.name;
-  $('town-opponent-uid').textContent = `${opponent.zone} 服 · UID ${player.player_id}`;
+  $('town-opponent-uid').textContent = player.is_ai ? 'AI 陪练' : `${opponent.zone} 服 · UID ${player.player_id}`;
   challengeOpponentProfile.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
   $('town-opponent-level').textContent = `Lv. ${progression.level}`;
   $('town-opponent-xp').max = progression.next_level_xp;
@@ -1032,6 +1087,10 @@ if (onlineMode) {
    details.className = 'town-opponent-details';
    name.textContent = player.name;
    level.textContent = `Lv. ${player.level}`;
+   if (player.is_ai) {
+    level.textContent += ' · AI 陪练';
+    level.className = 'town-ai-label';
+   }
    details.append(name, level);
    actions.className = 'town-opponent-actions';
    addFriend.type = 'button';
@@ -1049,7 +1108,7 @@ if (onlineMode) {
    button.textContent = '挑战';
    button.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
    button.addEventListener('click', () => run(() => challenge(player)));
-   if (player.zone === session.zone) actions.append(addFriend);
+   if (!player.is_ai && player.zone === session.zone) actions.append(addFriend);
    actions.append(button);
    profile.append(avatar, details);
    row.append(profile, actions);
