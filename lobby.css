@@ -494,7 +494,18 @@
 .town-battle-view .status-title strong { align-self: flex-end; }
 @media (max-width: 720px) {
   .town-game { padding: 15px 12px 24px; }
-  .town-game-layout { grid-template-columns: 1fr; }
+  .town-game-layout { grid-template-columns: minmax(0, 1fr) clamp(124px, 32vw, 216px); gap: 8px; }
+  .town-activity .town-panel-header { flex-wrap: wrap; gap: 4px; padding: 8px; }
+  .town-activity h2 { padding: 0; font-size: 14px; }
+  #refresh-opponents { padding-inline: 6px; }
+  #town-opponents { padding-inline: 8px; }
+  #town-opponents li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 5px;
+  }
+  #town-opponents .town-opponent-avatar { width: 24px; }
+  .town-opponent-actions { grid-column: 1 / -1; justify-content: flex-end; }
   .town-game-header, .town-game-account { gap: 6px; }
   .town-game-account button { padding-inline: 4px; }
   .town-collection-actions { gap: 6px; padding: 8px 10px; }
