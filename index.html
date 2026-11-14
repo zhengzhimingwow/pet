@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=profile-avatar">
-  <link rel="stylesheet" href="lobby.css?v=square-panels">
+  <link rel="stylesheet" href="lobby.css?v=sticky-square-nav">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -133,20 +133,21 @@
               </div>
             </dl>
           </div>
-          <div class="town-collection-actions">
-            <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
-            <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
-            <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
-            <button id="open-shop" type="button" aria-controls="town-shop-panel" aria-pressed="false">商店</button>
-            <button id="open-rankings" type="button" aria-controls="town-social-panel" aria-pressed="false">等级榜</button>
-            <button id="open-guilds" type="button" aria-controls="town-social-panel" aria-pressed="false">帮派</button>
-            <button id="open-friends" type="button" aria-controls="town-social-panel" aria-pressed="false">好友</button>
-            <span id="town-coins" class="town-coins"></span>
-          </div>
           <div class="town-profile-footer">
             <details><summary>角色详情</summary><p id="online-player"></p></details>
           </div>
         </section>
+        <nav class="town-collection-actions" aria-label="广场功能">
+          <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="true">乐斗记录</button>
+          <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
+          <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
+          <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
+          <button id="open-shop" type="button" aria-controls="town-shop-panel" aria-pressed="false">商店</button>
+          <button id="open-rankings" type="button" aria-controls="town-social-panel" aria-pressed="false">等级榜</button>
+          <button id="open-guilds" type="button" aria-controls="town-social-panel" aria-pressed="false">帮派</button>
+          <button id="open-friends" type="button" aria-controls="town-social-panel" aria-pressed="false">好友</button>
+          <span id="town-coins" class="town-coins"></span>
+        </nav>
         <section id="town-battle-view" class="town-battle-view" aria-labelledby="arena-title" hidden></section>
         <section id="town-history-panel" class="town-history" aria-labelledby="town-history-title">
           <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
@@ -372,6 +373,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=square-panels"></script>
+  <script src="online.js?v=sticky-square-nav"></script>
 </body>
 </html>

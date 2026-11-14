@@ -35,6 +35,7 @@ if (onlineMode) {
  const weaponList = $('town-weapon-list');
  const weaponReference = $('weapon-reference');
  const historyPanel = $('town-history-panel');
+ const openHistory = $('open-history');
  const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
  const squarePanels = [historyPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, avatarPanel, damagePanel, weaponPanel];
@@ -235,11 +236,17 @@ if (onlineMode) {
 
  function showSquarePanel(panel, button = null, moveFocus = false) {
   for (const section of squarePanels) section.hidden = section !== panel;
+  if (panel === historyPanel) button = openHistory;
   for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
   if (panel !== damagePanel) damageReportButton = null;
-  if (moveFocus) panel.querySelector('h2').focus();
+  if (moveFocus) {
+   const heading = panel.querySelector('h2');
+   heading.focus({preventScroll:true});
+   heading.scrollIntoView({block:'nearest'});
+  }
  }
 
+ openHistory.addEventListener('click', () => showSquarePanel(historyPanel, openHistory, true));
  for (const button of lobby.querySelectorAll('.town-panel-back')) {
   button.addEventListener('click', () => {
    const opener = damageReportButton;
@@ -617,6 +624,7 @@ if (onlineMode) {
   $('saved-login').disabled = value;
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
+  openHistory.disabled = value;
   openSkillCollection.disabled = value;
   avatarPicker.disabled = value;
   for (const id of ['open-shop', 'open-inventory', 'inventory-open-shop', 'town-rename-submit']) $(id).disabled = value;

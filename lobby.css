@@ -195,13 +195,21 @@
 .town-stat:last-child .town-stat-breakdown { right: 0; left: auto; translate: none; }
 .town-stat:is(:hover, :focus-within) .town-stat-breakdown { opacity: 1; }
 .town-collection-actions {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border-top: 1px solid var(--town-line);
+  border: 1px solid #9dbbe69e;
+  border-radius: 12px;
+  background: #f9fbff;
+  box-shadow: 0 5px 16px #050c2342;
 }
+.town-stage[hidden] ~ .town-collection-actions { display: none; }
+.town-character :is(.town-history, .town-inline-panel) h2 { scroll-margin-top: 76px; }
 .town-profile-footer {
   padding: 8px 16px;
   border-top: 1px solid var(--town-line);
@@ -518,6 +526,9 @@
   .town-game-layout { grid-template-columns: 1fr; }
   .town-game-header, .town-game-account { gap: 6px; }
   .town-game-account button { padding-inline: 4px; }
+  .town-collection-actions { gap: 6px; padding: 8px 10px; }
+  .town-collection-actions button { padding-inline: 7px; }
+  .town-character :is(.town-history, .town-inline-panel) h2 { scroll-margin-top: 126px; }
 }
 @container (max-width: 600px) {
   .town-battle-view .status-row { grid-template-columns: 1fr; gap: 12px; }
