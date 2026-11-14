@@ -2,14 +2,14 @@ if (onlineMode) {
  const entry = $('account-entry');
  const lobby = $('account-lobby');
  const townStage = $('town-stage');
- const shopDialog = $('town-shop-dialog');
+ const shopPanel = $('town-shop-panel');
  const inventoryPanel = $('town-inventory-panel');
  const openInventory = $('open-inventory');
  const shopItems = $('town-shop-items');
  const inventoryItems = $('town-inventory-items');
  const renameForm = $('town-rename-form');
  const renameName = $('town-rename-name');
- const socialDialog = $('town-social-dialog');
+ const socialPanel = $('town-social-panel');
  const socialForm = $('town-social-form');
  const socialInput = $('town-social-input');
  const socialList = $('town-social-list');
@@ -19,7 +19,7 @@ if (onlineMode) {
  const socialTitles = {rankings:'本服等级榜', guilds:'帮派', friends:'好友'};
  const itemDetails = {rename_card:{name:'改名卡', description:'使用后可修改当前区服的角色名。'}};
  const pendingItemRequests = new Map();
- const avatarDialog = $('town-avatar-dialog');
+ const avatarPanel = $('town-avatar-panel');
  const avatarPicker = $('open-avatar-picker');
  const avatarOptions = $('town-avatar-options');
  const avatarFeedback = $('town-avatar-feedback');
@@ -30,13 +30,15 @@ if (onlineMode) {
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
  const townHistory = $('town-battle-history');
- const damageDialog = $('town-damage-dialog');
- const weaponDialog = $('town-weapon-dialog');
+ const damagePanel = $('town-damage-panel');
+ const weaponPanel = $('town-weapon-panel');
  const weaponList = $('town-weapon-list');
  const weaponReference = $('weapon-reference');
  const historyPanel = $('town-history-panel');
  const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
+ const squarePanels = [historyPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, avatarPanel, damagePanel, weaponPanel];
+ const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
  const refreshOpponentsButton = $('refresh-opponents');
@@ -111,6 +113,7 @@ if (onlineMode) {
  function showEntry() {
   clearTimeout(returnToSquareTimer);
   battleView.hidden = true;
+  if (!session) showSquarePanel(historyPanel);
   townStage.hidden = false;
   entry.hidden = Boolean(session);
   $('account-login').hidden = Boolean(account);
@@ -224,24 +227,24 @@ if (onlineMode) {
   $('town-xp').value = progression.xp;
   $('town-xp-text').textContent = `${progression.xp} / ${progression.next_level_xp} 经验`;
   $('town-xp-remaining').textContent = `距升级还差 ${progression.next_level_xp - progression.xp} 经验`;
-  if (weaponDialog.open) renderWeaponCollection();
+  if (!weaponPanel.hidden) renderWeaponCollection();
   $('town-coins').textContent = `${data.inventory.coins} 金币`;
-  if (shopDialog.open) renderShop();
+  if (!shopPanel.hidden) renderShop();
   if (!inventoryPanel.hidden) renderInventory();
  }
 
- function showSquarePanel(panel) {
-  historyPanel.hidden = panel !== historyPanel;
-  skillPanel.hidden = panel !== skillPanel;
-  inventoryPanel.hidden = panel !== inventoryPanel;
-  openSkillCollection.setAttribute('aria-pressed', String(panel === skillPanel));
-  openInventory.setAttribute('aria-pressed', String(panel === inventoryPanel));
+ function showSquarePanel(panel, button = null, moveFocus = false) {
+  for (const section of squarePanels) section.hidden = section !== panel;
+  for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
+  if (panel !== damagePanel) damageReportButton = null;
+  if (moveFocus) panel.querySelector('h2').focus();
  }
 
  for (const button of lobby.querySelectorAll('.town-panel-back')) {
   button.addEventListener('click', () => {
-   showSquarePanel(historyPanel);
-   $('town-history-title').focus();
+   const opener = damageReportButton;
+   showSquarePanel(historyPanel, null, !opener?.isConnected);
+   if (opener?.isConnected) opener.focus();
   });
  }
 
@@ -271,7 +274,7 @@ if (onlineMode) {
    const affordable = coins >= item.price;
    const description = itemDetails[item.id]?.description;
    return itemRow(item.name, description ? `${description} ${item.price} 金币` : `${item.price} 金币`,
-    affordable ? '购买' : '金币不足', () => itemAction(shopDialog, $('town-shop-feedback'), '/shop/buy',
+    affordable ? '购买' : '金币不足', () => itemAction(shopPanel, $('town-shop-feedback'), '/shop/buy',
      {item_id:item.id}, `已购买「${item.name}」，可在背包查看。`), !affordable);
   }));
  }
@@ -311,16 +314,9 @@ if (onlineMode) {
     }
     renderPlayer(data);
     feedback.textContent = success;
-    if (container === inventoryPanel && !inventoryPanel.hidden) {
-     $('town-inventory-title').focus({preventScroll:true});
-    } else if (container.open) {
-     container.querySelector('[autofocus]').focus({preventScroll:true});
-    }
+    if (!container.hidden) container.querySelector('h2').focus({preventScroll:true});
    } catch (error) {
-    if (error.code === 'unauthorized') {
-     if (container.open) container.close();
-     throw error;
-    }
+    if (error.code === 'unauthorized') throw error;
     if (error.code && error.code !== 'unavailable') pendingItemRequests.delete(key);
     feedback.dataset.error = '';
     feedback.textContent = error.code ? error.message : messages.unavailable;
@@ -333,7 +329,7 @@ if (onlineMode) {
    shopCatalog = (await api(session.zone, '/shop')).items;
    $('town-shop-feedback').textContent = '';
    renderShop();
-   shopDialog.showModal();
+   showSquarePanel(shopPanel, $('open-shop'), true);
   });
  }
 
@@ -344,8 +340,7 @@ if (onlineMode) {
   renameForm.reset();
   renameForm.hidden = true;
   renderInventory();
-  showSquarePanel(inventoryPanel);
-  $('town-inventory-title').focus();
+  showSquarePanel(inventoryPanel, openInventory, true);
  });
  renameForm.addEventListener('submit', event => {
   event.preventDefault();
@@ -447,12 +442,9 @@ if (onlineMode) {
     renderSocial(await api(session.zone, `/${socialSection}`, {action, ...data}));
     socialForm.reset();
     socialFeedback.textContent = success;
-    if (socialDialog.open) socialDialog.querySelector('[autofocus]').focus({preventScroll:true});
+    if (!socialPanel.hidden) $('town-social-title').focus({preventScroll:true});
    } catch (error) {
-    if (error.code === 'unauthorized') {
-     if (socialDialog.open) socialDialog.close();
-     throw error;
-    }
+    if (error.code === 'unauthorized') throw error;
     socialFeedback.dataset.error = '';
     socialFeedback.textContent = error.code ? error.message : messages.unavailable;
    }
@@ -467,7 +459,7 @@ if (onlineMode) {
    socialFeedback.textContent = '';
    socialForm.reset();
    renderSocial(data);
-   socialDialog.showModal();
+   showSquarePanel(socialPanel, $(`open-${section}`), true);
   }));
  }
  socialForm.addEventListener('submit', event => {
@@ -526,10 +518,7 @@ if (onlineMode) {
      updateAvatarSelection();
      avatarFeedback.textContent = `已更换为「${label}」`;
     } catch (error) {
-     if (error.code === 'unauthorized') {
-      if (avatarDialog.open) avatarDialog.close();
-      throw error;
-     }
+     if (error.code === 'unauthorized') throw error;
      avatarFeedback.textContent = error.code ? error.message : messages.unavailable;
     }
    });
@@ -540,7 +529,7 @@ if (onlineMode) {
  avatarPicker.addEventListener('click', () => {
   avatarFeedback.textContent = '';
   updateAvatarSelection();
-  avatarDialog.showModal();
+  showSquarePanel(avatarPanel, avatarPicker, true);
  });
 
  function weaponMoveLabel(move) {
@@ -611,12 +600,10 @@ if (onlineMode) {
   selectedWeaponId = session.progression.weapons.find(id => id !== reference)
    ?? Object.keys(weaponMoves).find(id => id !== reference);
   renderWeaponCollection();
-  weaponDialog.showModal();
-  weaponList.parentElement.scrollTop = 0;
+  showSquarePanel(weaponPanel, $('open-weapon-collection'), true);
  });
  openSkillCollection.addEventListener('click', () => {
-  showSquarePanel(skillPanel);
-  $('town-skill-title').focus();
+  showSquarePanel(skillPanel, openSkillCollection, true);
  });
  function lock(value) {
   busy = value;
@@ -683,6 +670,7 @@ if (onlineMode) {
 
  async function playback(report, rewardText) {
   clearTimeout(returnToSquareTimer);
+  showSquarePanel(historyPanel);
   townStage.hidden = true;
   battleView.hidden = false;
   $('arena-title').focus({preventScroll:true});
@@ -766,13 +754,8 @@ if (onlineMode) {
   }
 
   damageReportButton = opener;
-  damageDialog.showModal();
-  damageDialog.querySelector('.town-damage-content').scrollTop = 0;
+  showSquarePanel(damagePanel, null, true);
  }
-
- damageDialog.addEventListener('close', () => {
-  damageReportButton?.focus({preventScroll:true});
- });
 
  async function refreshHistory() {
   const {battles} = await api(session.zone, '/battles');

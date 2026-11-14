@@ -407,6 +407,8 @@
 }
 .town-panel-header h2 { border-bottom: 0; }
 .town-inline-panel > .town-panel-header { gap: 8px; }
+.town-inline-panel > .town-panel-header > div { min-width: 0; }
+.town-inline-panel .town-panel-header p { margin: -5px 15px 10px; color: var(--town-muted); font-size: 13px; overflow-wrap: anywhere; }
 #refresh-opponents {
   min-height: 32px;
   padding: 4px 9px;
@@ -450,7 +452,7 @@
   overflow-wrap: anywhere;
 }
 .town-history-actions { display: flex; flex: none; gap: 6px; margin-inline-start: auto; }
-.town-history-actions button, .town-damage-header button, .town-panel-back {
+.town-history-actions button, .town-panel-back {
   flex: none;
   min-height: 32px;
   padding: 4px 9px;
@@ -460,35 +462,11 @@
   color: #344e75;
   font-size: 12px;
 }
-.town-history-actions button:hover, .town-damage-header button:hover, .town-panel-back:hover { background: #dceaff; }
+.town-history-actions button:hover, .town-panel-back:hover { background: #dceaff; }
 .town-collection-actions button[aria-pressed="true"] { border-color: #9a641c; background: #ffcb61; }
 .town-history-details { display: grid; gap: 2px; min-width: 0; }
 .town-history-details time { color: var(--town-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.town-damage-dialog {
-  width: min(680px, calc(100% - 24px));
-  max-height: min(78svh, 740px);
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid #9dbbe6;
-  border-radius: 14px;
-  background: #f9fbff;
-  color: var(--town-ink);
-  box-shadow: 0 16px 60px #07102466;
-}
-.town-damage-dialog[open] { display: flex; flex-direction: column; }
-.town-damage-dialog::backdrop { background: #101a33a6; }
-.town-damage-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--town-line);
-  background: #edf4ff;
-}
-.town-damage-header h2 { margin: 0; font-size: 20px; }
-.town-damage-header p { margin: 4px 0 0; color: var(--town-muted); font-size: 13px; overflow-wrap: anywhere; }
-.town-damage-content { padding: 16px; overflow: auto; overscroll-behavior: contain; }
+.town-damage-content { padding: 16px; }
 .town-damage-content h3 { margin: 0 0 8px; font-size: 15px; }
 .town-damage-content h4 { margin: 0 0 4px; font-size: 13px; overflow-wrap: anywhere; }
 .town-damage-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(225px, 100%), 1fr)); gap: 8px; margin-bottom: 16px; }
