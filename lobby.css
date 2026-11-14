@@ -54,7 +54,7 @@
   background: #182b5075;
   filter: blur(5px);
 }
-.town-sheet, .town-activity, .town-history {
+.town-sheet, .town-activity, .town-history, .town-inline-panel {
   overflow: hidden;
   border: 1px solid #9dbbe69e;
   border-radius: 12px;
@@ -390,7 +390,7 @@
   color: #7d551d;
   font-size: 21px;
 }
-.town-activity h2, .town-history h2 {
+.town-activity h2, .town-history h2, .town-inline-panel h2 {
   margin: 0;
   padding: 11px 15px;
   border-bottom: 1px solid var(--town-line);
@@ -406,6 +406,7 @@
   background: #edf4ff;
 }
 .town-panel-header h2 { border-bottom: 0; }
+.town-inline-panel > .town-panel-header { gap: 8px; }
 #refresh-opponents {
   min-height: 32px;
   padding: 4px 9px;
@@ -449,7 +450,7 @@
   overflow-wrap: anywhere;
 }
 .town-history-actions { display: flex; flex: none; gap: 6px; margin-inline-start: auto; }
-.town-history-actions button, .town-damage-header button {
+.town-history-actions button, .town-damage-header button, .town-panel-back {
   flex: none;
   min-height: 32px;
   padding: 4px 9px;
@@ -459,7 +460,8 @@
   color: #344e75;
   font-size: 12px;
 }
-.town-history-actions button:hover, .town-damage-header button:hover { background: #dceaff; }
+.town-history-actions button:hover, .town-damage-header button:hover, .town-panel-back:hover { background: #dceaff; }
+.town-collection-actions button[aria-pressed="true"] { border-color: #9a641c; background: #ffcb61; }
 .town-history-details { display: grid; gap: 2px; min-width: 0; }
 .town-history-details time { color: var(--town-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .town-damage-dialog {

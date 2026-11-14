@@ -3,7 +3,8 @@ if (onlineMode) {
  const lobby = $('account-lobby');
  const townStage = $('town-stage');
  const shopDialog = $('town-shop-dialog');
- const inventoryDialog = $('town-inventory-dialog');
+ const inventoryPanel = $('town-inventory-panel');
+ const openInventory = $('open-inventory');
  const shopItems = $('town-shop-items');
  const inventoryItems = $('town-inventory-items');
  const renameForm = $('town-rename-form');
@@ -33,7 +34,8 @@ if (onlineMode) {
  const weaponDialog = $('town-weapon-dialog');
  const weaponList = $('town-weapon-list');
  const weaponReference = $('weapon-reference');
- const skillDialog = $('town-skill-dialog');
+ const historyPanel = $('town-history-panel');
+ const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -192,6 +194,7 @@ if (onlineMode) {
 
  function acceptSession(data) {
   pendingItemRequests.clear();
+  showSquarePanel(historyPanel);
   renderPlayer(data);
   townFeedback.textContent = '';
   $('town-history-empty').hidden = true;
@@ -224,7 +227,22 @@ if (onlineMode) {
   if (weaponDialog.open) renderWeaponCollection();
   $('town-coins').textContent = `${data.inventory.coins} 金币`;
   if (shopDialog.open) renderShop();
-  if (inventoryDialog.open) renderInventory();
+  if (!inventoryPanel.hidden) renderInventory();
+ }
+
+ function showSquarePanel(panel) {
+  historyPanel.hidden = panel !== historyPanel;
+  skillPanel.hidden = panel !== skillPanel;
+  inventoryPanel.hidden = panel !== inventoryPanel;
+  openSkillCollection.setAttribute('aria-pressed', String(panel === skillPanel));
+  openInventory.setAttribute('aria-pressed', String(panel === inventoryPanel));
+ }
+
+ for (const button of lobby.querySelectorAll('.town-panel-back')) {
+  button.addEventListener('click', () => {
+   showSquarePanel(historyPanel);
+   $('town-history-title').focus();
+  });
  }
 
  function itemRow(name, description, action, onClick, disabled = false) {
@@ -277,7 +295,7 @@ if (onlineMode) {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
  }
 
- function itemAction(dialog, feedback, path, body, success) {
+ function itemAction(container, feedback, path, body, success) {
   return run(async () => {
    feedback.textContent = '';
    delete feedback.dataset.error;
@@ -293,10 +311,14 @@ if (onlineMode) {
     }
     renderPlayer(data);
     feedback.textContent = success;
-    if (dialog.open) dialog.querySelector('[autofocus]').focus({preventScroll:true});
+    if (container === inventoryPanel && !inventoryPanel.hidden) {
+     $('town-inventory-title').focus({preventScroll:true});
+    } else if (container.open) {
+     container.querySelector('[autofocus]').focus({preventScroll:true});
+    }
    } catch (error) {
     if (error.code === 'unauthorized') {
-     if (dialog.open) dialog.close();
+     if (container.open) container.close();
      throw error;
     }
     if (error.code && error.code !== 'unavailable') pendingItemRequests.delete(key);
@@ -310,7 +332,6 @@ if (onlineMode) {
   return run(async () => {
    shopCatalog = (await api(session.zone, '/shop')).items;
    $('town-shop-feedback').textContent = '';
-   if (inventoryDialog.open) inventoryDialog.close();
    renderShop();
    shopDialog.showModal();
   });
@@ -318,17 +339,18 @@ if (onlineMode) {
 
  $('open-shop').addEventListener('click', openShop);
  $('inventory-open-shop').addEventListener('click', openShop);
- $('open-inventory').addEventListener('click', () => {
+ openInventory.addEventListener('click', () => {
   $('town-inventory-feedback').textContent = '';
   renameForm.reset();
   renameForm.hidden = true;
   renderInventory();
-  inventoryDialog.showModal();
+  showSquarePanel(inventoryPanel);
+  $('town-inventory-title').focus();
  });
  renameForm.addEventListener('submit', event => {
   event.preventDefault();
   const name = renameName.value.trim();
-  itemAction(inventoryDialog, $('town-inventory-feedback'), '/items/use',
+  itemAction(inventoryPanel, $('town-inventory-feedback'), '/items/use',
    {item_id:'rename_card', name}, `角色名已改为「${name}」。`);
  });
 
@@ -592,7 +614,10 @@ if (onlineMode) {
   weaponDialog.showModal();
   weaponList.parentElement.scrollTop = 0;
  });
- openSkillCollection.addEventListener('click', () => skillDialog.showModal());
+ openSkillCollection.addEventListener('click', () => {
+  showSquarePanel(skillPanel);
+  $('town-skill-title').focus();
+ });
  function lock(value) {
   busy = value;
   $('login-submit').disabled = value;

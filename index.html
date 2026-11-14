@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=profile-avatar">
-  <link rel="stylesheet" href="lobby.css?v=town-social">
+  <link rel="stylesheet" href="lobby.css?v=town-inline-panels">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -135,8 +135,8 @@
           </div>
           <div class="town-collection-actions">
             <button id="open-weapon-collection" type="button">武器库</button>
-            <button id="open-skill-collection" type="button">功法库</button>
-            <button id="open-inventory" type="button" aria-haspopup="dialog">背包</button>
+            <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
+            <button id="open-inventory" type="button" aria-controls="town-inventory-panel" aria-pressed="false">背包</button>
             <button id="open-shop" type="button" aria-haspopup="dialog">商店</button>
             <button id="open-rankings" type="button" aria-haspopup="dialog">等级榜</button>
             <button id="open-guilds" type="button" aria-haspopup="dialog">帮派</button>
@@ -148,10 +148,47 @@
           </div>
         </section>
         <section id="town-battle-view" class="town-battle-view" aria-labelledby="arena-title" hidden></section>
-        <section class="town-history" aria-labelledby="town-history-title">
-          <h2 id="town-history-title">乐斗记录</h2>
+        <section id="town-history-panel" class="town-history" aria-labelledby="town-history-title">
+          <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
           <ul id="town-battle-history"></ul>
           <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
+        </section>
+        <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
+          <div class="town-panel-header">
+            <h2 id="town-skill-title" tabindex="-1">功法库</h2>
+            <button class="town-panel-back" type="button">返回乐斗记录</button>
+          </div>
+          <div class="town-damage-content">
+            <article class="town-skill-card" id="town-combo-skill">
+              <span class="town-item-icon" aria-hidden="true">✷</span>
+              <div>
+                <h3>连击</h3>
+                <p>攻击命中且对手仍站立时，有 20% 概率追加一击，造成 6 点伤害。</p>
+              </div>
+            </article>
+            <p id="town-skill-empty" class="town-empty" hidden>尚未获得功法</p>
+          </div>
+        </section>
+        <section id="town-inventory-panel" class="town-inline-panel" aria-labelledby="town-inventory-title" hidden>
+          <div class="town-panel-header">
+            <h2 id="town-inventory-title" tabindex="-1">背包</h2>
+            <button class="town-panel-back" type="button">返回乐斗记录</button>
+          </div>
+          <div class="town-damage-content">
+            <div id="town-inventory-empty" hidden>
+              <p>背包里还没有道具。</p>
+              <button id="inventory-open-shop" class="town-item-action" type="button">去商店</button>
+            </div>
+            <ul id="town-inventory-items" class="town-item-list"></ul>
+            <form id="town-rename-form" class="town-rename-form" hidden>
+              <label for="town-rename-name">新角色名</label>
+              <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
+                     autocomplete="off" aria-describedby="town-rename-hint">
+              <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
+              <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
+            </form>
+            <p id="town-inventory-feedback" class="town-item-feedback" role="status"></p>
+          </div>
         </section>
       </div>
       <aside class="town-sidebar" aria-labelledby="town-opponents-title">
@@ -199,27 +236,6 @@
         <p id="town-shop-feedback" class="town-item-feedback" role="status"></p>
       </div>
     </dialog>
-    <dialog id="town-inventory-dialog" class="town-damage-dialog" aria-labelledby="town-inventory-title">
-      <div class="town-damage-header">
-        <h2 id="town-inventory-title">背包</h2>
-        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
-      </div>
-      <div class="town-damage-content">
-        <div id="town-inventory-empty" hidden>
-          <p>背包里还没有道具。</p>
-          <button id="inventory-open-shop" class="town-item-action" type="button">去商店</button>
-        </div>
-        <ul id="town-inventory-items" class="town-item-list"></ul>
-        <form id="town-rename-form" class="town-rename-form" hidden>
-          <label for="town-rename-name">新角色名</label>
-          <input id="town-rename-name" name="name" type="text" required minlength="2" maxlength="16"
-                 autocomplete="off" aria-describedby="town-rename-hint">
-          <p id="town-rename-hint">2–16 个汉字、字母、数字或下划线。确认后消耗 1 张改名卡。</p>
-          <button id="town-rename-submit" class="town-item-action" type="submit">确认改名</button>
-        </form>
-        <p id="town-inventory-feedback" class="town-item-feedback" role="status"></p>
-      </div>
-    </dialog>
     <dialog id="town-avatar-dialog" class="town-damage-dialog" aria-labelledby="town-avatar-title">
       <div class="town-damage-header">
         <h2 id="town-avatar-title">更换头像</h2>
@@ -259,22 +275,6 @@
       </section>
       <div class="town-damage-content">
         <ul id="town-weapon-list"></ul>
-      </div>
-    </dialog>
-    <dialog id="town-skill-dialog" class="town-damage-dialog" aria-labelledby="town-skill-title">
-      <div class="town-damage-header">
-        <h2 id="town-skill-title">功法库</h2>
-        <form method="dialog"><button type="submit" autofocus>关闭</button></form>
-      </div>
-      <div class="town-damage-content">
-        <article class="town-skill-card" id="town-combo-skill">
-          <span class="town-item-icon" aria-hidden="true">✷</span>
-          <div>
-            <h3>连击</h3>
-            <p>攻击命中且对手仍站立时，有 20% 概率追加一击，造成 6 点伤害。</p>
-          </div>
-        </article>
-        <p id="town-skill-empty" class="town-empty" hidden>尚未获得功法</p>
       </div>
     </dialog>
     <dialog id="town-damage-dialog" class="town-damage-dialog" aria-labelledby="town-damage-title">
@@ -372,6 +372,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=town-social"></script>
+  <script src="online.js?v=town-inline-panels"></script>
 </body>
 </html>
