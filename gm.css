@@ -43,3 +43,13 @@ dialog { max-width: min(440px, 100% - 32px); color: inherit; }
 dialog::backdrop { background: #122b4c66; }
 #gm-confirm-text { overflow-wrap: anywhere; }
 .dialog-actions { display: flex; gap: 8px; justify-content: end; }
+.header-controls, .gm-account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.header-controls { justify-content: flex-end; }
+summary { cursor: pointer; font-weight: 700; }
+#gm-create { margin: 14px 0; }
+#gm-password-feedback { margin: 0; color: #8f3038; }
+#gm-password-feedback:empty { display: none; }
+@media (max-width: 520px) {
+  .page-header { align-items: flex-start; flex-direction: column; }
+  .header-controls { justify-content: flex-start; }
+}

@@ -13,20 +13,29 @@ const quantityInput = byId('gm-quantity');
 const reasonInput = byId('gm-reason');
 const confirmDialog = byId('gm-confirm');
 const logoutButton = byId('gm-logout');
+const usernameInput = byId('gm-username');
+const management = byId('gm-management');
+const passwordDialog = byId('gm-password-dialog');
+const passwordForm = byId('gm-password-form');
+const roleLabels = {admin:'管理员', operator:'发放员', viewer:'只读'};
 const status = byId('gm-feedback');
 const timeFormat = new Intl.DateTimeFormat('zh-CN', {
   timeZone:'Asia/Shanghai', dateStyle:'short', timeStyle:'medium',
 });
 const errors = {
-  unauthorized:'GM 口令错误或已更换，请重新输入。',
-  not_found:'该区服没有找到这个 UID 的角色。',
-  invalid_request:'请检查 UID、发放内容、数量和原因。',
+  unauthorized:'登录已失效，请重新登录。',
+  invalid_credentials:'账号或密码错误，或账号已停用。',
+  forbidden:'当前账号没有操作权限。',
+  not_found:'没有找到对应的角色或账号。',
+  invalid_request:'请检查填写内容。GM 账号使用 3–32 位字母、数字或下划线，密码至少 12 个字符且不超过 128 字节。',
+  account_taken:'这个 GM 账号已存在。',
+  self_management:'请用「修改密码」管理自己的密码。',
   already_owned:'角色已经拥有这把武器。',
   request_conflict:'此申请编号已使用，请重新核对。',
   rate_limited:'操作太快，请稍后再试。',
 };
 
-let token = '';
+let actor;
 let catalog;
 let target;
 let result;
@@ -35,9 +44,10 @@ let pending;
 let busy = false;
 
 async function request(zone, path, body) {
-  const response = await fetch(`/api/zone/${zone}/gm/${path}`, {
+  const prefix = zone == null ? '/api/account/gm/' : `/api/zone/${zone}/gm/`;
+  const response = await fetch(prefix + path, {
     method:body ? 'POST' : 'GET',
-    headers:{Authorization:`Bearer ${token}`, ...(body ? {'Content-Type':'application/json'} : {})},
+    headers:body ? {'Content-Type':'application/json'} : {},
     body:body ? JSON.stringify(body) : undefined,
     cache:'no-store',
   });
@@ -58,20 +68,22 @@ function clearPlayer() {
 }
 
 function logout() {
-  token = '';
-  catalog = pending = proposed = null;
+  actor = catalog = pending = proposed = null;
   clearPlayer();
   lookupForm.reset();
   grantForm.reset();
   loginForm.reset();
-  workspace.hidden = logoutButton.hidden = true;
+  byId('gm-account-list').replaceChildren();
+  management.open = false;
+  workspace.hidden = byId('gm-user-controls').hidden = true;
   loginPanel.hidden = false;
 }
 
 async function run(action, focus) {
   if (busy) return;
   busy = true;
-  const controls = [...document.querySelectorAll('form input, form select, form button, #gm-logout')];
+  const controls = [...document.querySelectorAll('form input, form select, form button, #gm-user-controls button, #gm-account-list button, #gm-account-list select')]
+    .filter(control => !control.disabled);
   controls.forEach(control => control.disabled = true);
   notify('');
   try {
@@ -79,7 +91,8 @@ async function run(action, focus) {
   } catch (error) {
     if (error.code === 'unauthorized') {
       logout();
-      focus = byId('gm-key');
+      if (passwordDialog.open) passwordDialog.close();
+      focus = usernameInput;
     }
     notify(errors[error.code] ?? '暂时无法确认操作结果。请稍后重试。', true);
   } finally {
@@ -106,7 +119,7 @@ function showPlayer(data) {
   history.replaceChildren(...data.grants.map(grant => {
     const row = document.createElement('tr');
     const values = [timeFormat.format(Number(grant.created_at_epoch) * 1000),
-      `${assetName(grant.kind, grant.asset_id)} × ${grant.quantity}`, grant.reason];
+      `${assetName(grant.kind, grant.asset_id)} × ${grant.quantity}`, grant.operator ?? '旧版 GM', grant.reason];
     for (const value of values) row.insertCell().textContent = value;
     return row;
   }));
@@ -134,21 +147,129 @@ function updateAssetControls() {
   grantForm.querySelector('button[type="submit"]').disabled = !available.length;
 }
 
+async function showWorkspace(account) {
+  catalog = await request(1, 'catalog');
+  actor = account;
+  loginForm.reset();
+  zoneInput.replaceChildren(...catalog.zones.map(zone => new Option(zone.name, zone.id)));
+  byId('gm-identity').textContent = `${actor.username} · ${roleLabels[actor.role]}`;
+  management.hidden = actor.role !== 'admin';
+  byId('gm-grant-panel').hidden = actor.role === 'viewer';
+  loginPanel.hidden = true;
+  workspace.hidden = byId('gm-user-controls').hidden = false;
+}
+
 loginForm.addEventListener('submit', event => {
   event.preventDefault();
-  run(async () => {
-    token = byId('gm-key').value.trim();
-    catalog = await request(1, 'catalog');
-    loginForm.reset();
-    zoneInput.replaceChildren(...catalog.zones.map(zone => new Option(zone.name, zone.id)));
-    loginPanel.hidden = true;
-    workspace.hidden = logoutButton.hidden = false;
-  }, uidInput);
+  run(async () => showWorkspace(await request(null, 'login', {
+    username:usernameInput.value.trim().toLowerCase(), password:byId('gm-key').value,
+  })), uidInput);
 });
-logoutButton.addEventListener('click', () => {
+logoutButton.addEventListener('click', () => run(async () => {
+  await request(null, 'logout', {});
   logout();
-  notify('');
-  byId('gm-key').focus();
+}, usernameInput));
+
+function accountAction(body, message) {
+  return run(async () => {
+    showAccounts((await request(null, 'accounts', body)).accounts);
+    notify(message);
+  });
+}
+
+function showAccounts(accounts) {
+  byId('gm-account-list').replaceChildren(...accounts.map(account => {
+    const row = document.createElement('tr');
+    const name = row.insertCell();
+    name.textContent = account.username;
+    const role = row.insertCell();
+    const state = row.insertCell();
+    state.textContent = account.enabled ? '启用' : '停用';
+    const cell = row.insertCell();
+    if (account.username === actor.username) {
+      role.textContent = roleLabels[account.role];
+      cell.textContent = '当前账号';
+      return row;
+    }
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', `${account.username} 的权限`);
+    select.append(...Object.entries(roleLabels).map(([id, label]) => new Option(label, id)));
+    select.value = account.role;
+    role.append(select);
+    const buttons = document.createElement('div');
+    buttons.className = 'gm-account-actions';
+    const addButton = (label, action) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'secondary';
+      button.textContent = label;
+      button.addEventListener('click', action);
+      buttons.append(button);
+    };
+    const update = (role, enabled) => accountAction({
+      action:'update', username:account.username, role, enabled,
+    }, `已更新 ${account.username}。`);
+    addButton('保存权限', () => {
+      if (select.value !== account.role) update(select.value, account.enabled);
+    });
+    addButton(account.enabled ? '停用' : '启用', () => update(account.role, !account.enabled));
+    addButton('重设密码', () => openPassword(account.username));
+    cell.append(buttons);
+    return row;
+  }));
+}
+
+management.addEventListener('toggle', () => {
+  if (management.open) run(async () => showAccounts((await request(null, 'accounts')).accounts));
+});
+byId('gm-create').addEventListener('submit', event => {
+  event.preventDefault();
+  run(async () => {
+    const username = byId('gm-new-user').value.trim().toLowerCase();
+    const result = await request(null, 'accounts', {
+      action:'create', username, role:byId('gm-new-role').value, password:byId('gm-new-key').value,
+    });
+    showAccounts(result.accounts);
+    event.target.reset();
+    notify(`已创建 ${username}。`);
+  });
+});
+
+let resetUser;
+function openPassword(username) {
+  resetUser = username;
+  passwordForm.reset();
+  byId('gm-password-feedback').textContent = '';
+  byId('password-title').textContent = username ? `重设 ${username} 的密码` : '修改密码';
+  byId('gm-current-password-row').hidden = Boolean(username);
+  byId('gm-current-password').required = !username;
+  passwordDialog.showModal();
+}
+byId('gm-password-open').addEventListener('click', () => openPassword());
+byId('gm-password-cancel').addEventListener('click', () => passwordDialog.close());
+passwordForm.addEventListener('submit', event => {
+  event.preventDefault();
+  run(async () => {
+    byId('gm-password-feedback').textContent = '';
+    const password = byId('gm-new-password').value;
+    try {
+      if (resetUser) {
+        const result = await request(null, 'accounts', {action:'reset_password', username:resetUser, password});
+        showAccounts(result.accounts);
+        notify(`已重设 ${resetUser} 的密码。`);
+      } else {
+        await request(null, 'password', {current_password:byId('gm-current-password').value, password});
+        logout();
+        notify('密码已修改，请用新密码登录。');
+      }
+      passwordForm.reset();
+      passwordDialog.close();
+    } catch (error) {
+      if (error.code === 'unauthorized') throw error;
+      byId('gm-password-feedback').textContent = error.code === 'invalid_credentials'
+        ? '当前密码不正确。' : errors[error.code] ?? '暂时无法保存密码。';
+    }
+  });
 });
 uidInput.addEventListener('input', clearPlayer);
 zoneInput.addEventListener('change', clearPlayer);
@@ -167,7 +288,7 @@ lookupForm.addEventListener('submit', event => {
 
 grantForm.addEventListener('submit', event => {
   event.preventDefault();
-  if (!target || busy) return;
+  if (!target || busy || actor.role === 'viewer') return;
   if (!reasonInput.value.trim()) {
     notify('请输入发放原因。', true);
     reasonInput.focus();
@@ -184,6 +305,14 @@ grantForm.addEventListener('submit', event => {
   const asset = assetName(body.kind, body.asset_id);
   byId('gm-confirm-text').textContent = `向 ${target.zone} 服的「${result.player.name}」（UID ${target.id}）发放 ${asset} × ${body.quantity}？`;
   confirmDialog.showModal();
+});
+
+run(async () => {
+  try {
+    await showWorkspace(await request(null, 'session'));
+  } catch (error) {
+    if (error.code !== 'unauthorized') throw error;
+  }
 });
 
 byId('gm-cancel').addEventListener('click', () => confirmDialog.close());

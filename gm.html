@@ -4,25 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GM 后台 · 企鹅大乐斗</title>
-  <link rel="stylesheet" href="gm.css?v=1">
-  <script src="gm.js?v=1" defer></script>
+  <link rel="stylesheet" href="gm.css?v=2">
+  <script src="gm.js?v=2" defer></script>
 </head>
 <body>
   <main>
     <header class="page-header">
       <div><p>企鹅大乐斗</p><h1>GM 后台</h1></div>
-      <button id="gm-logout" type="button" class="secondary" hidden>退出后台</button>
+      <div class="header-controls" id="gm-user-controls" hidden>
+        <span id="gm-identity"></span>
+        <button id="gm-password-open" type="button" class="secondary">修改密码</button>
+        <button id="gm-logout" type="button" class="secondary">退出后台</button>
+      </div>
     </header>
     <section id="gm-login-panel" class="card" aria-labelledby="login-title">
       <h2 id="login-title">管理员登录</h2>
       <form id="gm-login">
-        <label for="gm-key">GM 口令</label>
-        <input id="gm-key" type="password" required minlength="64" maxlength="64" autocomplete="off">
+        <label for="gm-username">GM 账号</label>
+        <input id="gm-username" required minlength="3" maxlength="32" autocomplete="username" autocapitalize="none">
+        <label for="gm-key">密码</label>
+        <input id="gm-key" type="password" required minlength="12" maxlength="128" autocomplete="current-password">
         <button type="submit">进入后台</button>
       </form>
     </section>
     <p id="gm-feedback" role="status"></p>
     <section id="gm-workspace" hidden>
+      <details id="gm-management" class="card" hidden>
+        <summary>GM 账号管理</summary>
+        <form id="gm-create" class="fields">
+          <div><label for="gm-new-user">新账号</label><input id="gm-new-user" required minlength="3" maxlength="32" autocomplete="off"></div>
+          <div><label for="gm-new-role">权限</label><select id="gm-new-role"><option value="viewer">只读</option><option value="operator">发放员</option><option value="admin">管理员</option></select></div>
+          <div><label for="gm-new-key">初始密码</label><input id="gm-new-key" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div>
+          <button type="submit">创建账号</button>
+        </form>
+        <div class="table-scroll">
+          <table><thead><tr><th scope="col">账号</th><th scope="col">权限</th><th scope="col">状态</th><th scope="col">操作</th></tr></thead><tbody id="gm-account-list"></tbody></table>
+        </div>
+      </details>
       <section class="card" aria-labelledby="find-title">
         <h2 id="find-title">查找角色</h2>
         <form id="gm-lookup" class="fields">
@@ -40,7 +58,7 @@
             <div><dt>武器库</dt><dd id="gm-weapons"></dd></div>
           </dl>
         </section>
-        <section class="card" aria-labelledby="grant-title">
+        <section class="card" id="gm-grant-panel" aria-labelledby="grant-title">
           <h2 id="grant-title">发放</h2>
           <form id="gm-grant">
             <div class="fields">
@@ -58,7 +76,7 @@
           <p id="gm-history-empty" class="muted">该角色还没有发放记录。</p>
           <div class="table-scroll" id="gm-history-table" hidden>
             <table>
-              <thead><tr><th scope="col">时间</th><th scope="col">内容</th><th scope="col">原因</th></tr></thead>
+              <thead><tr><th scope="col">时间</th><th scope="col">内容</th><th scope="col">操作账号</th><th scope="col">原因</th></tr></thead>
               <tbody id="gm-history"></tbody>
             </table>
           </div>
@@ -73,6 +91,19 @@
       <button id="gm-cancel" type="button" class="secondary" autofocus>取消</button>
       <button id="gm-send" type="button">确认发放</button>
     </div>
+  </dialog>
+  <dialog id="gm-password-dialog" aria-labelledby="password-title">
+    <h2 id="password-title">修改密码</h2>
+    <form id="gm-password-form">
+      <div id="gm-current-password-row"><label for="gm-current-password">当前密码</label><input id="gm-current-password" type="password" required minlength="12" maxlength="128" autocomplete="current-password"></div>
+      <div><label for="gm-new-password">新密码</label><input id="gm-new-password" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div>
+      <p class="muted">密码至少 12 个字符，最多 128 字节。</p>
+      <p id="gm-password-feedback" role="status"></p>
+      <div class="dialog-actions">
+        <button id="gm-password-cancel" type="button" class="secondary">取消</button>
+        <button type="submit">保存密码</button>
+      </div>
+    </form>
   </dialog>
 </body>
 </html>
