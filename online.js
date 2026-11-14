@@ -237,7 +237,7 @@ if (onlineMode) {
   const {player, zone, progression} = data;
   $('town-zone').textContent = `${zone} 服`;
   $('town-player-name').textContent = player.name;
-  $('town-player-avatar').src = avatarUrl(player.avatar_id);
+  updatePlayerAvatar(player.avatar_id);
   $('town-detail-name').textContent = player.name;
   $('town-detail-uid').textContent = player.player_id;
   $('town-hp').textContent = player.max_hp;
@@ -535,6 +535,12 @@ if (onlineMode) {
   return `assets/avatar-${Object.hasOwn(avatarChoices, id) ? id : 'blue'}.jpg`;
  }
 
+ function updatePlayerAvatar(id) {
+  const portrait = $('town-player-avatar');
+  const src = avatarUrl(id);
+  if (portrait.getAttribute('src') !== src) portrait.src = src;
+ }
+
  function updateAvatarSelection() {
   const current = session.player.avatar_id ?? 'blue';
   for (const button of avatarOptions.querySelectorAll('button')) {
@@ -566,7 +572,7 @@ if (onlineMode) {
     try {
      const {avatar_id} = await api(session.zone, '/avatar', {avatar_id:id});
      session.player.avatar_id = avatar_id;
-     $('town-player-avatar').src = avatarUrl(avatar_id);
+     updatePlayerAvatar(avatar_id);
      updateAvatarSelection();
      avatarFeedback.textContent = `已更换为「${label}」`;
     } catch (error) {

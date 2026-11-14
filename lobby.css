@@ -536,6 +536,7 @@
 .town-feedback { margin: 0; padding: 10px 12px; color: #8d3f29; font-size: 13px; overflow-wrap: anywhere; }
 .town-feedback:empty { display: none; }
 .town-game button:disabled { opacity: .58; cursor: wait; }
+.town-game #open-avatar-picker:disabled { opacity: 1; }
 .town-battle-view { display: grid; gap: 12px; container-type: inline-size; }
 .town-battle-view .game, .town-battle-view .log-panel { border-color: #9dbbe69e; border-radius: 12px; background: #f9fbff; }
 .town-battle-view .game-head { flex-wrap: wrap; padding: 10px 14px; }
