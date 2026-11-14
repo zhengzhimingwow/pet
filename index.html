@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=full-weapon-effects">
-  <link rel="stylesheet" href="lobby.css?v=weapon-effects">
+  <link rel="stylesheet" href="lobby.css?v=battle-mail">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -136,6 +136,7 @@
         </section>
         <nav class="town-collection-actions" aria-label="广场功能">
           <button id="open-history" type="button" aria-controls="town-history-panel" aria-pressed="true">乐斗记录</button>
+          <button id="open-mail" type="button" aria-controls="town-mail-panel" aria-pressed="false">邮件 <span id="town-mail-count" hidden></span></button>
           <button id="open-character-details" type="button" aria-controls="town-character-details-panel" aria-pressed="false">角色详情</button>
           <button id="open-weapon-collection" type="button" aria-controls="town-weapon-panel" aria-pressed="false">武器库</button>
           <button id="open-skill-collection" type="button" aria-controls="town-skill-panel" aria-pressed="false">功法库</button>
@@ -151,6 +152,20 @@
           <h2 id="town-history-title" tabindex="-1">乐斗记录</h2>
           <ul id="town-battle-history"></ul>
           <p id="town-history-empty" class="town-empty" hidden>还没有乐斗记录</p>
+        </section>
+        <section id="town-mail-panel" class="town-inline-panel" aria-labelledby="town-mail-title" hidden>
+          <div class="town-panel-header">
+            <h2 id="town-mail-title" tabindex="-1">收件箱</h2>
+            <div class="town-history-actions">
+              <button id="town-mail-refresh" type="button">刷新</button>
+              <button id="town-mail-read-all" type="button" disabled>全部已读</button>
+            </div>
+          </div>
+          <ul id="town-mail-list"></ul>
+          <p id="town-mail-empty" class="town-empty" hidden>还没有收到邮件</p>
+          <div class="town-mail-pagination town-history-actions">
+            <button id="town-mail-more" type="button" hidden>加载更早的邮件</button>
+          </div>
         </section>
         <section id="town-character-details-panel" class="town-inline-panel" aria-labelledby="town-character-details-title" hidden>
           <div class="town-panel-header">
@@ -397,6 +412,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=full-weapon-effects"></script>
-  <script src="online.js?v=full-weapon-effects"></script>
+  <script src="online.js?v=battle-mail"></script>
 </body>
 </html>

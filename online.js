@@ -35,6 +35,13 @@ if (onlineMode) {
  const weaponList = $('town-weapon-list');
  const historyPanel = $('town-history-panel');
  const openHistory = $('open-history');
+ const mailPanel = $('town-mail-panel');
+ const openMail = $('open-mail');
+ const mailList = $('town-mail-list');
+ const mailCount = $('town-mail-count');
+ const mailReadAll = $('town-mail-read-all');
+ const mailRefresh = $('town-mail-refresh');
+ const mailMore = $('town-mail-more');
  const characterDetailsPanel = $('town-character-details-panel');
  const openCharacterDetails = $('open-character-details');
  const skillPanel = $('town-skill-panel');
@@ -43,7 +50,7 @@ if (onlineMode) {
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
  const squarePanels = [historyPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
-  avatarPanel, damagePanel, weaponPanel, opponentPanel];
+  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -71,6 +78,8 @@ if (onlineMode) {
  let viewedOpponent;
  let opponentReturn;
  let recentOpponentIds = [];
+ let nextMail;
+ let unreadMail = 0;
  const opponentFriendStates = new Map();
 
  const messages = {
@@ -200,13 +209,17 @@ if (onlineMode) {
   if (!selectedZone) return;
   acceptSession(await api(selectedZone.id, '/enter', {}));
   townStage.focus();
-  await Promise.all([refreshOpponents(), refreshHistory()]);
+  await Promise.all([refreshOpponents(), refreshHistory(), refreshMailCount()]);
  }));
 
  function acceptSession(data) {
   pendingItemRequests.clear();
   opponentFriendStates.clear();
   recentOpponentIds = [];
+  mailList.replaceChildren();
+  nextMail = null;
+  mailMore.hidden = true;
+  setMailCount(0);
   renameForm.reset();
   renameForm.hidden = true;
   $('town-rename-feedback').textContent = '';
@@ -266,6 +279,16 @@ if (onlineMode) {
   await refreshHistory();
  }));
  openCharacterDetails.addEventListener('click', () => showSquarePanel(characterDetailsPanel, openCharacterDetails, true));
+ openMail.addEventListener('click', () => run(async () => {
+  await refreshMail();
+  showSquarePanel(mailPanel, openMail, true);
+ }));
+ mailRefresh.addEventListener('click', () => run(() => refreshMail()));
+ mailMore.addEventListener('click', () => run(() => nextMail && refreshMail(nextMail)));
+ mailReadAll.addEventListener('click', () => run(async () => {
+  await api(session.zone, '/mail/read-all', {});
+  await refreshMail();
+ }));
 
  function itemRow(name, description, action, onClick, disabled = false) {
   const row = document.createElement('li');
@@ -619,6 +642,8 @@ if (onlineMode) {
   $('saved-forget').disabled = value;
   $('open-weapon-collection').disabled = value;
   openHistory.disabled = value;
+  openMail.disabled = mailRefresh.disabled = mailMore.disabled = value;
+  mailReadAll.disabled = value || !unreadMail;
   openCharacterDetails.disabled = value;
   openSkillCollection.disabled = value;
   closeOpponentProfile.disabled = value;
@@ -633,7 +658,9 @@ if (onlineMode) {
    for (const button of list.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
   }
   for (const button of avatarOptions.querySelectorAll('button')) button.disabled = value;
-  for (const button of townHistory.querySelectorAll('button')) button.disabled = value;
+  for (const list of [townHistory, mailList]) {
+   for (const button of list.querySelectorAll('button')) button.disabled = value;
+  }
   for (const button of opponentsList.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
   for (const button of zoneOptions.querySelectorAll('button')) button.disabled = value;
   for (const button of zoneGroups.querySelectorAll('button')) button.disabled = value;
@@ -768,6 +795,98 @@ if (onlineMode) {
   showSquarePanel(damagePanel, null, true);
  }
 
+ function setMailCount(count) {
+  unreadMail = count;
+  mailCount.hidden = !count;
+  mailCount.textContent = count > 99 ? '99+' : count;
+  openMail.setAttribute('aria-label', count ? `邮件，${count} 封未读` : '邮件');
+  mailReadAll.disabled = busy || !count;
+ }
+
+ async function refreshMailCount() {
+  const {unread} = await api(session.zone, '/mail/unread');
+  setMailCount(unread);
+ }
+
+ window.setInterval(async () => {
+  if (!session || busy || document.hidden || !mailPanel.hidden) return;
+  const current = session;
+  try {
+   const {unread} = await api(current.zone, '/mail/unread');
+   if (session === current && !busy && mailPanel.hidden) setMailCount(unread);
+  } catch {
+   // Entering or opening the inbox retries the request through the regular UI.
+  }
+ }, 30000);
+
+ function battleDate(report, time) {
+  const playedAt = new Date(Number(report.created_at_epoch) * 1000);
+  if (Number.isFinite(playedAt.getTime())) {
+   time.dateTime = playedAt.toISOString();
+   return historyTimeFormat.format(playedAt);
+  }
+  return report.created_at?.slice(0, 19) ?? '';
+ }
+
+ function makeRematchButton(report, matchLabel) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'town-rematch';
+  button.disabled = busy;
+  button.textContent = '回敬';
+  button.setAttribute('aria-label', `回敬，${matchLabel}`);
+  button.addEventListener('click', () => run(() => challenge(null, report.battle_id)));
+  return button;
+ }
+
+ async function refreshMail(before) {
+  const {messages:letters, unread, next_before} = await api(session.zone, before ? `/mail/before/${before}` : '/mail');
+  if (!before) mailList.replaceChildren();
+  for (const letter of letters) {
+   const item = document.createElement('li');
+   const info = document.createElement('div');
+   const details = document.createElement('span');
+   const subject = document.createElement('span');
+   const time = document.createElement('time');
+   const result = document.createElement('span');
+   const actions = document.createElement('div');
+   const read = document.createElement('button');
+   item.toggleAttribute('data-unread', letter.unread);
+   info.className = 'town-history-info';
+   details.className = 'town-history-details';
+   subject.textContent = `${letter.opponent} 挑战了你`;
+   time.textContent = battleDate(letter, time);
+   details.append(subject, time);
+   const outcome = letter.winner === 'draw' ? 'draw' : letter.winner === 'right' ? 'left' : 'right';
+   result.className = `town-outcome town-outcome-${outcome}`;
+   result.textContent = {left:'胜', right:'负', draw:'平'}[outcome];
+   info.append(details, result);
+   const matchLabel = `${letter.opponent}，${time.textContent}`;
+   actions.className = 'town-history-actions';
+   read.type = 'button';
+   read.disabled = busy;
+   read.textContent = '查看战报';
+   read.setAttribute('aria-label', `${letter.unread ? '未读，' : ''}查看战报，${matchLabel}`);
+   read.addEventListener('click', () => run(async () => {
+    const report = await api(session.zone, `/battles/${letter.battle_id}`);
+    if (item.hasAttribute('data-unread')) {
+     const {unread} = await api(session.zone, `/mail/${letter.mail_id}/read`, {});
+     setMailCount(unread);
+     item.removeAttribute('data-unread');
+     read.setAttribute('aria-label', `查看战报，${matchLabel}`);
+    }
+    showDamageReport(report, time.textContent);
+   }));
+   actions.append(read, makeRematchButton(letter, matchLabel));
+   item.append(info, actions);
+   mailList.append(item);
+  }
+  nextMail = next_before;
+  mailMore.hidden = !nextMail;
+  $('town-mail-empty').hidden = Boolean(mailList.children.length);
+  setMailCount(unread);
+ }
+
  async function refreshHistory() {
   const {battles} = await api(session.zone, '/battles');
   townHistory.replaceChildren();
@@ -786,13 +905,7 @@ if (onlineMode) {
    actions.className = 'town-history-actions';
    details.className = 'town-history-details';
    name.textContent = report.side === 'right' ? `${report.opponent} 挑战了你` : report.opponent;
-   const playedAt = new Date(Number(report.created_at_epoch) * 1000);
-   if (Number.isFinite(playedAt.getTime())) {
-    time.dateTime = playedAt.toISOString();
-    time.textContent = historyTimeFormat.format(playedAt);
-   } else {
-    time.textContent = report.created_at.slice(0, 19);
-   }
+   time.textContent = battleDate(report, time);
    details.append(name, time);
    const outcome = report.winner === 'draw' ? 'draw' : report.winner === (report.side ?? 'left') ? 'left' : 'right';
    result.className = `town-outcome town-outcome-${outcome}`;
@@ -814,6 +927,7 @@ if (onlineMode) {
     showDamageReport(battle, time.textContent);
    }));
    actions.append(reportButton, playButton);
+   if (report.side === 'right') actions.append(makeRematchButton(report, matchLabel));
    item.append(info, actions);
    townHistory.append(item);
   }
@@ -1056,14 +1170,22 @@ if (onlineMode) {
 
  closeBattleResult.addEventListener('click', returnToSquare);
 
- async function challenge({player_id, zone}) {
+ async function challenge(target, originalBattleId) {
   prepareSound();
   playMusic();
-  if (pending?.target_player_id !== player_id || pending.target_zone !== zone) {
-   const requestId = newRequestId();
-   pending = {target_zone:zone, target_player_id:player_id, request_id:requestId};
+  const path = originalBattleId ? `/battles/${originalBattleId}/rematch` : '/battles';
+  const key = originalBattleId ?? `${target.zone}/${target.player_id}`;
+  if (pending?.key !== key) pending = {key, request_id:newRequestId()};
+  const {request_id} = pending;
+  const body = originalBattleId ? {request_id}
+   : {request_id, target_zone:target.zone, target_player_id:target.player_id};
+  let report;
+  try {
+   report = await api(session.zone, path, body);
+  } catch (error) {
+   if (error.code && error.code !== 'unavailable') pending = null;
+   throw error;
   }
-  const report = await api(session.zone, '/battles', pending);
   pending = null;
   const reward = report.reward;
   const weapon = weaponMoves[reward?.weapon_id];
@@ -1072,6 +1194,7 @@ if (onlineMode) {
   await playback(report, rewardText);
   await Promise.all([
    refreshHistory(),
+   refreshMailCount(),
    api(session.zone, '/session').then(renderPlayer),
   ]);
  }
