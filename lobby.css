@@ -149,8 +149,8 @@
 #town-xp::-webkit-progress-value { border-radius: 99px; background: #3878cf; }
 #town-xp::-moz-progress-bar { border-radius: 99px; background: #3878cf; }
 .town-attributes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.town-sheet .town-attributes { position: relative; }
 .town-stat {
-  position: relative;
   display: grid;
   gap: 3px;
   padding: 7px 5px 4px;
@@ -176,10 +176,10 @@
 .town-stat-breakdown {
   position: absolute;
   z-index: 2;
-  top: calc(100% + 1px);
+  bottom: calc(100% + 6px);
   left: 50%;
   width: max-content;
-  max-width: min(180px, 75vw);
+  max-width: min(180px, 100%);
   padding: 7px 10px;
   translate: -50% 0;
   border-radius: 6px;
