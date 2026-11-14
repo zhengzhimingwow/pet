@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=ranking-item-art">
+  <link rel="stylesheet" href="lobby.css?v=challenge-stamina">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -59,6 +59,7 @@
   <main id="account-lobby" class="town-game" hidden>
     <header class="town-game-header">
       <div class="town-game-account">
+        <span id="town-stamina" class="town-stamina" role="status" tabindex="0" hidden></span>
         <span id="town-coins" class="town-coins"></span>
         <button id="online-logout" type="button">退出登录</button>
       </div>
@@ -469,6 +470,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=toy-hammer-grip"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=unique-player-names"></script>
+  <script src="online.js?v=challenge-stamina"></script>
 </body>
 </html>

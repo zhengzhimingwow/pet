@@ -29,6 +29,7 @@ if (onlineMode) {
  const panelLayer = $('town-panel-layer');
  const closeTownPanel = $('close-town-panel');
  const townFeedback = $('town-feedback');
+ const staminaDisplay = $('town-stamina');
  const closeBattleResult = $('close-battle-result');
  const accountFeedback = $('account-feedback');
  const loginForm = $('online-login');
@@ -113,6 +114,8 @@ if (onlineMode) {
  let weaponTipTrigger;
  let dailyTask;
  let dailyResetTimer;
+ let staminaTimer;
+ let staminaRequest;
  const dailyTasks = $('town-tasks');
  const dailyToggle = $('town-daily-toggle');
  const dailyLayer = $('town-daily-layer');
@@ -142,6 +145,7 @@ if (onlineMode) {
   task_reset: '每日任务已刷新。',
   invalid_character_name: '请使用 2–16 个汉字、字母、数字或下划线。',
   insufficient_coins: '金币不足。',
+  insufficient_stamina: '体力不足，恢复后再来挑战。',
   missing_item: '背包里没有改名卡。',
   same_name: '请输入和当前角色名不同的名字。',
   name_taken: '这个角色名已被使用，请换一个。',
@@ -170,6 +174,7 @@ if (onlineMode) {
   if (!response.ok) {
    const error = new Error(messages[data.error] ?? messages.unavailable);
    error.code = data.error;
+   if (error.code === 'insufficient_stamina') error.stamina = data.stamina;
    throw error;
   }
   return data;
@@ -179,6 +184,9 @@ if (onlineMode) {
   clearTimeout(returnToSquareTimer);
   if (!session) {
    clearTimeout(dailyResetTimer);
+   clearTimeout(staminaTimer);
+   staminaRequest?.abort();
+   staminaDisplay.hidden = true;
    showDailyDetails(false);
    starterResultChoice.replaceChildren();
    resetChat();
@@ -226,6 +234,7 @@ if (onlineMode) {
  function renderPlayer(data) {
   session = data;
   const {player, progression} = data;
+  renderStamina(data.stamina);
   renderDailyTask(data.daily_task);
   $('town-player-name').textContent = player.name;
   updatePlayerAvatar(player.avatar_id);
@@ -252,6 +261,45 @@ if (onlineMode) {
   if (!shopPanel.hidden) renderShop();
   if (!inventoryPanel.hidden) renderInventory();
  }
+
+ function renderStamina(stamina) {
+  clearTimeout(staminaTimer);
+  staminaRequest?.abort();
+  staminaDisplay.hidden = !stamina;
+  if (!stamina) return;
+  const {current, max, challenge_cost, recovery_per_hour, next_recovery_in} = stamina;
+  const label = `体力 ${current}/${max}`;
+  if (staminaDisplay.textContent !== label) staminaDisplay.textContent = label;
+  staminaDisplay.toggleAttribute('data-low', current < challenge_cost);
+  staminaDisplay.title = `每场消耗 ${challenge_cost} 点 · 每小时恢复 ${recovery_per_hour} 点`;
+  staminaDisplay.setAttribute('aria-label', `${label}，${staminaDisplay.title}`);
+  if (next_recovery_in) staminaTimer = setTimeout(refreshStamina, Math.max(5000, next_recovery_in * 1000));
+ }
+
+ async function refreshStamina() {
+  if (!session || document.hidden) return;
+  staminaRequest?.abort();
+  const request = new AbortController();
+  staminaRequest = request;
+  try {
+   const stamina = await api('game', '/stamina', undefined, request.signal);
+   if (!request.signal.aborted) {
+    staminaRequest = null;
+    renderStamina(stamina);
+   }
+  } catch (error) {
+   if (!request.signal.aborted && error.code !== 'unauthorized') {
+    clearTimeout(staminaTimer);
+    staminaTimer = setTimeout(refreshStamina, 15000);
+   }
+  } finally {
+   if (staminaRequest === request) staminaRequest = null;
+  }
+ }
+
+ document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !busy) refreshStamina();
+ });
 
  const starterDescriptions = {hammer:'碎盾 · 击碎护盾', sword:'破甲 · 无视一半防御', umbrella:'护盾 · 抵挡下一次命中'};
 
@@ -1635,6 +1683,11 @@ if (onlineMode) {
    report = await api('game', path, body);
   } catch (error) {
    if (error.code && error.code !== 'unavailable') pending = null;
+   if (error.stamina) {
+    renderStamina(error.stamina);
+    const {current, challenge_cost} = error.stamina;
+    error.message = `体力不足（剩余 ${current} 点，挑战需 ${challenge_cost} 点）。`;
+   }
    throw error;
   }
   pending = null;

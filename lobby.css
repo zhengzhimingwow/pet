@@ -596,6 +596,8 @@
 }
 .town-collection-actions button:hover { background: #365780; }
 .town-coins { color: #ffe4a3; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.town-stamina { color: #bff7df; font-size: 13px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.town-stamina[data-low] { color: #ffb6a7; }
 .town-item-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .town-item-list li {
   display: flex;
