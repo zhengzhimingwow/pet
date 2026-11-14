@@ -39,8 +39,11 @@ if (onlineMode) {
  const openCharacterDetails = $('open-character-details');
  const skillPanel = $('town-skill-panel');
  const openSkillCollection = $('open-skill-collection');
+ const opponentPanel = $('town-opponent-panel');
+ const closeOpponentProfile = $('close-opponent-profile');
+ const challengeOpponentProfile = $('challenge-opponent-profile');
  const squarePanels = [historyPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel,
-  avatarPanel, damagePanel, weaponPanel];
+  avatarPanel, damagePanel, weaponPanel, opponentPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -65,6 +68,8 @@ if (onlineMode) {
  let shopCatalog = [];
  let socialSection;
  let currentGuild;
+ let viewedOpponent;
+ let opponentReturn;
  const opponentFriendStates = new Map();
 
  const messages = {
@@ -241,6 +246,9 @@ if (onlineMode) {
  }
 
  function showSquarePanel(panel, button = null, moveFocus = false) {
+  if (panel !== opponentPanel) {
+   viewedOpponent = opponentReturn = null;
+  }
   for (const section of squarePanels) section.hidden = section !== panel;
   if (panel === historyPanel) button = openHistory;
   for (const trigger of squarePanelButtons) trigger.setAttribute('aria-pressed', String(trigger === button));
@@ -550,30 +558,33 @@ if (onlineMode) {
  function weaponMoveLabel(move) {
   return `${move.name} · ${move.range === 'ranged' ? '远程' : '近战'}`;
  }
-
+ function weaponCard(move, owned) {
+  const item = document.createElement('li');
+  const icon = document.createElement('span');
+  icon.className = 'town-item-icon';
+  icon.textContent = move.icon || '⚔';
+  icon.setAttribute('aria-hidden', 'true');
+  const info = document.createElement('span');
+  const label = document.createElement('strong');
+  label.textContent = move.label;
+  const detail = document.createElement('small');
+  detail.textContent = `${weaponMoveLabel(move)} · 基础伤害 ${move.damage}`;
+  info.append(label, detail);
+  item.append(icon, info);
+  if (owned !== undefined) {
+   const state = document.createElement('span');
+   state.className = owned ? 'weapon-owned' : 'weapon-state';
+   state.textContent = owned ? '已拥有' : '未获得';
+   item.append(state);
+  }
+  return item;
+ }
 
  function renderWeaponCollection() {
   const owned = new Set(session.progression.weapons);
   const catalog = Object.entries(weaponMoves).sort(([a], [b]) => Number(owned.has(b)) - Number(owned.has(a)));
   $('town-weapon-count').textContent = `已收集 ${owned.size} / ${catalog.length}`;
-  weaponList.replaceChildren(...catalog.map(([id, move]) => {
-   const item = document.createElement('li');
-   const icon = document.createElement('span');
-   icon.className = 'town-item-icon';
-   icon.textContent = move.icon || '⚔';
-   icon.setAttribute('aria-hidden', 'true');
-   const info = document.createElement('span');
-   const label = document.createElement('strong');
-   label.textContent = move.label;
-   const detail = document.createElement('small');
-   detail.textContent = `${weaponMoveLabel(move)} · 基础伤害 ${move.damage}`;
-   info.append(label, detail);
-   const state = document.createElement('span');
-   state.className = owned.has(id) ? 'weapon-owned' : 'weapon-state';
-   state.textContent = owned.has(id) ? '已拥有' : '未获得';
-   item.append(icon, info, state);
-   return item;
-  }));
+  weaponList.replaceChildren(...catalog.map(([id, move]) => weaponCard(move, owned.has(id))));
  }
  $('open-weapon-collection').addEventListener('click', () => {
   renderWeaponCollection();
@@ -597,6 +608,8 @@ if (onlineMode) {
   openHistory.disabled = value;
   openCharacterDetails.disabled = value;
   openSkillCollection.disabled = value;
+  closeOpponentProfile.disabled = value;
+  challengeOpponentProfile.disabled = value;
   avatarPicker.disabled = value;
   for (const id of ['open-shop', 'open-inventory', 'inventory-open-shop', 'open-rename', 'town-rename-submit']) $(id).disabled = value;
   for (const id of ['open-rankings', 'open-guilds', 'open-friends', 'town-social-submit']) $(id).disabled = value;
@@ -797,6 +810,55 @@ if (onlineMode) {
   }
  }
 
+ async function openOpponentProfile(playerId, trigger) {
+  const {player, progression} = await api(session.zone, `/players/${playerId}`);
+  if (opponentPanel.hidden) {
+   opponentReturn = {
+    panel:squarePanels.find(panel => !panel.hidden) ?? historyPanel,
+    button:lobby.querySelector('button[aria-pressed="true"][aria-controls]'),
+    trigger,
+   };
+  } else {
+   opponentReturn.trigger = trigger;
+  }
+  viewedOpponent = player.player_id;
+  $('town-opponent-portrait').src = avatarUrl(player.avatar_id);
+  $('town-opponent-name').textContent = player.name;
+  $('town-opponent-uid').textContent = `UID ${player.player_id}`;
+  challengeOpponentProfile.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
+  $('town-opponent-level').textContent = `Lv. ${progression.level}`;
+  $('town-opponent-xp').max = progression.next_level_xp;
+  $('town-opponent-xp').value = progression.xp;
+  $('town-opponent-xp-text').textContent = `${progression.xp} / ${progression.next_level_xp} 经验`;
+  $('town-opponent-hp').textContent = player.max_hp;
+  $('town-opponent-attack').textContent = player.attack;
+  $('town-opponent-defense').textContent = player.defense;
+  const moves = progression.weapons.map(id => weaponMoves[id]).filter(Boolean);
+  $('town-opponent-weapon-count').textContent = `已收集 ${progression.weapons.length} 把`;
+  $('town-opponent-weapons').replaceChildren(...moves.map(move => weaponCard(move)));
+  $('town-opponent-weapons-empty').hidden = progression.weapons.length > 0;
+  const skills = $('town-opponent-skills');
+  skills.replaceChildren();
+  if (player.skill_id === 'combo') {
+   const combo = $('town-combo-skill').cloneNode(true);
+   combo.removeAttribute('id');
+   combo.hidden = false;
+   skills.append(combo);
+  }
+  $('town-opponent-skills-empty').hidden = skills.childElementCount > 0;
+  showSquarePanel(opponentPanel, null, true);
+ }
+
+ closeOpponentProfile.addEventListener('click', () => {
+  if (!opponentReturn) return;
+  const {panel, button, trigger} = opponentReturn;
+  showSquarePanel(panel, button, true);
+  (trigger.isConnected ? trigger : refreshOpponentsButton).focus({preventScroll:true});
+ });
+ challengeOpponentProfile.addEventListener('click', () => {
+  if (viewedOpponent) run(() => challenge(viewedOpponent));
+ });
+
  async function refreshOpponents() {
   const [{opponents}, {players}] = await Promise.all([
    api(session.zone, '/opponents'),
@@ -804,6 +866,7 @@ if (onlineMode) {
   ]);
   opponentsList.replaceChildren(...opponents.map(player => {
    const row = document.createElement('li');
+   const profile = document.createElement('button');
    const avatar = document.createElement('img');
    const details = document.createElement('span');
    const name = document.createElement('strong');
@@ -811,6 +874,13 @@ if (onlineMode) {
    const actions = document.createElement('span');
    const addFriend = document.createElement('button');
    const button = document.createElement('button');
+   profile.type = 'button';
+   profile.className = 'town-opponent-link';
+   profile.disabled = busy;
+   profile.setAttribute('aria-controls', 'town-opponent-panel');
+   profile.setAttribute('aria-label', `查看 ${player.name} 的养成详情，UID ${player.player_id}`);
+   profile.title = `查看 ${player.name} 的养成详情`;
+   profile.addEventListener('click', () => run(() => openOpponentProfile(player.player_id, profile)));
    avatar.className = 'town-opponent-avatar';
    avatar.src = avatarUrl(player.avatar_id);
    avatar.alt = '';
@@ -835,7 +905,8 @@ if (onlineMode) {
    button.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
    button.addEventListener('click', () => run(() => challenge(player.player_id)));
    actions.append(addFriend, button);
-   row.append(avatar, details, actions);
+   profile.append(avatar, details);
+   row.append(profile, actions);
    return row;
   }));
   updateOpponentFriends(players);

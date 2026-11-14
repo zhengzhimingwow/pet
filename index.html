@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=zone-art-fit">
-  <link rel="stylesheet" href="lobby.css?v=challenge-sidebar">
+  <link rel="stylesheet" href="lobby.css?v=opponent-profile">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -172,6 +172,42 @@
             <p id="town-rename-feedback" class="town-item-feedback" role="status"></p>
           </div>
         </section>
+        <section id="town-opponent-panel" class="town-inline-panel" aria-labelledby="town-opponent-title" hidden>
+          <div class="town-panel-header">
+            <h2 id="town-opponent-title" tabindex="-1">对手详情</h2>
+            <button id="close-opponent-profile" class="town-opponent-close" type="button" aria-label="关闭对手详情">×</button>
+          </div>
+          <div class="town-damage-content town-opponent-profile">
+            <div class="town-opponent-profile-header">
+              <img id="town-opponent-portrait" class="town-opponent-avatar" alt="">
+              <div>
+                <h3 id="town-opponent-name"></h3>
+                <p id="town-opponent-uid"></p>
+              </div>
+              <button id="challenge-opponent-profile" class="town-item-action" type="button">挑战</button>
+            </div>
+            <div class="town-opponent-growth">
+              <strong id="town-opponent-level"></strong>
+              <progress id="town-opponent-xp" aria-label="对手升级经验"></progress>
+              <span id="town-opponent-xp-text"></span>
+            </div>
+            <dl class="town-attributes">
+              <div class="town-stat town-stat-hp"><dt>生命</dt><dd id="town-opponent-hp"></dd></div>
+              <div class="town-stat town-stat-attack"><dt>攻击</dt><dd id="town-opponent-attack"></dd></div>
+              <div class="town-stat town-stat-defense"><dt>防御</dt><dd id="town-opponent-defense"></dd></div>
+            </dl>
+            <div>
+              <h3>武器库 <small id="town-opponent-weapon-count"></small></h3>
+              <ul id="town-opponent-weapons" class="town-weapon-list"></ul>
+              <p id="town-opponent-weapons-empty" class="town-empty" hidden>尚未获得武器</p>
+            </div>
+            <div>
+              <h3>功法库</h3>
+              <div id="town-opponent-skills"></div>
+              <p id="town-opponent-skills-empty" class="town-empty">尚未获得功法</p>
+            </div>
+          </div>
+        </section>
         <section id="town-skill-panel" class="town-inline-panel" aria-labelledby="town-skill-title" hidden>
           <div class="town-panel-header">
             <h2 id="town-skill-title" tabindex="-1">功法库</h2>
@@ -247,7 +283,7 @@
             </div>
           </div>
           <div class="town-damage-content">
-            <ul id="town-weapon-list"></ul>
+            <ul id="town-weapon-list" class="town-weapon-list"></ul>
           </div>
         </section>
         <section id="town-damage-panel" class="town-inline-panel" aria-labelledby="town-damage-title" hidden>
@@ -357,6 +393,6 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=weapon-collection"></script>
   <script src="game.js?v=weapon-draw"></script>
-  <script src="online.js?v=weapon-list-actions"></script>
+  <script src="online.js?v=opponent-profile"></script>
 </body>
 </html>

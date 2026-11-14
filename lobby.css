@@ -312,7 +312,7 @@
 #town-social-list li > div { min-width: 90px; overflow-wrap: anywhere; }
 #town-social-list li[data-self] { border-color: #9dbbe6; background: #edf4ff; }
 #town-social-confirm { color: #8d3f29; font-size: 13px; }
-#town-weapon-list {
+.town-weapon-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
   gap: 8px;
@@ -320,7 +320,7 @@
   padding: 0;
   list-style: none;
 }
-#town-weapon-list li {
+.town-weapon-list li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -333,7 +333,38 @@
   color: var(--town-ink);
   text-align: left;
 }
-#town-weapon-list small { display: block; color: var(--town-muted); overflow-wrap: anywhere; }
+.town-weapon-list small { display: block; color: var(--town-muted); overflow-wrap: anywhere; }
+#town-opponent-weapons li { grid-template-columns: auto minmax(0, 1fr); }
+.town-opponent-profile { display: grid; gap: 14px; }
+.town-opponent-profile-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.town-opponent-profile-header > div { flex: 1; min-width: 0; }
+.town-opponent-profile-header .town-opponent-avatar { width: 42px; }
+.town-opponent-profile-header h3 { margin: 0; overflow-wrap: anywhere; }
+.town-opponent-profile-header p { margin: 3px 0 0; overflow-wrap: anywhere; }
+.town-opponent-profile-header p, .town-opponent-growth span, #town-opponent-weapon-count {
+  color: var(--town-muted);
+  font-size: 12px;
+}
+.town-opponent-growth { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; }
+.town-opponent-growth progress { width: 100%; min-width: 0; accent-color: #3878cf; }
+.town-opponent-growth span { grid-column: 1 / -1; }
+.town-opponent-profile .town-stat dd { cursor: inherit; font-weight: 800; }
+.town-opponent-profile .town-empty { margin: 0; padding: 0; }
+.town-opponent-close {
+  min-width: 32px;
+  min-height: 32px;
+  border: 1px solid #c8d6eb;
+  border-radius: 7px;
+  background: #f9fbff;
+  color: #344e75;
+  font-size: 19px;
+}
+.town-opponent-close:hover { background: #e2ecfb; }
 .weapon-owned, .weapon-state { font-size: 12px; color: var(--town-muted); }
 .weapon-owned { color: #226342; font-weight: 700; }
 .town-skill-card {
@@ -393,7 +424,7 @@
 .town-opponent-details { display: grid; gap: 2px; flex: 1; min-width: 0; }
 .town-opponent-details strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .town-opponent-details small { color: var(--town-muted); overflow-wrap: anywhere; font-size: 11px; }
-#town-opponents button {
+.town-opponent-actions button {
   min-height: 34px;
   flex: none;
   padding: 4px 9px;
@@ -404,7 +435,23 @@
   font-size: 13px;
   font-weight: 800;
 }
-#town-opponents button:hover { background: #ffde8a; }
+.town-opponent-actions button:hover { background: #ffde8a; }
+.town-opponent-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #275a9c;
+  text-align: left;
+}
+.town-opponent-link strong { text-decoration: underline; text-underline-offset: 2px; }
+.town-opponent-link:hover, .town-opponent-link:focus-visible { background: #e8f1ff; }
 .town-opponent-actions { display: flex; flex: none; align-items: center; gap: 4px; }
 #town-opponents .town-add-friend {
   min-width: 30px;
@@ -501,11 +548,12 @@
   #town-opponents { padding-inline: 8px; }
   #town-opponents li {
     display: grid;
-    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 5px;
   }
   #town-opponents .town-opponent-avatar { width: 24px; }
-  .town-opponent-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  .town-opponent-actions { justify-content: flex-end; }
+  .town-opponent-profile { padding: 10px; }
   .town-game-header, .town-game-account { gap: 6px; }
   .town-game-account button { padding-inline: 4px; }
   .town-collection-actions { gap: 6px; padding: 8px 10px; }
