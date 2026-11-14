@@ -806,6 +806,7 @@ if (onlineMode) {
   mailCount.hidden = !count;
   mailCount.textContent = count > 99 ? '99+' : count;
   openMail.setAttribute('aria-label', count ? `邮件，${count} 封未读` : '邮件');
+  mailReadAll.toggleAttribute('data-unavailable', !count);
   mailReadAll.disabled = busy || !count;
  }
 
@@ -1008,7 +1009,7 @@ if (onlineMode) {
    api(session.zone, '/opponents', {previous_ids:recentOpponentIds}),
    api(session.zone, '/friends'),
   ]);
-  opponentsList.replaceChildren(...opponents.map(player => {
+  const rows = opponents.map(player => {
    const row = document.createElement('li');
    const profile = document.createElement('button');
    const avatar = document.createElement('img');
@@ -1053,7 +1054,9 @@ if (onlineMode) {
    profile.append(avatar, details);
    row.append(profile, actions);
    return row;
-  }));
+  });
+  await Promise.all(rows.map(row => row.querySelector('img').decode().catch(() => {})));
+  opponentsList.replaceChildren(...rows);
   updateOpponentFriends(players);
   recentOpponentIds = opponents.map(player => player.player_id);
   opponentsEmpty.hidden = opponents.length > 0;
@@ -1207,7 +1210,17 @@ if (onlineMode) {
   ]);
  }
 
- refreshOpponentsButton.addEventListener('click', () => run(refreshOpponents));
+ refreshOpponentsButton.addEventListener('click', async () => {
+  if (busy) return;
+  lobby.classList.add('is-refreshing-opponents');
+  opponentsList.setAttribute('aria-busy', 'true');
+  try {
+   await run(refreshOpponents);
+  } finally {
+   lobby.classList.remove('is-refreshing-opponents');
+   opponentsList.removeAttribute('aria-busy');
+  }
+ });
 
  $('switch-zone').addEventListener('click', () => run(showZones));
  function logout() {
