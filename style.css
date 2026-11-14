@@ -357,6 +357,39 @@ button { font: inherit; cursor: pointer; }
   pointer-events: none;
   filter: drop-shadow(0 3px 2px #392a39a8);
 }
+.custom-weapon-prop[data-weapon="hammer"]::before,
+.custom-weapon-prop[data-weapon="hammer"]::after {
+  content: "";
+  position: absolute;
+  left: 35%;
+  translate: -50% 0;
+}
+.custom-weapon-prop[data-weapon="hammer"]::before {
+  top: 23%;
+  width: 11%;
+  height: 53%;
+  border: 1px solid #412863;
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(0deg, #25234d44 0 2px, transparent 2px 5px) bottom / 100% 32% no-repeat,
+    linear-gradient(90deg, #6240a1, #be9af7 40%, #6944aa);
+}
+.custom-weapon-prop[data-weapon="hammer"]::after {
+  top: 9%;
+  width: 56%;
+  height: 29%;
+  border: 2px solid #a94732;
+  border-radius: 30% / 46%;
+  background:
+    linear-gradient(90deg, #f4715f 0 19%, transparent 19% 81%, #ee6556 81%),
+    linear-gradient(180deg, #fff395, #ffc454 55%, #e38229);
+  box-shadow: inset 0 3px 2px #fff3b6aa, inset 0 -3px 3px #9b373c44;
+}
+.hammer-contact {
+  position: absolute;
+  left: 35%;
+  top: 12%;
+}
 .custom-weapon-prop[data-weapon="spatula"] { font-size: 0; }
 .custom-weapon-prop[data-weapon="spatula"]::before {
   content: "";

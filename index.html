@@ -11,8 +11,8 @@
   </script>
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
-  <link rel="stylesheet" href="style.css?v=full-weapon-effects">
-  <link rel="stylesheet" href="lobby.css?v=daily-training">
+  <link rel="stylesheet" href="style.css?v=toy-hammer-grip">
+  <link rel="stylesheet" href="lobby.css?v=plaza-activity">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -95,6 +95,16 @@
             <div class="town-pet-shadow" aria-hidden="true"></div>
             <div class="fighter-art town-pet-art" role="img" aria-label="蓝围巾企鹅"></div>
           </div>
+          <div id="town-tasks" class="town-tasks" hidden>
+            <button id="town-daily-toggle" class="town-task-toggle" type="button" aria-controls="town-daily" aria-expanded="false">任务</button>
+            <section id="town-daily" class="town-daily" aria-labelledby="town-daily-title" hidden>
+              <h3 id="town-daily-title">每日乐斗</h3>
+              <p id="town-daily-rule"></p>
+              <p id="town-daily-progress" role="status"></p>
+              <button id="town-daily-claim" class="town-item-action" type="button" disabled>领取</button>
+              <p id="town-daily-result" role="status" hidden></p>
+            </section>
+          </div>
         </section>
         <section class="town-sheet" aria-labelledby="town-player-name">
           <div class="town-profile">
@@ -132,15 +142,6 @@
                 </dd>
               </div>
             </dl>
-            <section id="town-daily" class="town-daily" aria-labelledby="town-daily-title" hidden>
-              <div>
-                <h3 id="town-daily-title">每日乐斗</h3>
-                <p id="town-daily-rule"></p>
-                <p id="town-daily-progress" role="status"></p>
-              </div>
-              <button id="town-daily-claim" class="town-item-action" type="button" disabled>领取</button>
-              <p id="town-daily-result" role="status" hidden></p>
-            </section>
           </div>
         </section>
         <nav class="town-collection-actions" aria-label="广场功能">
@@ -419,8 +420,8 @@
     </section>
   </main>
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
-  <script src="weapon-moves.js?v=weapon-collection"></script>
-  <script src="game.js?v=full-weapon-effects"></script>
-  <script src="online.js?v=daily-training"></script>
+  <script src="weapon-moves.js?v=toy-hammer-grip"></script>
+  <script src="game.js?v=toy-hammer-grip"></script>
+  <script src="online.js?v=plaza-activity"></script>
 </body>
 </html>

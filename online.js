@@ -82,6 +82,9 @@ if (onlineMode) {
  let unreadMail = 0;
  let dailyTask;
  let dailyResetTimer;
+ const dailyTasks = $('town-tasks');
+ const dailyToggle = $('town-daily-toggle');
+ const dailyDetails = $('town-daily');
  const dailyClaim = $('town-daily-claim');
  const opponentFriendStates = new Map();
 
@@ -223,6 +226,7 @@ if (onlineMode) {
   pendingItemRequests.clear();
   opponentFriendStates.clear();
   recentOpponentIds = [];
+  showDailyDetails(false);
   $('town-daily-result').hidden = true;
   mailList.replaceChildren();
   nextMail = null;
@@ -274,14 +278,29 @@ if (onlineMode) {
   dailyClaim.toggleAttribute('data-unavailable', !dailyTask || dailyTask.claimed || dailyTask.progress < dailyTask.target);
  }
 
+ function showDailyDetails(open) {
+  dailyDetails.hidden = !open;
+  dailyToggle.setAttribute('aria-expanded', String(open));
+ }
+
+ dailyToggle.addEventListener('click', () => showDailyDetails(dailyDetails.hidden));
+ dailyTasks.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || dailyDetails.hidden) return;
+  showDailyDetails(false);
+  dailyToggle.focus();
+ });
+
  function renderDailyTask(task) {
   clearTimeout(dailyResetTimer);
   dailyTask = task;
-  $('town-daily').hidden = !task;
+  dailyTasks.hidden = !task;
   updateDailyClaim();
-  if (!task) return;
+  if (!task) {
+   showDailyDetails(false);
+   return;
+  }
   $('town-daily-rule').textContent = `完成与 ${task.target} 位不同对手的挑战或回敬，AI 陪练也计入。`;
-  $('town-daily-progress').textContent = `${task.progress} / ${task.target} · 北京时间零点重置`;
+  $('town-daily-progress').textContent = `${task.progress} / ${task.target} · 每日重置`;
   dailyClaim.textContent = task.claimed ? '已领取' : `领 ${task.reward_xp} 经验`;
   dailyResetTimer = setTimeout(function refreshAtMidnight() {
    if (!session) return;

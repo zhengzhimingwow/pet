@@ -2,8 +2,8 @@
 // Coordinates face right and are mirrored by the fighter sprite for the other side.
 const customWeaponMoves = {
  hammer: {
-  label:'玩具锤', icon:'🔨', name:'蓄力砸地', damage:24, spacing:.88, approachDuration:520, windUp:620, color:'#ffc14d',
-  frames:[[0,18,0,-35,-6,0],[.32,1,-74,-104,-12,0],[.75,10,-80,-111,-8,-4],[1,75,42,88,17,9]],
+  label:'玩具锤', icon:'🔨', name:'蓄力砸地', damage:24, spacing:.73, approachDuration:520, windUp:620, color:'#ffc14d',
+  frames:[[0,14,0,22,0,0],[.38,-3,-56,-43,-10,0],[.66,1,-60,-25,-7,-4],[.82,13,-47,28,3,-2],[1,31,-19,85,15,5]],
  },
  bat: {
   label:'棒球棍', icon:'🏏', name:'全垒打', damage:22, spacing:.90, windUp:420, color:'#ffac74',
@@ -87,7 +87,13 @@ function weaponProp(move, art) {
  prop.className = 'custom-weapon-prop';
  prop.dataset.weapon = move.weapon;
  prop.setAttribute('aria-hidden', 'true');
- prop.textContent = move.prop ?? move.icon;
+ if (move.weapon === 'hammer') {
+  const contact = document.createElement('span');
+  contact.className = 'hammer-contact';
+  prop.append(contact);
+ } else {
+  prop.textContent = move.prop ?? move.icon;
+ }
  art.append(prop);
  return prop;
 }

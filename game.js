@@ -162,7 +162,12 @@ function impactAt(attacker, defender, melee, move) {
  const position = fighterPosition(defender);
  let contactX = melee ? (fighterPosition(attacker).x + position.x) / 2 : position.x;
  let contactY = position.y;
- if (move.contact) {
+ const hammerContact = move.weapon === 'hammer' && attacker.querySelector('.hammer-contact');
+ if (hammerContact) {
+  const head = hammerContact.getBoundingClientRect();
+  contactX = head.x;
+  contactY = head.y;
+ } else if (move.contact) {
   const [frontX, frameY] = move.contact;
   const art = attacker.querySelector('.fighter-art').getBoundingClientRect();
   const localX = attacker.classList.contains('left') ? frontX : 1 - frontX;

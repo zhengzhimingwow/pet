@@ -39,9 +39,9 @@
 .town-stage:focus { outline: none; }
 .town-pet {
   position: absolute;
-  bottom: 6%;
+  bottom: 8%;
   left: 50%;
-  width: min(100%, clamp(176px, 24vw, 262px));
+  width: min(50%, clamp(94px, 14vw, 148px));
   aspect-ratio: 1;
   translate: -50% 0;
 }
@@ -52,7 +52,61 @@
   height: 11%;
   border-radius: 50%;
   background: #182b5075;
-  filter: blur(5px);
+  filter: blur(4px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .town-pet { animation: town-pet-stroll 12s linear infinite; }
+  .town-pet .town-pet-art {
+    background-image: url('assets/qq-penguin-expressions.png');
+    background-size: 500% 200%;
+    animation: town-pet-poses 12s steps(1, end) infinite, town-pet-gestures 12s linear infinite;
+  }
+  .town-pet-shadow { animation: town-pet-shadow 12s linear infinite; }
+}
+@keyframes town-pet-stroll {
+  0%, 14%, 100% { left: 24%; }
+  39%, 67% { left: 76%; }
+  87% { left: 38%; }
+  97% { left: 24%; }
+}
+@keyframes town-pet-poses {
+  0%, 39%, 49%, 65%, 92%, 97%, 100% {
+    background-position: 0 0;
+    rotate: 0deg;
+  }
+  16.5%, 21.5%, 26.5%, 31.5%, 36.5%, 69.5%, 74.5%, 79.5%, 84.5% {
+    background-position: 0 0;
+    rotate: -3deg;
+  }
+  14%, 19%, 24%, 29%, 34%, 67%, 72%, 77%, 82%, 94.5% {
+    background-position: 25% 0;
+    rotate: 3deg;
+  }
+  42%, 87% {
+    background-position: 100% 0;
+    rotate: 0deg;
+  }
+  57% {
+    background-position: 50% 0;
+    rotate: 0deg;
+  }
+}
+@keyframes town-pet-gestures {
+  0%, 14%, 39%, 47% { scale: 1 1; }
+  41% { scale: 1.08 .92; }
+  49% { scale: 1.07 .92; }
+  55% { scale: 1 1; }
+  58%, 64% { scale: 1.04 .91; }
+  66% { scale: 1 1; animation-timing-function: steps(1, end); }
+  67%, 97% { scale: -1 1; }
+  98% { scale: -1 1; animation-timing-function: steps(1, end); }
+  100% { scale: 1 1; }
+  0%, 41%, 47%, 85%, 92%, 100% { translate: 0 0; }
+  44%, 88.5% { translate: 0 -27%; }
+}
+@keyframes town-pet-shadow {
+  0%, 41%, 47%, 85%, 92%, 100% { scale: 1; opacity: 1; }
+  44%, 88.5% { scale: .71; opacity: .55; }
 }
 .town-sheet, .town-activity, .town-history, .town-inline-panel {
   overflow: hidden;
@@ -192,21 +246,39 @@
   pointer-events: none;
 }
 .town-stat:first-child .town-stat-breakdown { left: 0; translate: none; }
-.town-daily {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 9px;
-  border: 1px solid var(--town-line);
-  border-radius: 8px;
-  background: #f7fbff;
+.town-tasks {
+  position: absolute;
+  inset: 12px auto auto 12px;
+  z-index: 1;
+  width: min(290px, calc(100% - 24px));
+  pointer-events: none;
 }
-.town-daily > div { flex: 1 1 140px; }
+.town-task-toggle, .town-daily { pointer-events: auto; }
+.town-task-toggle {
+  min-height: 36px;
+  padding: 5px 14px;
+  border: 1px solid #9cc9f3;
+  border-radius: 9px;
+  background: #142d52ed;
+  color: #f3f8ff;
+  font-weight: 800;
+  box-shadow: 0 3px 10px #0d203c55;
+}
+.town-task-toggle:hover, .town-task-toggle[aria-expanded="true"] { background: #28548d; }
+.town-daily {
+  margin-top: 6px;
+  padding: 9px 11px;
+  border: 1px solid #c1daf5;
+  border-radius: 10px;
+  background: #f7fbfff5;
+  box-shadow: 0 4px 14px #0d203c55;
+}
 .town-daily h3 { margin: 0; color: #254e84; font-size: 14px; }
-.town-daily p { margin: 4px 0 0; color: var(--town-muted); font-size: 12px; }
+.town-daily p { margin: 4px 0 0; color: var(--town-muted); font-size: 12px; line-height: 1.4; }
+.town-daily button { margin-top: 7px; }
+.town-daily button:disabled { opacity: .68; }
 #town-daily-progress { color: #254e84; font-weight: 800; }
-#town-daily-result { flex-basis: 100%; color: #1e6050; font-weight: 700; }
+#town-daily-result { color: #1e6050; font-weight: 700; }
 .town-opponent-details .town-ai-label { color: #4752a0; font-weight: 650; }
 .town-stat:last-child .town-stat-breakdown { right: 0; left: auto; translate: none; }
 .town-stat:is(:hover, :focus-within) .town-stat-breakdown { opacity: 1; }
@@ -605,6 +677,9 @@
   .town-collection-actions { gap: 6px; padding: 8px 10px; }
   .town-collection-actions button { padding-inline: 7px; }
   .town-character :is(.town-history, .town-inline-panel) h2 { scroll-margin-top: 126px; }
+}
+@media (max-width: 520px) {
+  .town-stage { min-height: 340px; }
 }
 @container (max-width: 600px) {
   .town-battle-view .status-row { grid-template-columns: 1fr; gap: 12px; }
