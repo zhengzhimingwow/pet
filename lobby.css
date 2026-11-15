@@ -1191,6 +1191,21 @@
   font-size: 12px;
 }
 .town-history-actions button:hover { background: #dceaff; }
+.town-history-actions .town-history-play {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  padding: 0;
+}
+.town-history-play::before, .town-history-play::after { content: ''; grid-area: 1 / 1; }
+.town-history-play::before { width: 18px; height: 14px; border: 1.5px solid currentColor; border-radius: 4px; }
+.town-history-play::after {
+  width: 6px;
+  height: 7px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  translate: 1px 0;
+}
 .town-history-actions .town-rematch { border-color: #d09a35; background: #ffdf89; color: #4d3513; }
 .town-history-actions .town-rematch:hover { background: #ffcb61; }
 .town-collection-actions button[aria-pressed="true"] { border-color: #eac789; background: #ffe09b; color: #503818; }

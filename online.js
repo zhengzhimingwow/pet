@@ -1655,7 +1655,8 @@ if (onlineMode) {
    const path = `/battles/${report.battle_id}`;
    playButton.type = 'button';
    playButton.disabled = busy;
-   playButton.textContent = '播放';
+   playButton.className = 'town-history-play';
+   playButton.title = '播放战斗';
    playButton.setAttribute('aria-label', `播放，${matchLabel}`);
    playButton.addEventListener('click', () => run(async () => playback(await api('game', path))));
    reportButton.type = 'button';
