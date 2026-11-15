@@ -37,6 +37,8 @@ if (onlineMode) {
  const avatarChoices = {blue:'蓝围巾', red:'红围巾', green:'薄荷帽', gold:'星星领结'};
  const battleView = $('town-battle-view');
  const panelLayer = $('town-panel-layer');
+ const settingsPanel = $('town-settings-panel');
+ const openSettings = $('open-settings');
  const closeTownPanel = $('close-town-panel');
  const townFeedback = $('town-feedback');
  const staminaDisplay = $('town-stamina');
@@ -96,7 +98,7 @@ if (onlineMode) {
  const rankingFeedback = $('town-ranking-feedback');
  let rankingRequest;
  const squarePanels = [historyPanel, playerLogPanel, characterDetailsPanel, skillPanel, inventoryPanel, shopPanel, socialPanel, rankingsPanel,
-  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel, dungeonPanel, trialPanel];
+  avatarPanel, damagePanel, weaponPanel, opponentPanel, mailPanel, chatPanel, dungeonPanel, trialPanel, settingsPanel];
  const squarePanelButtons = lobby.querySelectorAll('button[aria-pressed][aria-controls]');
  const opponentsList = $('town-opponents');
  const opponentsEmpty = $('town-opponents-empty');
@@ -110,6 +112,7 @@ if (onlineMode) {
   hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23',
  });
  let session;
+ let audioAccount;
  let registering = false;
  let busy = false;
  let pending;
@@ -228,6 +231,8 @@ if (onlineMode) {
  }
 
  function acceptSession(data) {
+  audioAccount = {player_id:data.player.player_id, saved:data.audio_settings, writes:Promise.resolve()};
+  applyAudioSettings(audioAccount.saved ?? {music:false, sound:true});
   pendingItemRequests.clear();
   opponentFriendStates.clear();
   recentOpponentIds = [];
@@ -547,6 +552,21 @@ if (onlineMode) {
   (trigger?.isConnected ? trigger : townStage).focus({preventScroll:true});
  }
  closeTownPanel.addEventListener('click', closeSquarePanel);
+ openSettings.addEventListener('click', () => showSquarePanel(settingsPanel, openSettings, true));
+ document.addEventListener('penguin-audio-settings', event => {
+  const account = audioAccount;
+  if (!session || !account) return;
+  const preferences = event.detail;
+  const save = account.writes.then(async () => {
+   if (!session || audioAccount !== account) return;
+   account.saved = await api('game', '/settings/audio', {player_id:account.player_id, ...preferences});
+  }).catch(() => {
+   if (!session || audioAccount !== account || account.writes !== save) return;
+   applyAudioSettings(account.saved ?? {music:false, sound:true});
+   townFeedback.textContent = '声音设置保存失败，请重试。';
+  });
+  account.writes = save;
+ });
  panelLayer.addEventListener('click', event => {
   if (event.target === panelLayer) closeSquarePanel();
  });

@@ -63,6 +63,40 @@
   font-size: 12px;
 }
 .town-game-account button:hover { background: #ffffff22; }
+.town-settings-audio { display: grid; gap: 1px; padding: 8px 16px; }
+.town-settings-audio label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  color: var(--town-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.town-settings-audio label + label { border-top: 1px solid var(--town-line); }
+.town-settings-audio input {
+  appearance: none;
+  position: relative;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border: 1px solid #8d9db3;
+  border-radius: 20px;
+  background: #dce4ef;
+  cursor: pointer;
+}
+.town-settings-audio input::before {
+  content: '';
+  position: absolute;
+  inset: 3px auto 3px 3px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #25355055;
+}
+.town-settings-audio input:checked { border-color: #2e64a3; background: #3475bd; }
+.town-settings-audio input:checked::before { translate: 18px 0; }
 .town-stage {
   isolation: isolate;
   container-type: size;

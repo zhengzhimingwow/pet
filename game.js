@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const start = $('start'), again = $('again'), skip = $('skip'), result = $('result'), logs = $('logs');
 const arenaMusic = $('arena-music'), musicToggle = $('music-toggle');
+const soundToggle = $('sound'), settingsMusic = $('settings-music'), settingsSound = $('settings-sound');
 const arena = $('arena'), game = arena.closest('.game'), speedToggle = $('speed-toggle');
 const queryParams = new URLSearchParams(location.search);
 const onlineMode = queryParams.has('online') || !queryParams.has('demo');
@@ -75,13 +76,23 @@ const metalOvertones = {
 let running = false, skipping = false, audioContext = null, soundEnabled = true;
 const battleAnimations = new Set();
 let battleSpeed = 1;
-let musicEnabled = true;
-try { musicEnabled = localStorage.getItem('arena-music') !== 'off'; } catch {}
+let musicEnabled = false;
+if (!onlineMode) {
+ try {
+  musicEnabled = localStorage.getItem('penguin-background-music') === 'on';
+  soundEnabled = localStorage.getItem('penguin-battle-sound') !== 'off';
+ } catch {}
+}
 arenaMusic.volume = .34;
 
-function updateMusicToggle() {
+function updateAudioControls() {
  musicToggle.textContent = musicEnabled ? '♫ 音乐开' : '♫ 音乐关';
  musicToggle.setAttribute('aria-pressed', String(musicEnabled));
+ settingsMusic.checked = musicEnabled;
+ soundToggle.textContent = soundEnabled ? '🔊 音效开' : '🔇 音效关';
+ soundToggle.setAttribute('aria-pressed', String(soundEnabled));
+ soundToggle.setAttribute('aria-label', soundEnabled ? '关闭音效' : '开启音效');
+ settingsSound.checked = soundEnabled;
 }
 function playMusic() {
  if (musicEnabled && arenaMusic.paused) {
@@ -89,14 +100,31 @@ function playMusic() {
   arenaMusic.play().catch(() => {});
  }
 }
-updateMusicToggle();
-musicToggle.addEventListener('click', () => {
- musicEnabled = !musicEnabled;
- try { localStorage.setItem('arena-music', musicEnabled ? 'on' : 'off'); } catch {}
- updateMusicToggle();
- if (musicEnabled) playMusic();
- else arenaMusic.pause();
-});
+function applyAudioSettings({music, sound}) {
+ musicEnabled = music;
+ soundEnabled = sound;
+ updateAudioControls();
+ if (!musicEnabled) arenaMusic.pause();
+}
+function changeAudioSettings(music, sound) {
+ const preferences = {music, sound};
+ applyAudioSettings(preferences);
+ if (music) playMusic();
+ if (sound) prepareSound();
+ if (onlineMode) {
+  document.dispatchEvent(new CustomEvent('penguin-audio-settings', {detail:preferences}));
+ } else {
+  try {
+   localStorage.setItem('penguin-background-music', music ? 'on' : 'off');
+   localStorage.setItem('penguin-battle-sound', sound ? 'on' : 'off');
+  } catch {}
+ }
+}
+updateAudioControls();
+musicToggle.addEventListener('click', () => changeAudioSettings(!musicEnabled, soundEnabled));
+soundToggle.addEventListener('click', () => changeAudioSettings(musicEnabled, !soundEnabled));
+settingsMusic.addEventListener('change', () => changeAudioSettings(settingsMusic.checked, soundEnabled));
+settingsSound.addEventListener('change', () => changeAudioSettings(musicEnabled, settingsSound.checked));
 
 speedToggle.addEventListener('click', () => {
  battleSpeed = battleSpeed === 1 ? 2 : 1;
@@ -600,5 +628,3 @@ skip.addEventListener('click', () => {
  // Release the active playback waits so the precomputed result can render.
  for (const animation of battleAnimations) animation.finish();
 });
-
-$('sound').addEventListener('click', () => { soundEnabled = !soundEnabled; $('sound').textContent = soundEnabled ? '🔊 音效开' : '🔇 音效关'; $('sound').setAttribute('aria-pressed', String(soundEnabled)); $('sound').setAttribute('aria-label', soundEnabled ? '关闭音效' : '开启音效'); if (soundEnabled) prepareSound(); });
