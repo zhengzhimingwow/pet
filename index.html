@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=dungeon-entrance">
+  <link rel="stylesheet" href="lobby.css?v=player-challenges">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -410,20 +410,14 @@
       <aside id="town-opponents-sidebar" class="town-sidebar" aria-labelledby="town-opponents-title">
         <section class="town-activity">
           <div class="town-panel-header">
-            <h2 id="town-opponents-title">挑战列表</h2>
+            <h2 id="town-opponents-title">可挑战玩家</h2>
             <div class="town-opponents-controls">
               <button id="refresh-opponents" type="button">换一批</button>
               <button id="close-opponents" type="button" aria-label="收起挑战列表" aria-controls="town-opponents-sidebar" title="收起挑战列表">›</button>
             </div>
           </div>
-          <div class="town-opponent-scroll">
-            <section id="town-pinned-trials" aria-labelledby="town-pinned-title" hidden>
-              <button id="town-pinned-title" type="button" aria-controls="town-trial-panel" aria-pressed="false">江湖试炼 ›</button>
-              <ul id="town-pinned-trial-list"></ul>
-            </section>
-            <ul id="town-opponents" aria-label="可挑战玩家"></ul>
-            <p id="town-opponents-empty" class="town-empty" hidden>暂时没有可挑战的玩家</p>
-          </div>
+          <ul id="town-opponents" aria-label="可挑战玩家"></ul>
+          <p id="town-opponents-empty" class="town-empty" hidden>暂时没有可挑战的玩家</p>
         </section>
       </aside>
       <p id="town-feedback" class="town-feedback" role="status"></p>
@@ -514,6 +508,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=techniques"></script>
   <script src="town-pet.js?v=1" defer></script>
-  <script src="online.js?v=dungeon-entrance"></script>
+  <script src="online.js?v=player-challenges"></script>
 </body>
 </html>

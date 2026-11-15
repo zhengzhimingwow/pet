@@ -77,10 +77,6 @@ if (onlineMode) {
  const enterTrialDungeon = $('enter-trial-dungeon');
  const backToDungeons = $('back-to-dungeons');
  const trialList = $('town-trial-list');
- const pinnedTrials = $('town-pinned-trials');
- const pinnedTrialList = $('town-pinned-trial-list');
- const openPinnedTrials = $('town-pinned-title');
- const pinnedTrialIds = new Set(['9000000000000001001', '9000000000000001002', '9000000000000001004']);
  const opponentPanel = $('town-opponent-panel');
  const closeOpponentProfile = $('close-opponent-profile');
  const challengeOpponentProfile = $('challenge-opponent-profile');
@@ -215,7 +211,7 @@ if (onlineMode) {
  async function enterGame() {
   acceptSession(await api('game', '/enter', {}));
   townStage.focus();
-  await Promise.all([refreshOpponents(), refreshHistory(), refreshMailCount(), refreshTrials()]);
+  await Promise.all([refreshOpponents(), refreshHistory(), refreshMailCount()]);
  }
 
  function acceptSession(data) {
@@ -242,8 +238,6 @@ if (onlineMode) {
   $('town-history-empty').hidden = true;
   opponentsEmpty.hidden = true;
   opponentsList.replaceChildren();
-  pinnedTrials.hidden = true;
-  pinnedTrialList.replaceChildren();
   trialList.replaceChildren();
   $('town-dungeon-progress').textContent = '';
   $('town-dungeon-next').textContent = '';
@@ -560,13 +554,10 @@ if (onlineMode) {
   $('town-trial-progress').textContent = progress;
   $('town-dungeon-progress').textContent = progress;
   $('town-dungeon-next').textContent = next ? `下一关 · ${next.name}` : '可重打已通关关卡';
-  trialList.replaceChildren(...stages.map(stage => trialRow(stage, false)));
-  const pinned = stages.filter(stage => pinnedTrialIds.has(stage.player_id));
-  pinnedTrialList.replaceChildren(...pinned.map(stage => trialRow(stage, true)));
-  pinnedTrials.hidden = !pinned.length;
+  trialList.replaceChildren(...stages.map(trialRow));
  }
 
- function trialRow(stage, compact) {
+ function trialRow(stage) {
    const row = document.createElement('li');
    const portrait = document.createElement('img');
    const info = document.createElement('div');
@@ -576,9 +567,8 @@ if (onlineMode) {
    row.dataset.state = stage.state;
    portrait.src = avatarUrl(stage.avatar_id);
    portrait.alt = '';
-   name.textContent = compact ? stage.name : `${stage.name} · ${stage.title}`;
-   stats.textContent = compact ? `推荐 Lv. ${stage.recommended_level}`
-    : `推荐 Lv. ${stage.recommended_level} · 战斗力 ${powerNumber.format(stage.combat_power)}`;
+   name.textContent = `${stage.name} · ${stage.title}`;
+   stats.textContent = `推荐 Lv. ${stage.recommended_level} · 战斗力 ${powerNumber.format(stage.combat_power)}`;
    info.append(name, stats);
    if (stage.state === 'locked') {
     action.textContent = '未开放';
@@ -586,9 +576,8 @@ if (onlineMode) {
     action.type = 'button';
     action.className = 'town-item-action';
     action.disabled = busy;
-    const label = stage.state === 'cleared' ? '再次挑战' : '挑战';
-    action.textContent = compact && stage.state === 'cleared' ? '重打' : label;
-    action.setAttribute('aria-label', `${label}${stage.name}`);
+    action.textContent = stage.state === 'cleared' ? '再次挑战' : '挑战';
+    action.setAttribute('aria-label', `${action.textContent}${stage.name}`);
     action.addEventListener('click', () => run(() => challenge(stage)));
    }
    row.append(portrait, info, action);
@@ -604,10 +593,6 @@ if (onlineMode) {
   showSquarePanel(dungeonPanel, openDungeons, true);
   enterTrialDungeon.focus({preventScroll:true});
  });
- openPinnedTrials.addEventListener('click', () => run(async () => {
-  await refreshTrials();
-  showSquarePanel(trialPanel, openPinnedTrials, true);
- }));
 
  openHistory.addEventListener('click', () => run(async () => {
   showSquarePanel(historyPanel, openHistory, true);
@@ -1122,10 +1107,8 @@ if (onlineMode) {
  });
  function lock(value) {
   busy = value;
-  openDungeons.disabled = enterTrialDungeon.disabled = backToDungeons.disabled = openPinnedTrials.disabled = value;
-  for (const list of [trialList, pinnedTrialList]) {
-   for (const button of list.querySelectorAll('button')) button.disabled = value;
-  }
+  openDungeons.disabled = enterTrialDungeon.disabled = backToDungeons.disabled = value;
+  for (const button of trialList.querySelectorAll('button')) button.disabled = value;
   updateDailyClaim();
   $('login-submit').disabled = value;
   refreshOpponentsButton.disabled = value;
@@ -1852,7 +1835,6 @@ if (onlineMode) {
   await Promise.all([
    refreshHistory(),
    refreshMailCount(),
-   report.trial?.first_clear && refreshTrials(),
   ]);
  }
 
