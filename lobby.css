@@ -65,10 +65,98 @@
 .town-game-account button:hover { background: #ffffff22; }
 .town-stage {
   isolation: isolate;
+  container-type: size;
   overflow: hidden;
+  background: #82b3cf;
+}
+.town-scenery {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: max(100cqw, calc(100cqh * 1672 / 941));
+  aspect-ratio: 1672 / 941;
+  translate: -50% -54%;
+  background: url('assets/penguin-city.webp') center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+.town-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #0c234950, transparent 27%, transparent 72%, #0c23498c);
+  pointer-events: none;
+}
+.town-sky {
+  position: absolute;
+  inset: 0;
+  /* Follow the building roofs so the clouds pass behind the skyline. */
+  clip-path: polygon(24% 0, 78% 0, 76% 12%, 71% 14%, 70% 24%, 66% 22%,
+    65% 27%, 64% 8%, 63% 1%, 62% 10%, 61% 23%, 60% 17%, 55% 19%, 55% 29%,
+    52% 27%, 50% 29%, 49% 22%, 46% 23%, 44% 25%, 43% 18%, 39% 19%,
+    38% 12%, 36% 3%, 28% 1%, 27% 11%, 24% 11%);
+}
+.town-cloud {
+  position: absolute;
+  width: 26%;
+  height: 7%;
   background:
-    linear-gradient(180deg, #0c234966, transparent 27%, transparent 72%, #0c23498c),
-    #82b3cf url('assets/penguin-city.webp') center 54% / cover no-repeat;
+    radial-gradient(ellipse 43% 29% at 28% 54%, #ffe7fcaa, transparent 100%),
+    radial-gradient(ellipse 48% 28% at 56% 40%, #f8e5ff94, transparent 100%),
+    radial-gradient(ellipse 33% 24% at 80% 54%, #d8e5ffa1, transparent 100%);
+  transform: skewX(-27deg);
+  animation: town-cloud-drift 35s linear infinite;
+}
+.town-cloud-near { left: 14%; top: 8%; animation-delay: -11s; }
+.town-cloud-far { left: 17%; top: 17%; width: 19%; opacity: .6; animation-duration: 49s; animation-delay: -24s; }
+@keyframes town-cloud-drift {
+  from { translate: 0 0; }
+  to { translate: 250% -38%; }
+}
+.town-lamp-glow {
+  position: absolute;
+  left: var(--lamp-x);
+  top: var(--lamp-y);
+  width: var(--lamp-width);
+  height: var(--lamp-height);
+  transform-origin: 50% 25%;
+  translate: -50% -25%;
+  background: radial-gradient(ellipse 48% 34% at 50% 25%, #ffdc89aa, #ffab4545 48%, transparent 100%),
+    radial-gradient(ellipse 39% 37% at 50% 66%, #ffb45648, transparent 100%);
+  mix-blend-mode: screen;
+  animation: town-light-breathe 6s ease-in-out infinite alternate;
+}
+.town-lamp-cafe { --lamp-x: 17%; --lamp-y: 40%; --lamp-width: 21%; --lamp-height: 34%; animation-delay: -2s; }
+.town-lamp-path-west { --lamp-x: 33.5%; --lamp-y: 49%; --lamp-width: 7%; --lamp-height: 13%; animation-delay: -4s; }
+.town-lamp-path-east { --lamp-x: 63.1%; --lamp-y: 48%; --lamp-width: 6%; --lamp-height: 12%; animation-delay: -1s; }
+.town-lamp-bench { --lamp-x: 91%; --lamp-y: 63%; --lamp-width: 16%; --lamp-height: 19%; animation-delay: -3s; }
+@keyframes town-light-breathe {
+  from { opacity: .22; scale: .9 1; }
+  to { opacity: .76; scale: 1.13 1.06; }
+}
+.town-petals { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.town-petals i {
+  position: absolute;
+  left: var(--x);
+  top: 24%;
+  width: var(--size);
+  height: calc(var(--size) * .72);
+  border-radius: 75% 20% 70% 34%;
+  background: linear-gradient(145deg, #fff1f3, #f4a9c6 62%, #c6699e);
+  opacity: 0;
+  animation: town-petal-fall var(--flight) var(--delay) linear infinite;
+}
+@keyframes town-petal-fall {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(14deg) scale(.7); }
+  15% { opacity: .83; }
+  37% { transform: translate3d(calc(var(--drift) * .23), 16vh, 0) rotate(124deg) scale(1, .67); }
+  68% { transform: translate3d(calc(var(--drift) * .74), 33vh, 0) rotate(246deg) scale(1.06); }
+  82% { opacity: .72; }
+  100% { opacity: 0; transform: translate3d(var(--drift), 54vh, 0) rotate(390deg) scale(.86); }
+}
+.town-stage[data-scene-paused] :is(.town-cloud, .town-lamp-glow, .town-petals i) { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .town-stage :is(.town-cloud, .town-lamp-glow, .town-petals i) { animation: none; }
+  .town-lamp-glow { opacity: .35; }
 }
 .town-stage:has(.town-daily-layer:not([hidden])) { z-index: 8; }
 .town-tasks .town-task-toggle {
@@ -76,6 +164,7 @@
   left: var(--hud-left);
 }
 .town-stage .town-dungeon-toggle {
+  z-index: 3;
   top: calc(var(--hud-top) + 87px);
   left: calc(var(--hud-left) + 74px);
   background: #4b331ce8;
@@ -276,6 +365,7 @@
 .town-stage:focus { outline: none; }
 .town-pet {
   position: absolute;
+  z-index: 2;
   bottom: max(17%, calc(var(--hud-bottom) + var(--dock-height) + 12px));
   left: 43%;
   width: clamp(104px, 24dvh, 210px);
@@ -499,7 +589,7 @@
 .town-tasks {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
 }
 .town-task-toggle {

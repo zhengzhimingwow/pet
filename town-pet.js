@@ -109,6 +109,7 @@
  function update() {
   cancelAnimationFrame(frame);
   lastTime = undefined;
+  stage.toggleAttribute('data-scene-paused', document.hidden);
   if (lobby.hidden || stage.hidden || document.hidden) return;
   if (!motion.matches) {
    measure();

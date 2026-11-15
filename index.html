@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=player-challenges">
+  <link rel="stylesheet" href="lobby.css?v=animated-plaza">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -67,6 +67,26 @@
     <div class="town-game-layout">
       <div class="town-character">
         <section id="town-stage" class="town-stage" aria-label="广场场景" tabindex="-1">
+          <div class="town-scenery" aria-hidden="true">
+            <div class="town-sky">
+              <i class="town-cloud town-cloud-near"></i>
+              <i class="town-cloud town-cloud-far"></i>
+            </div>
+            <div class="town-lamp-glow town-lamp-cafe"></div>
+            <div class="town-lamp-glow town-lamp-path-west"></div>
+            <div class="town-lamp-glow town-lamp-path-east"></div>
+            <div class="town-lamp-glow town-lamp-bench"></div>
+          </div>
+          <div class="town-petals" aria-hidden="true">
+            <i style="--x:37%;--flight:12s;--delay:-2s;--drift:17vw;--size:6px"></i>
+            <i style="--x:49%;--flight:15s;--delay:-11s;--drift:20vw;--size:5px"></i>
+            <i style="--x:65%;--flight:14s;--delay:-6s;--drift:-16vw;--size:7px"></i>
+            <i style="--x:18%;--flight:16s;--delay:-9s;--drift:22vw;--size:8px"></i>
+            <i style="--x:79%;--flight:13s;--delay:-10s;--drift:-21vw;--size:6px"></i>
+            <i style="--x:57%;--flight:17s;--delay:-7s;--drift:18vw;--size:9px"></i>
+            <i style="--x:23%;--flight:14s;--delay:-12s;--drift:27vw;--size:7px"></i>
+            <i style="--x:90%;--flight:16s;--delay:-3s;--drift:-26vw;--size:8px"></i>
+          </div>
           <div class="town-pet">
             <div class="town-pet-shadow" aria-hidden="true"></div>
             <div class="town-pet-pose" role="img" aria-label="蓝围巾企鹅">
@@ -507,7 +527,7 @@
   <audio id="arena-music" src="assets/arena-theme.m4a" preload="none" loop></audio>
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=techniques"></script>
-  <script src="town-pet.js?v=1" defer></script>
+  <script src="town-pet.js?v=animated-plaza" defer></script>
   <script src="online.js?v=player-challenges"></script>
 </body>
 </html>
