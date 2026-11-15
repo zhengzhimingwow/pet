@@ -12,7 +12,7 @@
   <link rel="preload" href="assets/qq-penguin-side-idle.png" as="image">
   <link rel="preload" href="assets/qq-penguin-pan-poses.png" as="image">
   <link rel="stylesheet" href="style.css?v=stable-battle-status">
-  <link rel="stylesheet" href="lobby.css?v=animated-plaza">
+  <link rel="stylesheet" href="lobby.css?v=guild-offices">
 </head>
 <body>
   <main id="account-entry" class="account-entry" hidden>
@@ -365,10 +365,39 @@
                     <button id="town-social-submit" class="town-item-action" type="submit"></button>
                   </div>
                 </form>
-                <div id="town-social-summary" hidden>
-                  <h3 id="town-social-group"></h3>
-                  <button id="town-social-leave" class="town-item-action" type="button"></button>
+                <div id="town-social-summary" class="town-guild-summary" hidden>
+                  <div class="town-guild-heading">
+                    <div>
+                      <h3 id="town-social-group"></h3>
+                      <p id="town-guild-membership"></p>
+                    </div>
+                    <button id="town-social-leave" class="town-item-action" type="button"></button>
+                  </div>
                   <p id="town-social-confirm" hidden>确认解散后，所有成员都将退出帮派。</p>
+                  <div class="town-guild-notice">
+                    <h4>帮派公告</h4>
+                    <p id="town-guild-notice"></p>
+                  </div>
+                  <details id="town-guild-settings" class="town-guild-section" hidden>
+                    <summary>帮派设置</summary>
+                    <form id="town-guild-settings-form">
+                      <fieldset id="town-guild-settings-fields">
+                        <label>帮派公告 <input id="town-guild-notice-input" type="text" maxlength="120"></label>
+                        <label id="town-guild-join-field">招募方式
+                          <select id="town-guild-join-mode">
+                            <option value="open">自由加入</option>
+                            <option value="approval">审核加入</option>
+                          </select>
+                        </label>
+                        <button class="town-item-action" type="submit">保存设置</button>
+                      </fieldset>
+                    </form>
+                  </details>
+                  <details id="town-guild-review" class="town-guild-section" hidden>
+                    <summary>入帮申请 <span id="town-guild-application-count"></span></summary>
+                    <ul id="town-guild-applications" class="town-item-list"></ul>
+                    <p id="town-guild-applications-empty" class="town-empty" hidden>暂无待审核的申请</p>
+                  </details>
                 </div>
                 <ul id="town-social-list" class="town-item-list"></ul>
                 <p id="town-social-empty" class="town-empty" hidden></p>
@@ -528,6 +557,6 @@
   <script src="weapon-moves.js?v=toy-hammer-grip"></script>
   <script src="game.js?v=techniques"></script>
   <script src="town-pet.js?v=animated-plaza" defer></script>
-  <script src="online.js?v=player-challenges"></script>
+  <script src="online.js?v=guild-offices"></script>
 </body>
 </html>

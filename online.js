@@ -17,6 +17,14 @@ if (onlineMode) {
  const socialLeave = $('town-social-leave');
  const socialConfirm = $('town-social-confirm');
  const socialTitles = {guilds:'帮派', friends:'好友'};
+ const guildRoles = {owner:'帮主', deputy:'副帮主', elder:'长老', member:'成员'};
+ const guildJoinModes = {open:'自由加入', approval:'审核加入'};
+ const guildSettings = $('town-guild-settings');
+ const guildSettingsForm = $('town-guild-settings-form');
+ const guildNoticeInput = $('town-guild-notice-input');
+ const guildJoinMode = $('town-guild-join-mode');
+ const guildReview = $('town-guild-review');
+ const guildApplications = $('town-guild-applications');
  const statLabels = {max_hp:'生命', attack:'攻击', defense:'防御'};
  const powerFields = [...Object.keys(statLabels), 'weapons', 'skills'];
  const powerNumber = new Intl.NumberFormat('zh-CN');
@@ -167,7 +175,12 @@ if (onlineMode) {
   guild_full: '该帮派人数已满。',
   not_in_guild: '你当前没有加入帮派。',
   guild_owner_required: '只有帮主可以解散帮派。',
-  guild_owner_cannot_leave: '帮主可以在帮派面板解散帮派。',
+  guild_owner_cannot_leave: '请先移交帮主，或解散帮派。',
+  guild_permission_denied: '你的帮派职位没有这项权限。',
+  guild_office_full: '这个职位的名额已满。',
+  guild_member_missing: '成员或帮派已变更，请重新打开帮派面板。',
+  guild_application_missing: '这条申请已处理，请重新打开帮派面板。',
+  invalid_guild_notice: '帮派公告须为 120 字以内的单行文字。',
   unavailable: '游戏或战斗服务暂时不可用，请稍后重试。',
  };
 
@@ -734,14 +747,21 @@ if (onlineMode) {
    {item_id:'rename_card', name}, `角色名已改为「${name}」。`);
  });
 
- function addSocialButton(row, name, action, data, success, disabled = false) {
+ function addSocialButton(row, name, action, data, success, disabled = false, confirmLabel) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'town-item-action';
   button.textContent = name;
   if (disabled) button.dataset.unavailable = '';
   button.disabled = busy || disabled;
-  button.addEventListener('click', () => socialAction(action, data, success));
+  button.addEventListener('click', () => {
+   if (confirmLabel && button.textContent !== confirmLabel) {
+    button.textContent = confirmLabel;
+    return;
+   }
+   socialAction(action, data, success);
+  });
+  if (confirmLabel) button.addEventListener('blur', () => { button.textContent = name; });
   row.append(button);
  }
 
@@ -762,10 +782,70 @@ if (onlineMode) {
   return row;
  }
 
+ function guildMemberRow(player) {
+  const row = socialPlayerRow(player, `UID ${player.player_id}`);
+  const name = row.querySelector('strong');
+  const office = document.createElement('span');
+  office.className = 'town-guild-office';
+  office.dataset.role = player.role;
+  office.textContent = guildRoles[player.role];
+  name.after(office);
+  const canAppoint = currentGuild.permissions.appoint && player.role !== 'owner';
+  if (!canAppoint && !player.can_kick) return row;
+
+  const menu = document.createElement('details');
+  const trigger = document.createElement('summary');
+  const actions = document.createElement('div');
+  menu.className = 'town-guild-member-actions';
+  trigger.textContent = '管理';
+  trigger.setAttribute('aria-label', `管理 ${player.name}`);
+  const target = {guild_id:currentGuild.guild_id, player_id:player.player_id};
+  if (canAppoint) {
+   for (const [role, title] of Object.entries(guildRoles)) {
+    if (role === 'owner' || role === player.role) continue;
+    const label = role === 'member' ? '撤为成员' : `任命${title}`;
+    addSocialButton(actions, label, 'appoint', {...target, role}, `${player.name} 的职位已变更为${title}。`);
+   }
+   addSocialButton(actions, '移交帮主', 'transfer', target, `已将帮主移交给 ${player.name}。`, false, '确认移交');
+  }
+  if (player.can_kick) addSocialButton(actions, '移出帮派', 'kick', target, `已将 ${player.name} 移出帮派。`, false, '确认移出');
+  menu.append(trigger, actions);
+  row.append(menu);
+  return row;
+ }
+
+ function renderGuild(capacity, sameGuild) {
+  const guild = currentGuild;
+  const {permissions} = guild;
+  $('town-social-group').textContent = guild.name;
+  $('town-guild-membership').textContent = `${guildRoles[guild.role]} · ${guild.members.length} / ${capacity} 人 · ${guildJoinModes[guild.join_mode]}`;
+  $('town-guild-notice').textContent = guild.notice || '暂无公告';
+  socialLeave.textContent = guild.role === 'owner' ? '解散帮派' : '退出帮派';
+  guildSettings.hidden = !permissions.notice;
+  if (!sameGuild || guildSettings.hidden) guildSettings.open = false;
+  guildNoticeInput.value = guild.notice;
+  $('town-guild-join-field').hidden = !permissions.join_mode;
+  guildJoinMode.value = guild.join_mode;
+  const applications = guild.applications ?? [];
+  guildReview.hidden = !permissions.review;
+  if (!sameGuild || guildReview.hidden) guildReview.open = !guildReview.hidden && applications.length > 0;
+  $('town-guild-application-count').textContent = String(applications.length);
+  $('town-guild-applications-empty').hidden = applications.length > 0;
+  guildApplications.replaceChildren(...applications.map(player => {
+   const row = socialPlayerRow(player, `UID ${player.player_id}`);
+   const target = {guild_id:guild.guild_id, player_id:player.player_id};
+   addSocialButton(row, '同意', 'review', {...target, approve:true}, `已同意 ${player.name} 入帮。`);
+   addSocialButton(row, '拒绝', 'review', {...target, approve:false}, `已拒绝 ${player.name} 的申请。`);
+   return row;
+  }));
+  return guild.members.map(guildMemberRow);
+ }
+
  function renderSocial(data) {
   const guildView = socialSection === 'guilds';
   const friendView = socialSection === 'friends';
   if (friendView) updateOpponentFriends(data.players);
+  const sameGuild = Boolean(guildView && data.current && data.current.guild_id === currentGuild?.guild_id);
   currentGuild = guildView ? data.current : null;
   socialForm.hidden = !friendView && (!guildView || Boolean(currentGuild));
   $('town-social-summary').hidden = !currentGuild;
@@ -779,11 +859,7 @@ if (onlineMode) {
   let rows;
   let empty;
   if (guildView && currentGuild) {
-   const owner = currentGuild.owner_id === session.player.player_id;
-   $('town-social-group').textContent = `${currentGuild.name} · ${currentGuild.members.length}/${data.capacity} 人`;
-   socialLeave.textContent = owner ? '解散帮派' : '退出帮派';
-   rows = currentGuild.members.map(player => socialPlayerRow(player,
-    `${player.player_id === currentGuild.owner_id ? '帮主' : '成员'} · UID ${player.player_id}`));
+   rows = renderGuild(data.capacity, sameGuild);
   } else if (guildView) {
    empty = '暂时没有帮派。';
    rows = data.guilds.map(guild => {
@@ -792,11 +868,17 @@ if (onlineMode) {
     const name = document.createElement('strong');
     const members = document.createElement('p');
     name.textContent = guild.name;
-    members.textContent = `${guild.member_count}/${data.capacity} 人`;
+    members.textContent = `${guild.member_count} / ${data.capacity} 人 · ${guildJoinModes[guild.join_mode]}`;
     info.append(name, members);
     row.append(info);
-    addSocialButton(row, '加入', 'join', {guild_id:guild.guild_id}, `已加入「${guild.name}」。`,
-     guild.member_count >= data.capacity);
+    const target = {guild_id:guild.guild_id};
+    if (guild.applied) {
+     addSocialButton(row, '撤回申请', 'cancel_application', target, '已撤回入帮申请。');
+    } else {
+     addSocialButton(row, guild.join_mode === 'approval' ? '申请加入' : '加入', 'join', target,
+      state => state.current ? `已加入「${state.current.name}」。` : '已提交申请，等待审核。',
+      guild.member_count >= data.capacity);
+    }
     return row;
    });
   } else {
@@ -882,9 +964,10 @@ if (onlineMode) {
    socialFeedback.textContent = '';
    delete socialFeedback.dataset.error;
    try {
-    renderSocial(await api('game', `/${socialSection}`, {action, ...data}));
+    const state = await api('game', `/${socialSection}`, {action, ...data});
+    renderSocial(state);
     socialForm.reset();
-    socialFeedback.textContent = success;
+    socialFeedback.textContent = typeof success === 'function' ? success(state) : success;
     if (!socialPanel.hidden) $('town-social-title').focus({preventScroll:true});
    } catch (error) {
     if (error.code === 'unauthorized') throw error;
@@ -911,14 +994,22 @@ if (onlineMode) {
   if (socialSection === 'friends') socialAction('request', {player_id:value}, '好友申请已处理，可在列表查看状态。');
   else socialAction('create', {name:value}, `已创建「${value}」。`);
  });
+ guildSettingsForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if (!currentGuild?.permissions.notice) return;
+  const data = {guild_id:currentGuild.guild_id, notice:guildNoticeInput.value.trim()};
+  if (currentGuild.permissions.join_mode) data.join_mode = guildJoinMode.value;
+  socialAction('settings', data, '帮派设置已保存。');
+ });
  socialLeave.addEventListener('click', () => {
+  const target = {guild_id:currentGuild.guild_id};
   if (currentGuild.owner_id !== session.player.player_id) {
-   socialAction('leave', {}, '已退出帮派。');
+   socialAction('leave', target, '已退出帮派。');
   } else if (socialConfirm.hidden) {
    socialConfirm.hidden = false;
    socialLeave.textContent = '确认解散';
   } else {
-   socialAction('disband', {}, '已解散帮派。');
+   socialAction('disband', target, '已解散帮派。');
   }
  });
 
@@ -1137,7 +1228,8 @@ if (onlineMode) {
   socialInput.disabled = value;
   socialLeave.disabled = value;
   renameName.disabled = value;
-  for (const list of [shopItems, inventoryItems, socialList]) {
+  $('town-guild-settings-fields').disabled = value;
+  for (const list of [shopItems, inventoryItems, socialList, guildApplications]) {
    for (const button of list.querySelectorAll('button')) button.disabled = value || button.hasAttribute('data-unavailable');
   }
   for (const button of avatarOptions.querySelectorAll('button')) button.disabled = value;
