@@ -1700,7 +1700,9 @@ if (onlineMode) {
   viewedOpponent = opponent;
   $('town-opponent-portrait').src = avatarUrl(player.avatar_id);
   $('town-opponent-name').textContent = player.name;
-  $('town-opponent-uid').textContent = player.is_ai ? 'AI 陪练' : `UID ${player.player_id}`;
+  $('town-opponent-uid').textContent = player.is_ai
+   ? (player.online == null ? 'AI 陪练' : `AI 陪练 · ${player.online ? '在线' : '离线'}`)
+   : `UID ${player.player_id}`;
   renderCombatPower($('town-opponent-power'), progression.combat_power);
   challengeOpponentProfile.setAttribute('aria-label', `挑战 ${player.name}，UID ${player.player_id}`);
   $('town-opponent-level').textContent = `Lv. ${progression.level}`;
@@ -1762,6 +1764,8 @@ if (onlineMode) {
    if (player.is_ai) {
     level.textContent += ' · AI 陪练';
     level.className = 'town-ai-label';
+    if (player.online) level.dataset.online = '';
+    level.title = player.online ? 'AI 陪练在线' : 'AI 陪练离线';
    }
    details.append(name, level);
    actions.className = 'town-opponent-actions';

@@ -644,6 +644,16 @@
 #town-daily-progress { color: #254e84; font-weight: 800; }
 #town-daily-result { color: #1e6050; font-weight: 700; }
 .town-opponent-details .town-ai-label { color: #4752a0; font-weight: 650; }
+.town-opponent-details .town-ai-label[data-online]::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: #248157;
+  vertical-align: 1px;
+}
 .town-stat:last-child .town-stat-breakdown { right: 0; left: auto; translate: none; }
 .town-stat:is(:hover, :focus-within) .town-stat-breakdown { opacity: 1; }
 .town-collection-actions {
