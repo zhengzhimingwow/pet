@@ -768,8 +768,6 @@
   background: radial-gradient(ellipse at 50% 40%, #fff9e7, #edf2fb);
 }
 .town-shop-grid > li > div { grid-row: 2; min-width: 0; overflow-wrap: anywhere; }
-.town-shop-grid li p { margin: 3px 0 0; font-size: 12px; line-height: 1.4; }
-.town-shop-grid li p:empty { display: none; }
 .town-shop-price { grid-row: 3; color: #79521f; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .town-shop-grid .town-item-action { grid-row: 4; width: 100%; }
 .town-shop-grid .town-item-action[data-unavailable] { border-color: var(--town-line); background: #f0f3f8; color: var(--town-muted); }

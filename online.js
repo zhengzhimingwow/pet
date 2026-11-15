@@ -632,17 +632,20 @@ if (onlineMode) {
   const row = document.createElement('li');
   const info = document.createElement('div');
   const label = document.createElement('strong');
-  const detail = document.createElement('p');
   const button = document.createElement('button');
   label.textContent = name;
-  detail.textContent = description;
   button.type = 'button';
   button.className = 'town-item-action';
   button.textContent = action;
   if (disabled) button.dataset.unavailable = '';
   button.disabled = disabled || busy;
   button.addEventListener('click', onClick);
-  info.append(label, detail);
+  info.append(label);
+  if (description) {
+   const detail = document.createElement('p');
+   detail.textContent = description;
+   info.append(detail);
+  }
   if (image) {
    const icon = document.createElement('img');
    icon.className = 'town-item-art';
@@ -658,16 +661,25 @@ if (onlineMode) {
  function renderShop() {
   const {coins} = session.inventory;
   $('town-shop-coins').textContent = `金币余额 ${coins}`;
+  if (shopItems.contains(collectionTipTrigger)) closeCollectionTip();
   shopItems.replaceChildren(...shopCatalog.map(item => {
    const affordable = coins >= item.price;
    const definition = itemDetails[item.id];
-   const card = itemRow(item.name, definition?.description ?? '',
+   const card = itemRow(item.name, null,
     affordable ? '购买' : '金币不足', () => itemAction(shopPanel, $('town-shop-feedback'), '/shop/buy',
      {item_id:item.id}, `已购买「${item.name}」，可在背包查看。`), !affordable, definition?.image);
    const price = document.createElement('span');
    price.className = 'town-shop-price';
    price.textContent = `${item.price} 金币`;
    card.insertBefore(price, card.lastElementChild);
+   if (definition?.description) {
+    card.addEventListener('pointerenter', event => {
+     if (event.pointerType === 'mouse') showCollectionTip(card, () => document.createTextNode(definition.description));
+    });
+    card.addEventListener('pointerleave', () => {
+     if (collectionTipTrigger === card) closeCollectionTip();
+    });
+   }
    return card;
   }));
  }
@@ -1116,9 +1128,12 @@ if (onlineMode) {
  function showCollectionTip(trigger, info, label) {
   if (collectionTipTrigger === trigger) return;
   closeCollectionTip();
-  const state = document.createElement('small');
-  state.textContent = label;
-  collectionTip.replaceChildren(info(), state);
+  collectionTip.replaceChildren(info());
+  if (label) {
+   const state = document.createElement('small');
+   state.textContent = label;
+   collectionTip.append(state);
+  }
   collectionTip.showPopover();
   collectionTipTrigger = trigger;
   trigger.setAttribute('aria-describedby', collectionTip.id);
