@@ -661,10 +661,14 @@ if (onlineMode) {
   shopItems.replaceChildren(...shopCatalog.map(item => {
    const affordable = coins >= item.price;
    const definition = itemDetails[item.id];
-   const description = definition?.description;
-   return itemRow(item.name, description ? `${description} ${item.price} 金币` : `${item.price} 金币`,
+   const card = itemRow(item.name, definition?.description ?? '',
     affordable ? '购买' : '金币不足', () => itemAction(shopPanel, $('town-shop-feedback'), '/shop/buy',
      {item_id:item.id}, `已购买「${item.name}」，可在背包查看。`), !affordable, definition?.image);
+   const price = document.createElement('span');
+   price.className = 'town-shop-price';
+   price.textContent = `${item.price} 金币`;
+   card.insertBefore(price, card.lastElementChild);
+   return card;
   }));
  }
 
